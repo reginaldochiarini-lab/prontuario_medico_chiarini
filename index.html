@@ -769,6 +769,13 @@
                     } else if (event.error === 'network') {
                         // Omissão silenciosa: não gera travamento de botão.
                         console.warn("Instabilidade rápida de rede detectada. Reiniciando de forma limpa nos bastidores...");
+                    } else if (event.error === 'aborted') {
+                        stopSpeechEngine();
+                        showMicDiagnostic(
+                            "Concorrência de Microfone (Erro: aborted)",
+                            "O Chrome bloqueou o microfone porque há outra aba utilizando o recurso.",
+                            "Certifique-se de <strong>fechar todas as outras abas antigas do Prontuário, WhatsApp Web, Google Meet ou do Gemini</strong> que possam estar abertas em segundo plano, depois recarregue esta página com <strong>Ctrl + F5</strong>!"
+                        );
                     } else if (event.error !== 'no-speech') {
                         stopSpeechEngine();
                         showMicDiagnostic(
