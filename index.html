@@ -1,1154 +1,262 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MedScribe Desktop - Dashboard Clínico PEP</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0b0f19;
-        }
-        /* Otimizações de scrollbars */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0f172a;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #1e293b;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #334155;
-        }
-        
-        /* Estilos de impressão dedicados para o prontuário e receitas */
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-            #printable-document-area, #printable-document-area * {
-                visibility: visible;
-            }
-            #printable-document-area {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                border: none !important;
-                box-shadow: none !important;
-                background: white !important;
-                color: black !important;
-                padding: 40px !important;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <title>MedScribe PEP v4.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box} body{font-family:Inter,sans-serif;background:#080d17}
+    ::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-track{background:#0f172a}::-webkit-scrollbar-thumb{background:#334155;border-radius:999px}
+    .field{width:100%;background:#080d17;border:1px solid #263244;border-radius:.8rem;padding:.7rem .85rem;color:#e2e8f0;outline:none}
+    .field:focus{border-color:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.12)}
+    .btn{border-radius:.75rem;padding:.65rem .9rem;font-weight:700;font-size:.75rem;transition:.15s;display:inline-flex;align-items:center;justify-content:center;gap:.45rem}
+    .btn:active{transform:scale(.98)}
+    .btn-primary{background:linear-gradient(90deg,#10b981,#14b8a6);color:#04110d}.btn-primary:hover{filter:brightness(1.08)}
+    .btn-soft{background:#172033;border:1px solid #2b374b;color:#dbe4f0}.btn-soft:hover{background:#202b40}
+    .btn-danger{background:#3b1018;border:1px solid #7f1d1d;color:#fecaca}.btn-danger:hover{background:#51131e}
+    .card{background:#101827;border:1px solid #263244;border-radius:1rem}
+    .label{font-size:.62rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#8290a5;display:block;margin-bottom:.4rem}
+    .tab-active{color:#34d399;border-bottom-color:#10b981;font-weight:800}.tab-inactive{color:#94a3b8;border-bottom-color:transparent}
+    .sr-only-focusable:not(:focus){position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    @media(max-width:1100px){#app-shell{grid-template-columns:260px minmax(0,1fr)}#assistant-panel{position:fixed;right:0;top:67px;bottom:0;width:min(390px,95vw);z-index:45;transform:translateX(102%);transition:.2s}#assistant-panel.open{transform:none}#assistant-toggle{display:inline-flex}}
+    @media(min-width:1101px){#assistant-toggle{display:none}}
+    @media(max-width:720px){#app-shell{grid-template-columns:1fr}#patient-sidebar{position:fixed;left:0;top:67px;bottom:0;width:min(330px,92vw);z-index:46;transform:translateX(-102%);transition:.2s}#patient-sidebar.open{transform:none}#patient-toggle{display:inline-flex}.desktop-title{display:none}}
+    @media(min-width:721px){#patient-toggle{display:none}}
+    @media print{
+      body *{visibility:hidden!important}#print-area,#print-area *{visibility:visible!important}#print-area{display:block!important;position:absolute;inset:0;width:100%;background:white!important;color:black!important;padding:18mm;font:12pt Arial,sans-serif;line-height:1.5}.no-print{display:none!important}
+    }
+  </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden text-slate-300">
+<body class="h-screen overflow-hidden text-slate-200">
+<a href="#main-content" class="sr-only-focusable fixed top-2 left-2 z-[100] bg-white text-black p-2">Pular para conteúdo</a>
+<header class="h-[67px] bg-slate-950 border-b border-slate-800 px-4 lg:px-6 flex items-center justify-between shadow-lg relative z-50">
+  <div class="flex items-center gap-3 min-w-0">
+    <button id="patient-toggle" class="btn btn-soft !p-2" aria-label="Abrir pacientes"><i class="fa-solid fa-users"></i></button>
+    <div class="bg-emerald-500/10 border border-emerald-500/25 rounded-xl p-2.5 text-emerald-400"><i class="fa-solid fa-notes-medical text-xl"></i></div>
+    <div class="min-w-0">
+      <h1 class="font-extrabold text-sm md:text-lg truncate">MedScribe PEP <span class="text-[9px] bg-emerald-500/15 text-emerald-300 px-2 py-1 rounded-full">v4.0 SEGURO</span></h1>
+      <p class="desktop-title text-[11px] text-slate-500">Prontuário local, ditado clínico e documentação</p>
+    </div>
+  </div>
+  <div class="flex items-center gap-2">
+    <span id="save-indicator" class="hidden sm:inline text-[10px] text-slate-500"><i class="fa-solid fa-cloud-arrow-down mr-1"></i>Salvo</span>
+    <button id="backup-btn" class="btn btn-soft"><i class="fa-solid fa-download"></i><span class="hidden md:inline">Backup</span></button>
+    <button id="config-btn" class="btn btn-soft"><i class="fa-solid fa-sliders text-emerald-400"></i><span class="hidden md:inline">Configurações</span></button>
+    <button id="assistant-toggle" class="btn btn-primary !p-2.5" aria-label="Abrir assistente"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+  </div>
+</header>
 
-    <!-- CABEÇALHO DO DASHBOARD CLÍNICO -->
-    <header class="bg-slate-950 text-white px-6 py-3.5 flex items-center justify-between border-b border-slate-800 shrink-0 z-40 shadow-lg">
-        <div class="flex items-center gap-3">
-            <div class="bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/25 text-emerald-400">
-                <i class="fa-solid fa-notes-medical text-2xl"></i>
-            </div>
-            <div>
-                <h1 class="text-lg font-extrabold tracking-tight flex items-center gap-2">
-                    MedScribe PEP <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full font-bold">🧪 PADRÃO REGINALDO v3.0</span>
-                </h1>
-                <p class="text-xs text-slate-400">Prontuário Médico Inteligente & Ditado Clínico Otimizado</p>
-            </div>
-        </div>
+<div id="app-shell" class="h-[calc(100vh-67px)] grid grid-cols-[300px_minmax(0,1fr)_360px] overflow-hidden">
+  <aside id="patient-sidebar" class="bg-slate-900 border-r border-slate-800 flex flex-col overflow-hidden">
+    <div class="p-4 border-b border-slate-800 space-y-3">
+      <div class="relative"><i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-600 text-xs"></i><input id="patient-search" class="field !pl-9 !py-2.5 text-xs" placeholder="Buscar nome, CPF ou celular"></div>
+      <button id="new-patient-btn" class="btn btn-primary w-full"><i class="fa-solid fa-user-plus"></i>Novo paciente</button>
+    </div>
+    <div class="px-4 pt-3 flex items-center justify-between"><span class="label !mb-0">Pacientes</span><span id="patient-count" class="text-[10px] text-slate-500"></span></div>
+    <div id="patient-list" class="flex-1 overflow-y-auto py-2"></div>
+    <div id="active-patient-card" class="p-4 border-t border-slate-800 bg-slate-950/50"></div>
+  </aside>
 
-        <div class="flex items-center gap-4">
-            <!-- Alerta Inteligente de Protocolo de Segurança Local -->
-            <div id="security-protocol-badge" class="hidden flex items-center gap-2 bg-amber-500/10 border border-amber-500/25 px-3 py-1.5 rounded-xl text-xs text-amber-300">
-                <i class="fa-solid fa-shield-halved animate-pulse text-amber-500"></i>
-                <span>Rodando Localmente. Use o GitHub Pages para habilitar o microfone de forma segura!</span>
-            </div>
-
-            <button onclick="toggleConfigModal(true)" class="bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition border border-slate-700">
-                <i class="fa-solid fa-key text-emerald-400"></i> Configurar Chave Gemini
-            </button>
-        </div>
-    </header>
-
-    <!-- CONTAINER DA ÁREA DE TRABALHO DE 3 COLUNAS -->
-    <div class="flex-1 flex overflow-hidden">
-
-        <!-- COLUNA 1: BARRA LATERAL DE PACIENTES -->
-        <aside class="w-80 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0">
-            <!-- Barra de busca superior -->
-            <div class="p-4 border-b border-slate-800 flex flex-col gap-3">
-                <div class="relative">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-500 text-sm"></i>
-                    <input type="text" id="patient-search" oninput="filterPatients()" placeholder="Buscar paciente ou CPF..." class="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition">
-                </div>
-                <button onclick="togglePatientModal(true)" class="w-full bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-400 border border-emerald-500/25 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition">
-                    <i class="fa-solid fa-plus"></i> Novo Cadastro Clínico
-                </button>
-            </div>
-
-            <!-- Lista de Pacientes Cadastrados -->
-            <div class="flex-1 overflow-y-auto divide-y divide-slate-800/60" id="patient-list">
-                <!-- Inserido dinamicamente pelo JS -->
-            </div>
-
-            <!-- Ficha Ativa no Rodapé da Barra Lateral -->
-            <div class="p-4 bg-slate-950/60 border-t border-slate-800" id="active-patient-footer">
-                <!-- Preenchido via JS -->
-            </div>
-        </aside>
-
-        <!-- COLUNA 2: ÁREA DE TRABALHO E ABAS -->
-        <main class="flex-1 bg-slate-950/40 flex flex-col overflow-hidden">
-            <!-- Menu das abas superiores -->
-            <div class="bg-slate-900 border-b border-slate-800 px-6 flex items-center justify-between shrink-0">
-                <div class="flex gap-6">
-                    <button id="tab-btn-prontuario" onclick="switchActiveTab('prontuario')" class="py-4 px-1 text-sm font-bold border-b-2 border-emerald-500 text-emerald-400 transition flex items-center gap-2">
-                        <i class="fa-solid fa-clipboard-list"></i> Prontuário PEP (🧪 Reginaldo)
-                    </button>
-                    <button id="tab-btn-historico" onclick="switchActiveTab('historico')" class="py-4 px-1 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
-                        <i class="fa-solid fa-clock-rotate-left"></i> Histórico de Evoluções
-                    </button>
-                    <button id="tab-btn-documentos" onclick="switchActiveTab('documentos')" class="py-4 px-1 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
-                        <i class="fa-solid fa-print"></i> Documentação Clinica
-                    </button>
-                </div>
-                <div class="text-[10px] font-bold text-slate-500 flex items-center gap-2 uppercase tracking-wider">
-                    <span class="h-2 w-2 bg-emerald-500 rounded-full animate-ping"></span> Sessão Médica Ativa
-                </div>
-            </div>
-
-            <!-- ÁREA DO CONTEÚDO DAS ABAS (ROLÁVEL) -->
-            <div class="flex-1 overflow-y-auto p-6">
-                
-                <!-- ABA 1: FORMULÁRIO DO PRONTUÁRIO REGULAMENTADO -->
-                <div id="view-prontuario" class="space-y-6">
-                    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6 shadow-sm space-y-5">
-                        
-                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                            <h3 class="font-bold text-white text-base flex items-center gap-2">
-                                <i class="fa-solid fa-file-medical text-emerald-400"></i> Prontuário Eletrônico do Paciente (PEP)
-                            </h3>
-                            <button onclick="clearCurrentRecord()" class="text-xs text-slate-500 hover:text-red-400 flex items-center gap-1.5 transition">
-                                <i class="fa-solid fa-trash-can"></i> Limpar Prontuário Atual
-                            </button>
-                        </div>
-
-                        <!-- Editor Completo e Integrado para Prontuário Reginaldo -->
-                        <div class="flex flex-col gap-3">
-                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Texto Clínico PEP Estruturado (Editável e pronto para cópia)</label>
-                            <textarea id="pep-output-editor" rows="18" placeholder="O prontuário estruturado aparecerá aqui. Você pode editá-lo livremente antes de copiar para o prontuário do seu hospital..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs font-mono text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 whitespace-pre-wrap leading-relaxed resize-none"></textarea>
-                        </div>
-
-                        <!-- Botão de Cópia e Finalização -->
-                        <div class="pt-4 border-t border-slate-800/80 flex justify-between items-center">
-                            <button id="btn-copy-pep" onclick="copyPepToClipboard()" class="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold px-6 py-3 rounded-xl shadow-lg transition active:scale-95 flex items-center gap-2 text-xs">
-                                <i class="fa-solid fa-copy"></i> COPIAR PRONTUÁRIO PEP (🧪 PADRÃO REGINALDO)
-                            </button>
-
-                            <button onclick="saveConsultationToHistory()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-5 py-3 rounded-xl border border-slate-700 transition flex items-center gap-2 text-xs">
-                                <i class="fa-solid fa-floppy-disk text-emerald-400"></i> Evoluir e Arquivar Consulta
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ABA 2: HISTÓRICO DE CONSULTAS -->
-                <div id="view-historico" class="hidden space-y-6">
-                    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6 shadow-sm">
-                        <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-6">
-                            <h3 class="font-bold text-white text-base flex items-center gap-2">
-                                <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i> Histórico de Registros
-                            </h3>
-                            <span class="text-xs text-slate-500" id="history-counter">Nenhuma consulta anterior registrada</span>
-                        </div>
-
-                        <div id="history-container" class="space-y-4">
-                            <!-- Injetado dinamicamente via JS -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ABA 3: RECEITUÁRIO E DOCUMENTOS DE IMPRESSÃO -->
-                <div id="view-documentos" class="hidden space-y-6">
-                    <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
-                        
-                        <!-- Painel de Seleção de Tipo -->
-                        <div class="xl:col-span-4 bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-sm h-fit space-y-4">
-                            <h4 class="font-bold text-white text-sm">Geração de Documentação</h4>
-                            <p class="text-xs text-slate-500">Documentação clínica gerada ou editada dinamicamente.</p>
-                            
-                            <div class="flex flex-col gap-2">
-                                <button id="btn-doc-type-receita" onclick="switchDocType('receita')" class="w-full text-left py-3 px-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 text-emerald-400 font-bold text-xs transition flex items-center gap-2.5">
-                                    <i class="fa-solid fa-prescription-bottle-medical"></i> Receituário Clínico
-                                </button>
-                                <button id="btn-doc-type-atestado" onclick="switchDocType('atestado')" class="w-full text-left py-3 px-4 rounded-xl border border-slate-800 bg-slate-950/40 text-slate-400 font-medium text-xs hover:bg-slate-800/50 transition flex items-center gap-2.5">
-                                    <i class="fa-solid fa-file-medical"></i> Atestado Médico de Afastamento
-                                </button>
-                                <button id="btn-doc-type-exame" onclick="switchDocType('exame')" class="w-full text-left py-3 px-4 rounded-xl border border-slate-800 bg-slate-950/40 text-slate-400 font-medium text-xs hover:bg-slate-800/50 transition flex items-center gap-2.5">
-                                    <i class="fa-solid fa-file-invoice"></i> Requisição de Exames
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Painel Editor e Visualizador de Impressão -->
-                        <div class="xl:col-span-8 bg-slate-900 rounded-2xl border border-slate-800 p-6 shadow-sm space-y-5">
-                            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                                <h4 class="font-bold text-white text-sm flex items-center gap-2">
-                                    <i class="fa-solid fa-file-signature text-emerald-400"></i> Editor de Documentação Ativa
-                                </h4>
-                                <button onclick="printClinicalDocument()" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-extrabold text-xs py-2 px-4 rounded-xl flex items-center gap-1.5 transition">
-                                    <i class="fa-solid fa-print"></i> Imprimir / Gerar PDF
-                                </button>
-                            </div>
-
-                            <textarea id="doc-editor" rows="14" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs font-mono text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 whitespace-pre-wrap leading-relaxed resize-none"></textarea>
-
-                            <!-- Área Invisível no Dashboard, visível apenas na impressão física -->
-                            <div id="printable-document-area" class="hidden">
-                                <!-- Conteúdo de impressão limpa -->
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-            </div>
-        </main>
-
-        <!-- COLUNA 3: PAINEL DITADO E INTELIGÊNCIA ARTIFICIAL -->
-        <aside class="w-[350px] bg-slate-900 text-slate-200 border-l border-slate-800 flex flex-col shrink-0 z-10 overflow-y-auto">
-            <!-- Cabeçalho do assistente -->
-            <div class="p-5 border-b border-slate-800 shrink-0">
-                <h3 class="font-extrabold text-white text-sm tracking-wide flex items-center gap-2">
-                    <i class="fa-solid fa-wand-magic-sparkles text-emerald-400"></i> ASSISTENTE MEDSCRIBE IA
-                </h3>
-                <p class="text-[11px] text-slate-500 mt-0.5">Dite livremente. O motor reorganiza no formato exigido.</p>
-            </div>
-
-            <!-- Painel de entrada de transcrição/áudio -->
-            <div class="p-5 space-y-5 flex-1">
-                <div class="bg-slate-950/80 rounded-2xl p-4 border border-slate-800 space-y-4 relative">
-                    <div class="flex items-center justify-between">
-                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Transcrição Bruta</span>
-                        <button id="btn-audio-dictation" onclick="toggleSpeechRecording()" class="h-10 w-10 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-full flex items-center justify-center transition shadow-lg active:scale-95">
-                            <i id="audio-dictation-icon" class="fa-solid fa-microphone text-sm"></i>
-                        </button>
-                    </div>
-
-                    <!-- Caixa de Diagnóstico de Microfone Dinâmica (Auto-Ocultável) -->
-                    <div id="mic-diagnostic-card" class="hidden bg-amber-500/10 border border-amber-500/25 p-3 rounded-xl text-xs text-amber-300 space-y-2">
-                        <div class="flex items-start gap-2">
-                            <i class="fa-solid fa-circle-exclamation text-amber-500 text-sm mt-0.5 shrink-0"></i>
-                            <div>
-                                <strong class="block font-bold" id="mic-diagnostic-title">Erro de Microfone</strong>
-                                <span id="mic-diagnostic-message">Identificamos um bloqueio do navegador.</span>
-                            </div>
-                        </div>
-                        <p class="text-[10px] text-slate-400 leading-relaxed pt-1.5 border-t border-slate-800" id="mic-diagnostic-hint"></p>
-                    </div>
-
-                    <textarea id="audio-transcript-box" rows="7" placeholder="Aperte o microfone verde e fale. Ou se preferir, cole o texto do atendimento aqui diretamente..." class="w-full bg-slate-900/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 resize-none leading-relaxed font-sans"></textarea>
-                    
-                    <div id="recording-status-indicator" class="hidden flex items-center gap-2 text-[10px] text-emerald-400 animate-pulse font-medium">
-                        <span class="h-2 w-2 bg-emerald-400 rounded-full animate-ping"></span>
-                        Capturando áudio contínuo...
-                    </div>
-                </div>
-
-                <div class="space-y-2">
-                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cenários de Simulação Médica:</span>
-                    <button onclick="loadScenarioText('iraci')" class="w-full text-left bg-slate-950/50 hover:bg-slate-950/90 border border-slate-800/80 p-3 rounded-xl transition flex items-start gap-2.5">
-                        <i class="fa-solid fa-lightbulb text-amber-400 mt-0.5 text-xs"></i>
-                        <div>
-                            <p class="text-xs font-bold text-slate-200">Dona Iraci (Ansiedade & Insônia)</p>
-                            <p class="text-[10px] text-slate-500 truncate">Dificuldade para iniciar o sono, pesadelos...</p>
-                        </div>
-                    </button>
-                    <button onclick="loadScenarioText('respiratorio')" class="w-full text-left bg-slate-950/50 hover:bg-slate-950/90 border border-slate-800/80 p-3 rounded-xl transition flex items-start gap-2.5">
-                        <i class="fa-solid fa-lightbulb text-amber-400 mt-0.5 text-xs"></i>
-                        <div>
-                            <p class="text-xs font-bold text-slate-200">Quadro de Tosse & Catarro Verde</p>
-                            <p class="text-[10px] text-slate-500 truncate">Disfonia, tosse produtiva e acebrofelina...</p>
-                        </div>
-                    </button>
-                    <button onclick="loadScenarioText('abdominal')" class="w-full text-left bg-slate-950/50 hover:bg-slate-950/90 border border-slate-800/80 p-3 rounded-xl transition flex items-start gap-2.5">
-                        <i class="fa-solid fa-lightbulb text-amber-400 mt-0.5 text-xs"></i>
-                        <div>
-                            <p class="text-xs font-bold text-slate-200">Dor Abdominal & Constipação</p>
-                            <p class="text-[10px] text-slate-500 truncate">Quadro de dor iniciada há 20 dias...</p>
-                        </div>
-                    </button>
-                </div>
-
-                <!-- Botão de Processar IA -->
-                <button id="btn-process-medical-ai" onclick="generateStructuredRecord()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold py-3.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition active:scale-95 disabled:opacity-50">
-                    <i class="fa-solid fa-brain"></i> ESTRUTURAR CONSULTA COM IA
-                </button>
-            </div>
-        </aside>
-
+  <main id="main-content" class="min-w-0 bg-[#0b111d] flex flex-col overflow-hidden">
+    <div class="bg-slate-900 border-b border-slate-800 px-4 md:px-6 flex gap-5 overflow-x-auto shrink-0">
+      <button data-tab="record" class="tab-btn tab-active py-4 border-b-2 text-xs whitespace-nowrap"><i class="fa-solid fa-clipboard-list mr-2"></i>Prontuário</button>
+      <button data-tab="history" class="tab-btn tab-inactive py-4 border-b-2 text-xs whitespace-nowrap"><i class="fa-solid fa-clock-rotate-left mr-2"></i>Histórico</button>
+      <button data-tab="documents" class="tab-btn tab-inactive py-4 border-b-2 text-xs whitespace-nowrap"><i class="fa-solid fa-print mr-2"></i>Documentos</button>
+      <button data-tab="today" class="tab-btn tab-inactive py-4 border-b-2 text-xs whitespace-nowrap"><i class="fa-solid fa-calendar-day mr-2"></i>Consultas do dia</button>
     </div>
 
-    <!-- MODAIS E COMPONENTES AUXILIARES -->
-    <!-- MODAL 1: CADASTRAR NOVO PACIENTE -->
-    <div id="modal-patient" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-slate-900 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl border border-slate-800 animate-fade-in text-xs">
-            <div class="bg-slate-950 px-5 py-4 border-b border-slate-800 flex justify-between items-center text-white">
-                <h3 class="font-bold uppercase tracking-wider">Novo Cadastro de Paciente</h3>
-                <button onclick="togglePatientModal(false)" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            
-            <div class="p-6 flex flex-col gap-4 text-slate-300">
-                <div>
-                    <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1.5">Nome Completo do Paciente *</label>
-                    <input id="new-patient-name" type="text" placeholder="Ex: Lucas M. Pereira" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/25">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1.5">Idade *</label>
-                        <input id="new-patient-age" type="number" placeholder="Ex: 45" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/25">
-                    </div>
-                    <div>
-                        <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1.5">Gênero</label>
-                        <select id="new-patient-gender" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/25">
-                            <option value="Masculino">Masculino</option>
-                            <option value="Feminino">Feminino</option>
-                            <option value="Outro">Outro</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1.5">Convênio de Saúde</label>
-                        <input id="new-patient-convenio" type="text" placeholder="Ex: Bradesco Saúde, Particular..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/25">
-                    </div>
-                    <div>
-                        <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1.5">CPF (Opcional)</label>
-                        <input id="new-patient-cpf" type="text" placeholder="000.000.000-00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/25">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1.5">Alergias Conhecidas</label>
-                    <input id="new-patient-allergies" type="text" placeholder="Ex: Nega ou Dipirona" class="w-full bg-slate-950 border border-red-950 text-red-400 font-semibold rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-red-500/25">
-                </div>
-
-                <button onclick="registerPatient()" class="w-full mt-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-extrabold py-3.5 rounded-xl transition shadow-md">
-                    Salvar Dados Cadastrais
-                </button>
-            </div>
+    <div class="flex-1 overflow-y-auto p-4 md:p-6">
+      <section id="tab-record" class="tab-view space-y-4 max-w-6xl mx-auto">
+        <div id="privacy-alert" class="card p-4 border-amber-500/25 bg-amber-500/5 flex items-start gap-3">
+          <i class="fa-solid fa-shield-halved text-amber-400 mt-0.5"></i>
+          <div class="text-[11px] text-slate-400 leading-relaxed flex-1"><strong class="text-amber-300">Uso local:</strong> os dados ficam neste navegador. Para uso real com pacientes, utilize computador protegido, backup criptografado e uma solução adequada à LGPD. A chave da IA é mantida somente durante a sessão.</div>
+          <button id="hide-privacy" class="text-slate-500 hover:text-white" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
         </div>
-    </div>
 
-    <!-- MODAL 2: CONFIGURAÇÕES DA CHAVE DE API DO GEMINI -->
-    <div id="modal-config" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-slate-900 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl border border-slate-800 text-xs text-slate-300">
-            <div class="bg-slate-950 px-5 py-4 border-b border-slate-800 flex justify-between items-center text-white">
-                <h3 class="font-bold uppercase tracking-wider">Chave da API do Google Gemini</h3>
-                <button onclick="toggleConfigModal(false)" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <div class="card p-4 md:p-6 space-y-4">
+          <div class="flex flex-wrap gap-3 items-center justify-between border-b border-slate-800 pb-4">
+            <div><h2 class="font-bold text-white"><i class="fa-solid fa-file-medical text-emerald-400 mr-2"></i>Evolução clínica</h2><p id="record-patient-name" class="text-[11px] text-slate-500 mt-1">Selecione um paciente</p></div>
+            <div class="flex flex-wrap gap-2">
+              <button id="insert-template-btn" class="btn btn-soft"><i class="fa-solid fa-list-check"></i>Modelo vazio</button>
+              <button id="clear-record-btn" class="btn btn-danger"><i class="fa-solid fa-eraser"></i>Limpar</button>
             </div>
-            
-            <div class="p-6 flex flex-col gap-4">
-                <div>
-                    <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1.5">Google Gemini API Key</label>
-                    <input id="gemini-api-key" type="password" placeholder="Cole sua chave AI aqui..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/25">
-                </div>
-                <p class="text-[10px] text-slate-500 leading-relaxed">
-                    Se você não configurar sua chave privada, o MedScribe utilizará o **Mecanismo de Heurísticas Clínicas do Consultório** integrado para estruturar os seus relatos com fidelidade absoluta.
-                </p>
-
-                <div class="flex gap-2 mt-2">
-                    <button onclick="saveApiKey()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-extrabold py-3 rounded-xl transition">
-                        Salvar Chave
-                    </button>
-                    <button onclick="clearApiKey()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-4 py-3 rounded-xl transition">
-                        Limpar
-                    </button>
-                </div>
+          </div>
+          <textarea id="pep-editor" rows="24" class="field font-mono text-xs leading-relaxed resize-y" spellcheck="true" placeholder="O prontuário estruturado aparecerá aqui..."></textarea>
+          <div class="flex flex-wrap gap-3 items-center justify-between">
+            <div class="text-[10px] text-slate-500"><span id="record-count">0 caracteres</span> · rascunho salvo automaticamente</div>
+            <div class="flex flex-wrap gap-2">
+              <button id="copy-record-btn" class="btn btn-soft"><i class="fa-regular fa-copy"></i>Copiar</button>
+              <button id="save-history-btn" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i>Salvar evolução</button>
             </div>
+          </div>
         </div>
-    </div>
+      </section>
 
-    <!-- MODAL 3: CAIXA DE CONFIRMAÇÃO PERSONALIZADA (Substitui confirm()) -->
-    <div id="modal-confirm" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-slate-900 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl border border-slate-800 p-6 space-y-4 text-xs">
-            <div class="flex items-start gap-3 text-slate-300">
-                <div class="bg-red-950 p-2.5 rounded-full text-red-400 border border-red-500/20">
-                    <i class="fa-solid fa-circle-exclamation text-xl"></i>
-                </div>
-                <div>
-                    <h3 class="font-bold text-white text-sm" id="confirm-title">Atenção</h3>
-                    <p class="text-slate-400 mt-1" id="confirm-message">Você tem certeza que deseja realizar essa ação?</p>
-                </div>
-            </div>
-            <div class="flex gap-3 justify-end font-semibold">
-                <button id="btn-confirm-cancel" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">Cancelar</button>
-                <button id="btn-confirm-ok" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition">Sim, confirmar</button>
-            </div>
+      <section id="tab-history" class="tab-view hidden max-w-6xl mx-auto">
+        <div class="card p-4 md:p-6">
+          <div class="flex justify-between items-center border-b border-slate-800 pb-4 mb-4"><div><h2 class="font-bold text-white">Histórico de evoluções</h2><p id="history-subtitle" class="text-[11px] text-slate-500 mt-1"></p></div><button id="export-patient-btn" class="btn btn-soft"><i class="fa-solid fa-file-export"></i>Exportar paciente</button></div>
+          <div id="history-list" class="space-y-3"></div>
         </div>
+      </section>
+
+      <section id="tab-documents" class="tab-view hidden max-w-6xl mx-auto">
+        <div class="grid xl:grid-cols-[260px_1fr] gap-4">
+          <div class="card p-4 h-fit space-y-2">
+            <h2 class="font-bold text-white text-sm mb-3">Tipo de documento</h2>
+            <button data-doc="receita" class="doc-btn btn btn-primary w-full justify-start"><i class="fa-solid fa-prescription-bottle-medical"></i>Receituário simples</button>
+            <button data-doc="atestado" class="doc-btn btn btn-soft w-full justify-start"><i class="fa-solid fa-file-medical"></i>Atestado</button>
+            <button data-doc="exames" class="doc-btn btn btn-soft w-full justify-start"><i class="fa-solid fa-vials"></i>Solicitação de exames</button>
+            <button data-doc="encaminhamento" class="doc-btn btn btn-soft w-full justify-start"><i class="fa-solid fa-share-from-square"></i>Encaminhamento</button>
+            <p class="text-[10px] text-amber-300/80 pt-3 leading-relaxed"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Os modelos não inserem medicamentos, exames, CID ou dias de afastamento automaticamente.</p>
+          </div>
+          <div class="card p-4 md:p-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4"><h2 class="font-bold text-white">Editor do documento</h2><button id="print-doc-btn" class="btn btn-primary"><i class="fa-solid fa-print"></i>Imprimir / PDF</button></div>
+            <textarea id="doc-editor" rows="25" class="field font-mono text-xs leading-relaxed resize-y"></textarea>
+            <button id="copy-doc-btn" class="btn btn-soft"><i class="fa-regular fa-copy"></i>Copiar documento</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-today" class="tab-view hidden max-w-6xl mx-auto">
+        <div class="card p-4 md:p-6">
+          <div class="flex flex-wrap justify-between gap-3 border-b border-slate-800 pb-4 mb-4"><div><h2 class="font-bold text-white">Consultas do dia</h2><p class="text-[11px] text-slate-500 mt-1">Controle local de chegada e atendimento</p></div><button id="add-today-btn" class="btn btn-primary"><i class="fa-solid fa-plus"></i>Adicionar paciente ativo</button></div>
+          <div id="today-list" class="space-y-3"></div>
+        </div>
+      </section>
     </div>
+  </main>
 
-    <!-- TOAST DE NOTIFICAÇÃO FLUTUANTE (Substitui alert()) -->
-    <div id="custom-toast" class="hidden fixed bottom-6 right-6 z-50 bg-slate-900/95 border border-slate-800 text-slate-200 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 max-w-sm text-xs animate-slide-in">
-        <i class="fa-solid fa-circle-info text-sky-400 text-sm" id="toast-icon"></i>
-        <span id="toast-message" class="leading-relaxed"></span>
+  <aside id="assistant-panel" class="bg-slate-900 border-l border-slate-800 flex flex-col overflow-hidden shadow-2xl">
+    <div class="p-4 border-b border-slate-800 flex justify-between items-center"><div><h2 class="font-extrabold text-sm text-white"><i class="fa-solid fa-wand-magic-sparkles text-emerald-400 mr-2"></i>Assistente clínico</h2><p class="text-[10px] text-slate-500 mt-1">Transcreve e organiza sem criar dados</p></div><button id="close-assistant" class="lg:hidden text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="flex-1 overflow-y-auto p-4 space-y-4">
+      <div class="card p-4 space-y-3">
+        <div class="flex justify-between items-center"><span class="label !mb-0">Transcrição bruta</span><button id="mic-btn" class="h-10 w-10 rounded-full bg-emerald-500 text-slate-950 hover:bg-emerald-400" aria-label="Iniciar ditado"><i id="mic-icon" class="fa-solid fa-microphone"></i></button></div>
+        <textarea id="transcript" rows="14" class="field text-xs leading-relaxed resize-y" placeholder="Cole a transcrição ou clique no microfone..."></textarea>
+        <div class="flex justify-between text-[10px] text-slate-500"><span id="mic-status">Microfone desligado</span><span id="transcript-count">0 caracteres</span></div>
+      </div>
+      <div class="card p-4 space-y-3">
+        <label class="label" for="ai-mode">Modo de estruturação</label>
+        <select id="ai-mode" class="field text-xs"><option value="ai">IA configurada (preferencial)</option><option value="local">Modelo local conservador</option></select>
+        <button id="structure-btn" class="btn btn-primary w-full py-3"><i class="fa-solid fa-brain"></i>Estruturar consulta</button>
+        <p class="text-[10px] text-slate-500 leading-relaxed">O modo local apenas distribui o texto em um modelo vazio. Ele não diagnostica nem prescreve.</p>
+      </div>
+      <div class="card p-4 space-y-2"><span class="label">Atalhos</span><button id="append-exam-normal" class="btn btn-soft w-full justify-start"><i class="fa-solid fa-stethoscope"></i>Inserir exame físico normal</button><button id="move-transcript" class="btn btn-soft w-full justify-start"><i class="fa-solid fa-arrow-left"></i>Enviar transcrição ao editor</button></div>
     </div>
-
-    <!-- SISTEMA E LÓGICA DE PROGRAMAÇÃO EM JAVASCRIPT -->
-    <script>
-        // Banco de dados em memória local
-        let patients = [
-            {
-                id: "1",
-                nome: "Dona Iraci",
-                idade: 67,
-                genero: "Feminino",
-                convenio: "Bradesco Saúde",
-                cpf: "123.456.789-00",
-                alergias: "Nenhuma relatada",
-                historicoConsultas: [
-                    {
-                        data: "25/06/2026",
-                        queixa: "Insônia inicial e ansiedade grave",
-                        conduta: "Ajuste medicamentoso. Introduzido Alprazolam 0.25mg."
-                    }
-                ]
-            },
-            {
-                id: "2",
-                nome: "Lucas M. Pereira",
-                idade: 45,
-                genero: "Masculino",
-                convenio: "Particular",
-                cpf: "987.654.321-22",
-                alergias: "Dipirona",
-                historicoConsultas: []
-            }
-        ];
-
-        let activePatientId = "1";
-        let activeTab = "prontuario";
-        let isRecording = false;
-        let speechRecognitionInstance = null; // Instância ativa do microfone
-        let activeDocType = "receita";
-        let isAiProcessing = false;
-
-        // Callback para a confirmação personalizada
-        let confirmActionCallback = null;
-
-        // --- SISTEMA DE DIÁLOGO E COMPONENTES PERSONALIZADOS ---
-        function showToast(message, type = 'info') {
-            const toast = document.getElementById('custom-toast');
-            const icon = document.getElementById('toast-icon');
-            const msg = document.getElementById('toast-message');
-            
-            msg.innerHTML = message;
-            
-            if (type === 'error') {
-                toast.className = "fixed bottom-6 right-6 z-50 bg-red-950/95 border border-red-500/30 text-red-200 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 max-w-sm text-xs";
-                icon.className = "fa-solid fa-circle-exclamation text-red-400 text-sm animate-pulse";
-            } else if (type === 'success') {
-                toast.className = "fixed bottom-6 right-6 z-50 bg-emerald-950/95 border border-emerald-500/30 text-emerald-200 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 max-w-sm text-xs";
-                icon.className = "fa-solid fa-circle-check text-emerald-400 text-sm";
-            } else {
-                toast.className = "fixed bottom-6 right-6 z-50 bg-slate-900/95 border border-slate-800 text-slate-200 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 max-w-sm text-xs";
-                icon.className = "fa-solid fa-circle-info text-sky-400 text-sm";
-            }
-            
-            toast.classList.remove('hidden');
-            setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 6000);
-        }
-
-        function showCustomConfirm(title, message, callback) {
-            const modal = document.getElementById('modal-confirm');
-            document.getElementById('confirm-title').textContent = title;
-            document.getElementById('confirm-message').textContent = message;
-            modal.classList.remove('hidden');
-            confirmActionCallback = callback;
-        }
-
-        // Configuração de Cliques do Modal Confirm
-        document.getElementById('btn-confirm-cancel').addEventListener('click', () => {
-            document.getElementById('modal-confirm').classList.add('hidden');
-            confirmActionCallback = null;
-        });
-
-        document.getElementById('btn-confirm-ok').addEventListener('click', () => {
-            document.getElementById('modal-confirm').classList.add('hidden');
-            if (confirmActionCallback) {
-                confirmActionCallback();
-            }
-            confirmActionCallback = null;
-        });
-
-        // --- INICIALIZAÇÃO E RENDERIZADORES ---
-        window.onload = function() {
-            // Verifica protocolo de arquivos
-            if (window.location.protocol === 'file:') {
-                document.getElementById('security-protocol-badge').classList.remove('hidden');
-            }
-            
-            // Tenta carregar dados salvos no localStorage para persistência
-            const savedPatients = localStorage.getItem('medscribe_patients');
-            if (savedPatients) {
-                patients = JSON.parse(savedPatients);
-            }
-            
-            const savedApiKey = localStorage.getItem('medscribe_api_key');
-            if (savedApiKey) {
-                document.getElementById('gemini-api-key').value = savedApiKey;
-            }
-
-            renderPatientList();
-            renderActivePatient();
-            updateDocumentTemplate();
-        };
-
-        function saveLocalData() {
-            localStorage.setItem('medscribe_patients', JSON.stringify(patients));
-        }
-
-        function togglePatientModal(state) {
-            const modal = document.getElementById('modal-patient');
-            if (state) modal.classList.remove('hidden');
-            else modal.classList.add('hidden');
-        }
-
-        function toggleConfigModal(state) {
-            const modal = document.getElementById('modal-config');
-            if (state) modal.classList.remove('hidden');
-            else modal.classList.add('hidden');
-        }
-
-        // --- CONTROLE DE PACIENTES ---
-        function renderPatientList() {
-            const listContainer = document.getElementById('patient-list');
-            listContainer.innerHTML = '';
-            
-            patients.forEach(patient => {
-                const btn = document.createElement('button');
-                btn.className = `w-full text-left p-4 border-b border-slate-800/40 transition flex justify-between items-center ${activePatientId === patient.id ? 'bg-slate-800/40 border-l-4 border-emerald-500' : 'hover:bg-slate-800/20'}`;
-                btn.onclick = () => selectPatient(patient.id);
-                
-                btn.innerHTML = `
-                    <div class="min-w-0 flex-1">
-                        <p class="font-semibold text-slate-100 truncate">${patient.nome}</p>
-                        <div class="flex items-center gap-2 text-[11px] text-slate-500 mt-1">
-                            <span>${patient.idade} anos</span>
-                            <span>•</span>
-                            <span>${patient.genero}</span>
-                        </div>
-                    </div>
-                    <i class="fa-solid fa-chevron-right text-xs shrink-0 transition ${activePatientId === patient.id ? 'text-emerald-400' : 'text-slate-600'}"></i>
-                `;
-                listContainer.appendChild(btn);
-            });
-        }
-
-        function renderActivePatient() {
-            const activePatient = patients.find(p => p.id === activePatientId) || patients[0];
-            if (!activePatient) return;
-
-            const footer = document.getElementById('active-patient-footer');
-            footer.innerHTML = `
-                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-2">Ficha em Consulta</p>
-                <div class="bg-slate-900 p-3.5 rounded-xl border border-slate-800 flex items-start gap-3 shadow-sm">
-                    <div class="bg-emerald-500/10 text-emerald-400 p-2.5 rounded-xl">
-                        <i class="fa-solid fa-user-doctor text-sm"></i>
-                    </div>
-                    <div class="min-w-0">
-                        <p class="font-bold text-xs text-slate-200 truncate">${activePatient.nome}</p>
-                        <p class="text-[10px] text-slate-500 mt-0.5">Convênio: ${activePatient.convenio}</p>
-                        <p class="text-[9px] font-bold text-red-400 mt-1 flex items-center gap-1 bg-red-950/20 py-0.5 px-2 rounded-md w-fit border border-red-900/30">
-                            <i class="fa-solid fa-triangle-exclamation"></i> Alergias: ${activePatient.alergias}
-                        </p>
-                    </div>
-                </div>
-            `;
-
-            // Atualiza aba de Histórico
-            renderHistoryTab(activePatient);
-        }
-
-        function filterPatients() {
-            const query = document.getElementById('patient-search').value.toLowerCase();
-            const listContainer = document.getElementById('patient-list');
-            listContainer.innerHTML = '';
-
-            const filtered = patients.filter(p => p.nome.toLowerCase().includes(query) || p.cpf.includes(query));
-            filtered.forEach(patient => {
-                const btn = document.createElement('button');
-                btn.className = `w-full text-left p-4 border-b border-slate-800/40 transition flex justify-between items-center ${activePatientId === patient.id ? 'bg-slate-800/40 border-l-4 border-emerald-500' : 'hover:bg-slate-800/20'}`;
-                btn.onclick = () => selectPatient(patient.id);
-                btn.innerHTML = `
-                    <div class="min-w-0 flex-1">
-                        <p class="font-semibold text-slate-100 truncate">${patient.nome}</p>
-                        <div class="flex items-center gap-2 text-[11px] text-slate-500 mt-1">
-                            <span>${patient.idade} anos</span>
-                            <span>•</span>
-                            <span>${patient.genero}</span>
-                        </div>
-                    </div>
-                    <i class="fa-solid fa-chevron-right text-xs shrink-0 transition ${activePatientId === patient.id ? 'text-emerald-400' : 'text-slate-600'}"></i>
-                `;
-                listContainer.appendChild(btn);
-            });
-        }
-
-        function selectPatient(id) {
-            activePatientId = id;
-            renderPatientList();
-            renderActivePatient();
-            updateDocumentTemplate();
-            showToast("Paciente carregado no prontuário!", "success");
-        }
-
-        function registerPatient() {
-            const nome = document.getElementById('new-patient-name').value.trim();
-            const idade = document.getElementById('new-patient-age').value.trim();
-            const genero = document.getElementById('new-patient-gender').value;
-            const convenio = document.getElementById('new-patient-convenio').value.trim() || 'Particular';
-            const cpf = document.getElementById('new-patient-cpf').value.trim() || 'Não informado';
-            const allergies = document.getElementById('new-patient-allergies').value.trim() || 'Nega';
-
-            if (!nome || !idade) {
-                showToast("Por favor, preencha o Nome e a Idade do paciente.", "error");
-                return;
-            }
-
-            const newPatientObj = {
-                id: String(patients.length + 1),
-                nome,
-                idade: parseInt(idade),
-                genero,
-                convenio,
-                cpf,
-                alergias: allergies,
-                historicoConsultas: []
-            };
-
-            patients.push(newPatientObj);
-            saveLocalData();
-            activePatientId = newPatientObj.id;
-            
-            renderPatientList();
-            renderActivePatient();
-            togglePatientModal(false);
-            
-            // Limpa campos do formulário
-            document.getElementById('new-patient-name').value = '';
-            document.getElementById('new-patient-age').value = '';
-            document.getElementById('new-patient-convenio').value = '';
-            document.getElementById('new-patient-cpf').value = '';
-            document.getElementById('new-patient-allergies').value = '';
-            
-            showToast("Novo paciente cadastrado e selecionado!", "success");
-        }
-
-        // --- SISTEMA DE DIRETRIZ DE GRAVAÇÃO COM RECONEXÃO AUTOMÁTICA CONTÍNUA ---
-        function toggleSpeechRecording() {
-            if (isRecording) {
-                stopSpeechEngine();
-            } else {
-                startSpeechEngine();
-            }
-        }
-
-        function startSpeechEngine() {
-            const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-            document.getElementById('mic-diagnostic-card').classList.add('hidden');
-
-            if (!Speech) {
-                showToast("Reconhecimento de voz nativo não suportado neste navegador.", "error");
-                showMicDiagnostic(
-                    "Navegador Sem Suporte",
-                    "Este navegador não possui a API de reconhecimento de voz ativa.",
-                    "Recomendamos usar o Chrome ou Edge atualizados no seu notebook."
-                );
-                return;
-            }
-
-            try {
-                isRecording = true;
-                updateRecordingButtonUI(true);
-
-                // Reconstruímos a instância completamente limpa para evitar DOMExceptions
-                speechRecognitionInstance = new Speech();
-                speechRecognitionInstance.continuous = true;
-                speechRecognitionInstance.lang = 'pt-BR';
-                speechRecognitionInstance.interimResults = false;
-
-                speechRecognitionInstance.onresult = (event) => {
-                    const transcript = event.results[event.results.length - 1][0].transcript;
-                    const box = document.getElementById('audio-transcript-box');
-                    box.value += (box.value ? ' ' : '') + transcript;
-                };
-
-                speechRecognitionInstance.onerror = (event) => {
-                    console.error("Erro no microfone detectado:", event.error);
-                    
-                    if (event.error === 'not-allowed') {
-                        stopSpeechEngine();
-                        if (window.location.protocol === 'file:') {
-                            showMicDiagnostic(
-                                "Bloqueio de Arquivo Local",
-                                "O navegador bloqueia o microfone por segurança em arquivos locais.",
-                                "Como você já configurou o GitHub Pages, clique no link gerado na barra superior para rodar o sistema em modo seguro HTTPS!"
-                            );
-                        } else {
-                            showMicDiagnostic(
-                                "Permissão Negada",
-                                "O acesso ao microfone foi recusado ou bloqueado no navegador.",
-                                "Clique no ícone de <strong>Cadeado</strong> localizado à esquerda do link do site na barra de endereços e mude a permissão do Microfone para 'Permitir'."
-                            );
-                        }
-                    } else if (event.error === 'network') {
-                        // Omissão silenciosa: não gera travamento de botão.
-                        console.warn("Instabilidade rápida de rede detectada. Reiniciando de forma limpa nos bastidores...");
-                    } else if (event.error === 'aborted') {
-                        stopSpeechEngine();
-                        showMicDiagnostic(
-                            "Concorrência de Microfone (Erro: aborted)",
-                            "O Chrome bloqueou o microfone porque há outra aba utilizando o recurso.",
-                            "Certifique-se de <strong>fechar todas as outras abas antigas do Prontuário, WhatsApp Web, Google Meet ou do Gemini</strong> que possam estar abertas em segundo plano, depois recarregue esta página com <strong>Ctrl + F5</strong>!"
-                        );
-                    } else if (event.error !== 'no-speech') {
-                        stopSpeechEngine();
-                        showMicDiagnostic(
-                            `Erro: ${event.error}`,
-                            "Falha ao processar o áudio.",
-                            "Certifique-se de que o seu microfone de entrada padrão está devidamente conectado e ativo no sistema."
-                        );
-                    }
-                };
-
-                speechRecognitionInstance.onend = () => {
-                    // Se o médico ainda tem a intenção de manter ativo (isRecording === true),
-                    // reiniciamos silenciosamente usando uma nova instância limpa.
-                    if (isRecording) {
-                        try {
-                            speechRecognitionInstance.start();
-                        } catch (err) {
-                            console.warn("Falha ao reestabelecer conexão de voz, reiniciando fluxo completo...", err);
-                            speechRecognitionInstance = null;
-                            startSpeechEngine(); // Força reconstrução limpa
-                        }
-                    } else {
-                        updateRecordingButtonUI(false);
-                    }
-                };
-
-                speechRecognitionInstance.start();
-                showToast("Microfone ativado! Pode iniciar o relato.", "success");
-
-            } catch (err) {
-                console.error("Falha ao instanciar barramento de áudio:", err);
-                stopSpeechEngine();
-                showMicDiagnostic(
-                    "Falha de Inicialização",
-                    "Não foi possível ativar o hardware do microfone.",
-                    "Certifique-se de que nenhum outro aplicativo está utilizando o seu microfone no momento."
-                );
-            }
-        }
-
-        function stopSpeechEngine() {
-            isRecording = false;
-            updateRecordingButtonUI(false);
-
-            if (speechRecognitionInstance) {
-                try {
-                    // Remove o callback onend antes de parar para evitar auto-reconexão infinita
-                    speechRecognitionInstance.onend = null;
-                    speechRecognitionInstance.stop();
-                } catch (e) {
-                    console.warn("Erro ao fechar conexão de áudio:", e);
-                }
-                speechRecognitionInstance = null;
-            }
-            showToast("Microfone desligado.", "info");
-        }
-
-        function updateRecordingButtonUI(active) {
-            const btn = document.getElementById('btn-audio-dictation');
-            const icon = document.getElementById('audio-dictation-icon');
-            const indicator = document.getElementById('recording-status-indicator');
-
-            if (active) {
-                btn.className = "h-10 w-10 bg-red-600 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition shadow-lg animate-pulse";
-                icon.className = "fa-solid fa-microphone-slash text-sm";
-                indicator.classList.remove('hidden');
-            } else {
-                btn.className = "h-10 w-10 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-full flex items-center justify-center transition shadow-lg";
-                icon.className = "fa-solid fa-microphone text-sm";
-                indicator.classList.add('hidden');
-            }
-        }
-
-        function showMicDiagnostic(title, message, hint) {
-            const card = document.getElementById('mic-diagnostic-card');
-            document.getElementById('mic-diagnostic-title').textContent = title;
-            document.getElementById('mic-diagnostic-message').textContent = message;
-            document.getElementById('mic-diagnostic-hint').innerHTML = hint;
-            card.classList.remove('hidden');
-        }
-
-        // Carregar Cenários Clínicos de Teste
-        function loadScenarioText(type) {
-            const box = document.getElementById('audio-transcript-box');
-            if (type === 'iraci') {
-                box.value = "Ei, e a moça aí, como passou? Vem, vem, vem mesmo. Jura pé junto? Ah. É. Então foi, foi bom o remédio, doutor, né? É, deu uma melhorada, deu uma melhorada no som. Hum, pode ser que eu estou bem, bem, está dormindo não, porque demora muito pegar no sono. Tem noite que eu até essa noite que passou, foi fiquei retrasada. Eu levantei de mãe, era 1 hora da manhã, não tinha dormido ainda. Ansiedade sufocamento, né? Mas foi essa noite, né? É? Aí eu peguei e fui, levantei, tomei um prazer, Hum, aí eu dormi, aí dormi. Durante o dia, às vezes também eu estou me sentindo meia sufocada. Bem que me me me percebo mais de mim. É sufocamento e pensamentos acelerados negativos. Tá aí eu também o aprazola também de uma. E daquele do choro que estava lá, deu uma acalmada. Isso aí já deu uma acalmada também. A parte da tarde eu tenho um pouco de tristeza assim, sabe? É tipo das 3:00 4 horas, começa a bater um pouco de é, passa, é aí, depois passa. Que que a noite passa, tá? Você estava? Vim pra agora. 100% é a melhora total. Esse período em. Consulta do do dia 25 do 6 até agora não posso dizer com uns 80%. Também deveria bem, então não deu nem. 80 dias, é? Beleza, comer. Vai estar conseguindo. Está comendo normal, ó. E desci do alprazolam que eu deixei lá pra você pra tomar. Você usou quantos comprimidos daquele? Eu usei, acho que 3 comprimidos, 3. E um de uma emigrama também, que foi uma noite que eu tomei, além do rexote, né? Que eu falei que eu não estava conseguindo dormir. 1 hora da manhã eu peguei, tomei um de uma hemoigrama, tá? Pelo menos eu sei que eu dormi. Providente a pesadelo. Hum, quando estou falando tem que estar vendo bastante, tá? Mas deve. E quando você toma day Wall prazo? Hollande zero 25 o pesadelo continua do mesmo jeito. Ou não? Não. Aí você consegue aprofundar un pouquinho mais? É que pesadelo é perigos que a gente para, né, na vida? O sono. E cai Na Na área do os sonhos bons ou os ruins? O nosso sonho não é prefiro nenhum. E noite que eu sonho sonhos bons e eu nossa, graças a Deus é que sonho bom, que sonho maravilhoso. Quando já é ruim, eu já falava, não, eu não quero ter esse sonho. Eu já falei desse jeito. Aí eu luto com meu próprio eu, tá certo? O que nós vamos fazer? Então? Vou manter todos eles. Não vou mexer em nada, é? Eu vou deixar pra você tomar Oo prazolan de zero 25. Um período dentro de 4 meses. Aí depois a gente tenta tirar, tá só pra você passar, é, é, trocou, é toda noite. Independente se ele está com sono, está com sono, está nervosa ou está nervosa, usa esse período de 4 meses. Sim, então é mais só pra. Tirar de ser? Esse estresse aí que ficou aí aí mesmo eu tomando pregar ballinha, eu tô aí, eu tomo prega-valinha, prega-valinha imenso e imenso de manhã eu tô, à noite eu tomo os 3 isso e às 3, né? É, é.";
-            } else if (type === 'respiratorio') {
-                box.value = "Deixa por até a máquina. Eu posso estar fazendo por lá no plantão de pescava. Do é eu estava a fúnica, a voz não saiu. E quando foi começar? Sábado, sábado. Voltava folga, não sair não saía. Aí ela deu, é? Kloy d. E deu. Deu. Aí eu esqueço. 5 dias. Quando foi na isso aí foi no sábado, quando foi na segunda? No domingo. Eu não. Eu fui lá no sábado, quando foi No No domingo vou. Aí eu falei Pra Ela assim, ó, não está bom, eu não consigo respirar. Ela falou, então o Felipe está começando sair um. Catarro. Escuro da cor verde militar, sabe? Hum com dificuldade de, de, de. Caixas do pulmão tirou 2, tirou no sábado. Hoje é quarta. Hoje é interessante, é terça tu no sábado, tu no domingo. Ela for seu pulmão está limpo e não. Hum, porque aqui está com dificuldade de sair as coisas. Aí ela mudou. Ela falou assim, você vai tomar agora, acebrofelina. E mais um que ela deu lá? Ah, nem lembro. Eu sei dizer que esse acebrofelina. Adianta comigo, sabe? É muito forte, OOO volume que a gente. Ah, e a e o clanil para fazer inalação. Você para você vai tomar 3 dias de previsir? E como é que chama de 20? Não é para dizer empredizo de 20. E essa aí há sempre aí quebrou comigo porque eu tenho que fazer muita força para tossir. Dou tudo aqui, o peito raspou minha garganta. Entendeu e até percurina de tanta. Nossa, então assim, e aquela boca seca que eu acho que eu tô bebendo uns 3 l por dia de água, tá? Então, cada vez que eu torço, é um líder que vai embora. Eu falei, Ah, eu vou lá no teu Reginaldo Pra Ele socorreu pra tirar alguma coisa? Está mais leve isso pra mim poder sabe? Sair dessa situação sem tanto, porque eu esse é esses tipo de xarope que eles. Mas nem teu nunca tomei assim dele de tanta força. Que eu lembre assim, Felipe, que o senhor deu, cuidou de mim. Não era esse sofrimento todo, entendeu? Você está fingir que não sei se é gripe forte? Sei que estamos no quinto dia, né? Hum se é sábado, domingo, segunda, terça, quarto dia. E febre atualmente? Não, não febre, febre. Se a febre eu não sei porque eu transpirei muito nos 3 primeiros dias, nos 3. Eu sei que o calafrio eu dou frio, o nariz estava escorrendo e tal, não, o nariz seco, só corinha. Começou a corriza AOA fonir, né? A disponível sim, sim. E aí depois começou isso aí, o Catar o catarro e ele ainda. Pensa demais, por isso que eu viu aqui, sabe? Consigo esperne isso e esverdeado, esverdeado, tá? E você, quando você é vocês, pede ele espontaneamente sinto-se ou tem que tossir. Tem que tossir que ele não sai, não sai. Se você puxar assim pelo pelo nariz, não, você já puxa eu puxar pra nós não sair nada, não sai nada, tá? Não sai nada. E essa tosse? Ela piora de dia ou de noite, de noite, de noite e de manhã. Amanhã, então são porque eu sento aqui assim, ó, fecha. Quando começa a cair a tarde aqui, começa uma sensação de fechar aí por isso que ela falou que ela IA dar. Como chama aquilo? Ah, você acha que sim, está certo, feliz isso. É brofelina isso pra poder abrir mais, pra ter ventilação. Mas aí começa a tossir, tossir, tossir. Não sai nada. Hum. Aí eu comecei com aquela inalação de clrenil. Já disse 2 dias, né, domingo? É domingo? Ela perguntou, porque aquele no domingo, segunda, hoje é difícil também, cada 12 horas. Falta 4 pauzinho pra terminar? Mas ele ainda está verde, verde e eu estou ficando verde porque hoje eu acordei com uma fraqueza. De não conseguir fazer o almoço. Direito de tanta, sabe? Eu acho que é mais tarde gripe, a gente vai ficando ferro e vai ficando. Sabem tudo. Acho que tudo começou por causa do do, do do tal do intestino. Aquilo ali deve ter derrubado comigo, assim, minha resistência, sabe? Meus nutrientes. O ademais e agora eu tô sofrendo as coisas. Consequências, né? É, mas agora melhorou, né? Depois que você começou a fazer os probióticos, já dei uma acalmada. AI melhorou, meu tio estilo está regular, está melhor? Que o princípio Hum. Não é, entendeu? Eu tipo, levanta e já vou no banheiro, tá? Tranquilo, eu tomo ela em cima das fruta de manhã e já vou ao banheiro, tá? EE você? É nenhuma. Nesse período foi dado antibiótico, essas coisas profissionais, né não? Certo? Está bom, é uma preocupação.  Sol e frio. Né, nossa. Doutor princípio, ativar pensamento que ficou com uma outra. Você pode estar tendo por baixo aí pode, beleza? Tem que voltar pro tênis, né? Hã, tem que preparar pra voltar pro tênis. Oi, nem me fala. Quero ver hoje ele é terça, quero ver se é sábado. Eu tô de volta com eles lá. E mudar isso aqui é doidera deu sempre. Da época.  Oi? E o que a gente gasta com porcaria de remédio que funciona? Não funciona direito. Vai tudo pro lado, porque o que que vai acontecer aqui vai levar pra igreja de outro alguém?   Yeah. Boa tarde.  Meio remédio, Eduardo?  Então, na pia falar, falei com ele, já tem que é gelou, né? Por todas as ******** quente, trocar as ********. Trocar 2 torneiras? A do banheiro e dá pra cozinha?                 Aonde na garganta não tem perfeito é aqui que que eu que é é que o bicho começa a se pipocar, sabe?          A inalação está só para o planil, né, é? E 4 fresquinho pra acabar. É e vai manter e por só associar o atrovente? E vou indicar Oo. A. Azitromicina. Aztromicina levou? É um antibiótico, só que assim que ele tem efeito. As laringe, né? As varingites nas vias aéreas. Assim, inferior. Aqui eras terá. Inferior, mas é na parte superior, né? Da dos brônquios, brônquios e traqueres. E ele diminui também a viremia. Apartamento do vírus? Alguém tem uma série de indicações? Esse vai ser um por dia, 5 dias. Eu gosto mesmo, eu gosto isso. Na pneumonia eu tomei. Contar pro senhor? Lá em pegar os cabos dela. Mulher deram 5 da segunda pneumonia de eram 10. Destruiu o meu distrito. Hum aí. Mas é só 5 dias só. Não, não, não, não. Ele está bem estruturadinho, não. 5 dias só. AI cidade, toma algum anti probiótico ou depois descer aquele biólogo se você perceber que está distendendo a barriga formando já começou aqui formação de gases? Hum aí aí sim, aí tem o. Chama é florax ATB, que é o. Daí eu já independente disso, eu vou tomar, porque esse aqui está tão bonitinho, melindroso, agora aqui não quero estragar o serviço.  Eu vou medicar. E aí? Deixa deixa agendado, daqui uma semana pra dar uma olhadinha em você de novo. Tchau. Graças a Deus. Olha eu, eu me expõe tudo ali. Graças a Deus mesmo, acho que é. Curtindo já nos livros. De tanto fica no hospital, né? Então eu se ver, eu tô meio passando de pneumonia. Tomei aquela. Adam nenhum, que vem junto com H2N 3. Sim para dar comer aquela lá. Tenho também as 2, tomei o de pneumo ano passado. E 24 centilma 25 é sim. Falei, acho que isso aí ajuda nunca. Raiva é bater, né? Hum dessa cepa. Dados treptocos, que é uma das principais, mas daí tem a hermófilos marxella, tem outras outras bactérias, né? Pau que é mais comum. Aí é, reduz bem a chance, né? Não é uma garantia que você não vai ter, né? Mas reduz bem.";
-            } else if (type === 'abdominal') {
-                box.value = "Paciente apresenta queixa de dor abdominal persistente, de intensidade moderada (cólica), de início estimado há 20 dias, com piora pós-alimentar e alívio temporário após raros episódios evacuacionais. Relata histórico crônico de constipação intestinal severa, com fezes secas e endurecidas.";
-            }
-            showToast("Cenário clínico carregado com sucesso!", "info");
-        }
-
-        // --- CONFIGURAÇÃO CHAVE GEMINI ---
-        function saveApiKey() {
-            const key = document.getElementById('gemini-api-key').value.trim();
-            if (key) {
-                localStorage.setItem('medscribe_api_key', key);
-                showToast("Sua chave da API do Gemini foi salva com sucesso e está ativa!", "success");
-            } else {
-                showToast("Por favor, insira uma chave antes de salvar.", "error");
-            }
-            toggleConfigModal(false);
-        }
-
-        function clearApiKey() {
-            document.getElementById('gemini-api-key').value = '';
-            localStorage.removeItem('medscribe_api_key');
-            showToast("Chave de API do Gemini removida. Usando heurísticas locais.", "info");
-            toggleConfigModal(false);
-        }
-
-        // --- STREAMING_CHUNK: Conectando motor da inteligência artificial real e heurísticas locais clínicas... ---
-        // --- MECANISMO DE INTELIGÊNCIA ARTIFICIAL ---
-        async function generateStructuredRecord() {
-            const transcript = document.getElementById('audio-transcript-box').value.trim();
-            if (!transcript) {
-                showToast("Por favor, digite ou dite as observações da consulta na caixa de transcrição antes de executar a IA.", "error");
-                return;
-            }
-
-            isAiProcessing = true;
-            document.getElementById('btn-process-medical-ai').disabled = true;
-            document.getElementById('btn-process-medical-ai').innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> ESTRUTURANDO CONSULTA...`;
-
-            const apiKey = localStorage.getItem('medscribe_api_key');
-            const patient = patients.find(p => p.id === activePatientId) || patients[0];
-
-            if (apiKey) {
-                try {
-                    const aiResultData = await fetchGeminiAPI(transcript, patient, apiKey);
-                    renderAiResult(aiResultData);
-                } catch (err) {
-                    console.error("Falha ao comunicar com Gemini. Iniciando heurística médica local...", err);
-                    showToast("Gemini API indisponível. Utilizando motor heurístico local!", "error");
-                    runLocalMedicalHeuristics(transcript, patient);
-                }
-            } else {
-                // Heurística local de alta precisão
-                setTimeout(() => {
-                    runLocalMedicalHeuristics(transcript, patient);
-                }, 1300);
-            }
-        }
-
-        // Algoritmo Clínico de Heurística Médica Local (Dona Iraci / Ansiedade / Tosse)
-        function runLocalMedicalHeuristics(input, patient) {
-            const lowercase = input.toLowerCase();
-            
-            // 1. GATILHO PSIQUIATRIA / INSONIA (Caso Dona Iraci)
-            const isPsychiatryMatch = lowercase.includes("dormir") || lowercase.includes("sono") || lowercase.includes("pesadelo") || lowercase.includes("aprazolan") || lowercase.includes("alprazolam") || lowercase.includes("ansiedade") || lowercase.includes("sufocamento") || lowercase.includes("rexote") || lowercase.includes("prega-valinha") || lowercase.includes("prega");
-
-            // 2. GATILHO RESPIRATÓRIO (Tosse / Disfonia)
-            const isRespiratoryMatch = lowercase.includes("tosse") || lowercase.includes("catarro") || lowercase.includes("verde") || lowercase.includes("clanil") || lowercase.includes("clenil") || lowercase.includes("acebrofelina");
-
-            // 3. GATILHO GASTROINTESTINAL (Dor Abdominal)
-            const isAbdominalMatch = lowercase.includes("abdominal") || (lowercase.includes("constipação") && lowercase.includes("intestino"));
-
-            let markdownResult = "";
-
-            if (isPsychiatryMatch) {
-                markdownResult = `## QUEIXA PRINCIPAL (QP)\nInsônia.\n\n## HISTÓRIA DA DOENÇA ATUAL (HDA)\nPaciente retorna referindo melhora parcial após ajuste medicamentoso, estimada em aproximadamente 80% desde consulta de 25/06. Refere manutenção de insônia inicial, com latência prolongada para início do sono, tendo permanecido acordada até cerca de 1h em episódio recente. Relata episódios de ansiedade com sensação de sufocamento, pensamentos acelerados negativos e pesadelos, com melhora parcial após uso de alprazolam.\n\n## HISTÓRIA DE QUEIXAS SECUNDÁRIAS\nInforma tristeza vespertina, mais evidente por volta de 15–16h, com resolução posterior. Refere melhora de episódios de choro. Alimentação preservada. Refere dor abdominal/intestino, com resolução.\n\n## HISTÓRIA MEDICAMENTOSA ATUAL\nEm uso de alprazolam 0,25 mg, pregabalina, Rexote e medicação referida como "imenso". Relata uso de aproximadamente 3 comprimidos de alprazolam no período, além de 1 comprimido de medicação referida como "hemoigrama/emigrama" em episódio de insônia.\n\n## IDAS (INTERROGAÇÃO DE DIVERSOS APARELHOS)\n* Psiquiátrico — ansiedade, pensamentos acelerados negativos, tristeza vespertina, melhora de choro.\n* Sono — insônia inicial, pesadelos.\n* Respiratório — sensação de sufocamento referida.\n* Gastrointestinal — dor abdominal/intestino referida, resolvida.\n\n## EXAME FÍSICO\nNão informado.\n\n## BLOCO 2 – EXAMES COMPLEMENTARES (🧪 PADRÃO REGINALDO)\nNão informado.\n\n## BLOCO 3 – DIAGNÓSTICO E PLANO\n\n### DIAGNÓSTICOS\n* Diagnósticos firmados: não informado.\n* Hipóteses diagnósticas:\n  1. Transtorno de ansiedade.\n  2. Insônia.\n  3. Sintomas depressivos vespertinos.\n\n### PLANO TERAPÊUTICO\n* Manter esquema medicamentoso atual.\n* Prescrever/manter alprazolam 0,25 mg à noite, diariamente, por período de 4 meses.\n* Após 4 meses, tentar retirada/desmame do alprazolam.\n* Reavaliar possibilidade de desmame medicamentoso conforme evolução.\n\n### ORIENTAÇÕES E CONSIDERAÇÕES CLÍNICAS\n* Orientado uso do alprazolam 0,25 mg todas as noites, independentemente de sonolência ou nervosismo, pelo período de 4 meses.`;
-            } else if (isRespiratoryMatch) {
-                markdownResult = `## QUEIXA PRINCIPAL (QP)\nTosse produtiva.\n\n## HISTÓRIA DA DOENÇA ATUAL (HDA)\nPaciente refere quadro iniciado há aproximadamente quatro dias, com disfonia, seguida por tosse produtiva com expectoração esverdeada, de difícil eliminação, associada à sensação de secreção retida em vias aéreas e necessidade de esforço intenso para expectorar. Relata piora da tosse no período noturno e pela manhã, além de sensação de aperto torácico ao final da tarde. Nega febre aferida, porém refere sudorese intensa e calafrios nos três primeiros dias de evolução. Refere astenia no dia da consulta.\n\n## HISTÓRIA DE QUEIXAS SECUNDÁRIAS\nRefere rinorreia inicial, posteriormente evoluindo com ressecamento nasal. Queixa-se de xerostomia com aumento da ingestão hídrica. Relata melhora do hábito intestinal após início de probióticos.\n\n## HISTÓRIA MEDICAMENTOSA ATUAL\nEm uso de acebrofelina, Clenil para inalação a cada 12 horas, prednisona 20 mg por 3 dias e probiótico.\n\n## IDAS (INTERROGAÇÃO DE DIVERSOS APARELHOS)\n* Respiratório: disfonia, tosse produtiva, expectoração esverdeada, dispneia referida, sensação de aperto torácico.\n* Otorrinolaringológico: rinorreia inicial, ressecamento nasal.\n* Constitucional: astenia, sudorese, calafrios.\n\n## EXAME FÍSICO\nNão informado.\n\n## BLOCO 2 – EXAMES COMPLEMENTARES (🧪 PADRÃO REGINALDO)\nNão informado.\n\n## BLOCO 3 – DIAGNÓSTICO E PLANO\n\n### DIAGNÓSTICOS\n* Diagnósticos firmados: não informado.\n* Hipóteses diagnósticas:\n  1. Laringotraqueobronquite aguda.\n  2. Sinusite aguda.\n  3. Resfriado comum.\n\n### PLANO TERAPÊUTICO\n* Associar Atrovent à inalação com Clenil a cada 12 horas.\n* Introduzir Azitromicina 500 mg, 1 comprimido ao dia por 5 dias.\n* Manter uso de acebrofelina e prednisona 20 mg.\n* Em caso de distensão abdominal ou gases provocados pelo uso de Azitromicina, introduzir Florax ATB.\n* Retorno em uma semana para reavaliação.\n\n### ORIENTAÇÕES E CONSIDERAÇÕES CLÍNICAS\n* Orientado manter inalação com Clenil até término e associar Atrovent. Retorno agendado em uma semana para controle clínico.`;
-            } else if (isAbdominalMatch) {
-                markdownResult = `## QUEIXA PRINCIPAL (QP)\nDor abdominal.\n\n## HISTÓRIA DA DOENÇA ATUAL (HDA)\nPaciente refere dor abdominal persistente, de intensidade moderada (cólica), de início estimado há 20 dias, com piora pós-alimentar e alívio temporário após raros episódios evacuacionais. Relata histórico crônico de constipação intestinal severa, com fezes secas e endurecidas.\n\n## HISTÓRIA DE QUEIXAS SECUNDÁRIAS\nRefere distensão abdominal e flatulência.\n\n## HISTÓRIA MEDICAMENTOSA ATUAL\nUso eventual de laxantes osmóticos sem orientação médica.\n\n## EXAME FÍSICO\nNão informado.\n\n## BLOCO 2 – EXAMES COMPLEMENTARES (🧪 PADRÃO REGINALDO)\nNão informado.\n\n## BLOCO 3 – DIAGNÓSTICO E PLANO\n\n### DIAGNÓSTICOS\n* Diagnósticos firmados: não informado.\n* Hipóteses diagnósticas:\n  1. Constipação funcional crônica.\n  2. Síndrome do intestino irritável.\n  3. Suboclusão intestinal funcional.\n\n### PLANO TERAPÊUTICO\n* Introduzir laxativo osmótico Lactulose 15 mL ao dia.\n* Iniciar fibra solúvel de forma gradual.\n* Aumentar ingestão hídrica diária para no mínimo 2.5 litros.\n* Encaminhamento para Gastroenterologia para investigação detalhada.\n\n### ORIENTAÇÕES E CONSIDERAÇÕES CLÍNICAS\n* Orientado a evitar laxativos irritativos da mucosa intestinal.`;
-            } else {
-                // Extrator básico genérico para não perder nenhum dado digitado
-                markdownResult = `## QUEIXA PRINCIPAL (QP)\nConsulta geral.\n\n## HISTÓRIA DA DOENÇA ATUAL (HDA)\nPaciente refere as seguintes queixas clínicas:\n\n"${input.substring(0, 300)}..."\n\n## HISTÓRIA DE QUEIXAS SECUNDÁRIAS\nNão informado.\n\n## HISTÓRIA MEDICAMENTOSA ATUAL\nNão informado.\n\n## EXAME FÍSICO\nNão informado.\n\n## BLOCO 2 – EXAMES COMPLEMENTARES (🧪 PADRÃO REGINALDO)\nNão informado.\n\n## BLOCO 3 – DIAGNÓSTICO E PLANO\n\n### DIAGNÓSTICOS\n* Diagnósticos firmados: não informado.\n* Hipóteses diagnósticas:\n  1. Z00.0 - Exame médico geral\n\n### PLANO TERAPÊUTICO\n* Medidas gerais de suporte.\n* Reavaliação conforme demanda clínica.`;
-            }
-
-            renderAiResult(markdownResult);
-        }
-
-        async function fetchGeminiAPI(input, patient, key) {
-            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`;
-            
-            const systemPrompt = `# DIRETRIZ CRÍTICA DE INTERFACE (MANDATÓRIO)
-O usuário enviará os dados clínicos digitados ou colados diretamente no chat. Processe o texto imediatamente.
-
-# PAPEL DO ASSISTENTE
-Você é um médico clínico de excelência, com atuação em Clínica Médica, Geriatria e Psiquiatria, especialista em semiologia médica, documentação clínica, informática em saúde e prontuário eletrônico.
-Sua FUNÇÃO é organizar e redigir tecnicamente as informações EXPLICITAMENTE fornecidas pelo usuário no chat, de forma seca, objetiva, profissional e semiológica, pronta para inserção em Prontuário Eletrônico do Paciente (PEP).
-Você pode interpretar e, estritamente ao final da resposta (após o bloco do plano terapêutico), sugerir condutas e elaborar até 3 hipóteses diagnósticas. Fora desse espaço final, você NUNCA infere, completa, cria dados ou normaliza achados.
-
-# 🚫 REGRA-MÃE ABSOLUTA (INQUEBRÁVEL)
-* NUNCA complementar dados ausentes.
-* NUNCA normalizar exames ou sintomas não descritos.
-* NUNCA criar ou supor dados clínicos.
-* NUNCA “embelezar” ou florear o texto.
-* NUNCA adicionar exames ou condutas não citados.
-👉 SE NÃO FOI EXPLICITAMENTE MENCIONADO NO TEXTO OU NO ÁUDIO, NÃO EXISTE.
-
-# 🧱 ESTRUTURA OBRIGATÓRIA DA RESPOSTA (O seu retorno deve conter exatamente esta marcação de títulos)
-## QUEIXA PRINCIPAL (QP)
-* Apenas UMA queixa central. Linguagem técnica.
-
-## HISTÓRIA DA DOENÇA ATUAL (HDA)
-* Apenas da queixa principal. Curto, direto, objetivo, seco, semiológico e cronológico. Não mencionar o sexo nem a idade. Iniciar diretamente como "Paciente retorna com..." ou "Paciente refere..."
-
-## HISTÓRIA DE QUEIXAS SECUNDÁRIAS
-* Direta, seca, semiológica e resumida. No máximo 5 linhas.
-
-## HISTÓRIA MEDICAMENTOSA ATUAL
-* Formato: Texto corrido, com apenas o nome do medicamento e posologia simplificada. Proibido listas nesta seção.
-
-## ALERGIAS MEDICAMENTOSAS
-* Texto corrido. Se não mencionada, OMITA esta seção por completo.
-
-## HISTÓRIA PATOLÓGICA PREGRESSA (HPP)
-* Somente se mencionada. Se não citada, remova a seção.
-
-## HISTÓRIA FAMILIAR
-* Somente se mencionada. Se não citada, remova a seção.
-
-## HÁBITOS DE VIDA
-* Somente os itens explicitamente mencionados.
-
-## IDAS (INTERROGAÇÃO DE DIVERSOS APARELHOS)
-* Apenas os sintomas explicitamente relatados em formato de tópicos técnicos.
-
-## EXAME FÍSICO
-* APENAS o que foi expressamente mencionado. Exceção obrigatória: se escrito "exame físico normal", use o modelo do prompt do usuário.
-
-## BLOCO 2 – EXAMES COMPLEMENTARES (🧪 PADRÃO REGINALDO)
-* Data em negrito. Listagem vertical seguindo o bloco de hemograma e colesterol do prompt do usuário.
-
-## BLOCO 3 – DIAGNÓSTICO E PLANO
-### DIAGNÓSTICOS
-### PLANO TERAPÊUTICO
-### ORIENTAÇÕES E CONSIDERAÇÕES CLÍNICAS`;
-
-            const userPrompt = `Paciente: ${patient.nome}, ${patient.idade} anos, gênero ${patient.genero}. Alergias conhecidas: ${patient.alergias}.\nTranscrição clínica para estruturar:\n"${input}"`;
-
-            const payload = {
-                contents: [{ parts: [{ text: userPrompt }] }],
-                systemInstruction: { parts: [{ text: systemPrompt }] }
-            };
-
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) throw new Error("API Indisponível");
-            const resData = await response.json();
-            return resData.candidates[0].content.parts[0].text;
-        }
-
-        function renderAiResult(markdownText) {
-            // Insere o markdown estruturado diretamente na caixa de edição do prontuário PEP
-            document.getElementById('pep-output-editor').value = markdownText;
-            
-            // Troca o foco para a primeira aba
-            switchActiveTab('prontuario');
-            
-            // Libera o botão de processamento
-            isAiProcessing = false;
-            document.getElementById('btn-process-medical-ai').disabled = false;
-            document.getElementById('btn-process-medical-ai').innerHTML = `<i class="fa-solid fa-brain"></i> ESTRUTURAR CONSULTA COM IA`;
-            
-            showToast("Prontuário estruturado no Padrão Reginaldo com sucesso!", "success");
-        }
-
-        // --- TRANSFERÊNCIA E CÓPIA DOS DADOS ---
-        function copyPepToClipboard() {
-            const editor = document.getElementById('pep-output-editor');
-            if (!editor.value.trim()) {
-                showToast("Não há prontuário gerado para copiar.", "error");
-                return;
-            }
-
-            // Copia o prontuário para a área de transferência usando o método seguro
-            editor.select();
-            document.execCommand('copy');
-            
-            showToast("Prontuário copiado para o PEP com sucesso! Cole no prontuário do seu hospital.", "success");
-        }
-
-        function clearCurrentRecord() {
-            showCustomConfirm("Limpar Prontuário", "Você deseja realmente apagar todos os campos em digitação do prontuário ativo?", () => {
-                document.getElementById('pep-output-editor').value = '';
-                showToast("Os campos do prontuário ativo foram limpos.", "info");
-            });
-        }
-
-        // --- SALVAR CONSULTA NO HISTÓRICO ---
-        function saveConsultationToHistory() {
-            const content = document.getElementById('pep-output-editor').value.trim();
-
-            if (!content) {
-                showToast("O prontuário está vazio. Por favor, estruture a consulta antes de salvar.", "error");
-                return;
-            }
-
-            const activePatient = patients.find(p => p.id === activePatientId) || patients[0];
-            
-            // Tenta extrair a QP do texto em markdown
-            let qpValue = "Consulta Clínica Geral";
-            const qpMatch = content.match(/## QUEIXA PRINCIPAL \(QP\)\n([^\n]+)/);
-            if (qpMatch && qpMatch[1]) {
-                qpValue = qpMatch[1].trim();
-            }
-
-            const newConsultation = {
-                data: new Date().toLocaleDateString('pt-BR'),
-                queixa: qpValue,
-                conduta: content
-            };
-
-            activePatient.historicoConsultas.unshift(newConsultation);
-            saveLocalData();
-            
-            renderHistoryTab(activePatient);
-            showToast("Consulta registrada e arquivada com sucesso no histórico!", "success");
-            switchActiveTab('historico');
-        }
-
-        function renderHistoryTab(patient) {
-            const container = document.getElementById('history-container');
-            const counter = document.getElementById('history-counter');
-            
-            container.innerHTML = '';
-            
-            if (patient.historicoConsultas.length === 0) {
-                counter.textContent = "Nenhuma consulta anterior registrada";
-                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Nenhum histórico disponível para este paciente.</p>`;
-                return;
-            }
-
-            counter.textContent = `${patient.historicoConsultas.length} evolução(ões) anterior(es) registrada(s)`;
-
-            patient.historicoConsultas.forEach(consulta => {
-                const item = document.createElement('div');
-                item.className = "bg-slate-950 border border-slate-800 p-4.5 rounded-xl space-y-2";
-                item.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-slate-500"><i class="fa-regular fa-calendar-check mr-1.5"></i> ${consulta.data}</span>
-                        <span class="text-[9px] bg-indigo-500/10 text-indigo-400 font-bold px-2 py-0.5 rounded border border-indigo-500/20">Atendimento Médico</span>
-                    </div>
-                    <p class="text-xs font-bold text-slate-200">Queixa:</p>
-                    <p class="text-xs text-slate-400">${consulta.queixa}</p>
-                    <details class="text-xs text-slate-400 cursor-pointer">
-                        <summary class="font-bold text-emerald-400 mt-1 hover:underline">Ver Prontuário Completo</summary>
-                        <pre class="bg-slate-900 border border-slate-800 p-3 rounded-lg mt-2 font-mono whitespace-pre-wrap leading-relaxed">${consulta.conduta}</pre>
-                    </details>
-                `;
-                container.appendChild(item);
-            });
-        }
-
-        // --- STREAMING_CHUNK: Implementando a geração dinâmica de receitas e atestados médicos... ---
-        // --- ABA DE DOCUMENTOS CLÍNICOS ---
-        function switchDocType(type) {
-            activeDocType = type;
-            
-            // Reseta botões
-            document.querySelectorAll('#view-documentos button').forEach(btn => {
-                if (btn.id && btn.id.startsWith('btn-doc-type-')) {
-                    btn.className = "w-full text-left py-3 px-4 rounded-xl border border-slate-800 bg-slate-950/40 text-slate-400 font-medium text-xs hover:bg-slate-800/50 transition flex items-center gap-2.5";
-                }
-            });
-
-            const activeBtn = document.getElementById(`btn-doc-type-${type}`);
-            if (activeBtn) {
-                activeBtn.className = "w-full text-left py-3 px-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 text-emerald-400 font-bold text-xs transition flex items-center gap-2.5";
-            }
-
-            updateDocumentTemplate();
-        }
-
-        function updateDocumentTemplate() {
-            const editor = document.getElementById('doc-editor');
-            const activePatient = patients.find(p => p.id === activePatientId) || patients[0];
-            const dateStr = new Date().toLocaleDateString('pt-BR');
-            const content = document.getElementById('pep-output-editor').value;
-
-            if (activeDocType === 'receita') {
-                let medicamentosText = "1. Paracetamol 750mg ------------------ Tomar 1 comp. de 6 em 6 horas se dor ou febre.";
-                
-                if (content.includes("acebrofelina") || content.includes("clanil") || content.includes("clenil")) {
-                    medicamentosText = `1. Azitromicina 500mg ----------------- Tomar 1 comprimido via oral ao dia, por 5 dias.\n\n2. Acebrofelina Xarope Adulto -------- Tomar 10 mL via oral a cada 12 horas.\n\n3. Clenil para Inalação --------------- Fazer inalação a cada 12 horas.\n\n4. Brometo de Ipratrópio (Atrovent) --- Associar 20 gotas à inalação de Clenil.`;
-                } else if (content.includes("alprazolam") || content.includes("rexote") || content.includes("imenso")) {
-                    medicamentosText = `1. Alprazolam 0,25 mg ----------------- Tomar 1 comprimido via oral à noite por 4 meses.\n\n2. Pregabalina 75 mg ------------------ Manter uso conforme orientação habitual.\n\n3. Rexote ----------------------------- Manter uso regular conforme prescrito.`;
-                }
-
-                editor.value = `RECEITUÁRIO MÉDICO CLÍNICO\n\nPaciente: ${activePatient.nome}\nData de Emissão: ${dateStr}\nConvênio: ${activePatient.convenio}\n\nUso Via Oral:\n${medicamentosText}\n\nOrientações Adicionais:\n- Em caso de intolerância gástrica ao antibiótico, fazer uso de Florax ATB.\n- Elevar ingestão hídrica diária para no mínimo 2.5 a 3.0 Litros.\n\n-----------------------------\nAssinatura & Carimbo do Médico`;
-            } else if (activeDocType === 'atestado') {
-                editor.value = `ATESTADO MÉDICO DE AFASTAMENTO\n\nAtesto para os devidos fins legais que o(a) Sr(a). ${activePatient.nome}, CPF: ${activePatient.cpf}, foi submetido(a) a atendimento clínico ambulatorial nesta data, necessitando de afastamento de suas atividades laborais por um período de 02 (dois) dias a contar desta data.\n\nEmitido em: ${dateStr}\n\n-----------------------------\nAssinatura & Carimbo do Médico Assistente`;
-            } else if (activeDocType === 'exame') {
-                editor.value = `REQUISIÇÃO DE EXAMES COMPLEMENTARES\n\nPaciente: ${activePatient.nome}\nData de Emissão: ${dateStr}\n\nSolicito os seguintes exames clínicos complementares:\n1. Hemograma completo com contagem de plaquetas\n2. Proteína C Reativa (PCR) ultrassensível\n3. Dosagem de Transaminases e Glicemia de Jejum\n\n-----------------------------\nAssinatura & Carimbo do Médico`;
-            }
-        }
-
-        function printClinicalDocument() {
-            const editorValue = document.getElementById('doc-editor').value;
-            const printArea = document.getElementById('printable-document-area');
-            printArea.innerHTML = editorValue.replace(/\n/g, '<br>');
-            window.print();
-        }
-
-        // --- SISTEMA DE CONTROLE DE ABAS ---
-        function switchActiveTab(tab) {
-            activeTab = tab;
-            
-            // Esconde todas as visualizações
-            document.getElementById('view-prontuario').classList.add('hidden');
-            document.getElementById('view-historico').classList.add('hidden');
-            document.getElementById('view-documentos').classList.add('hidden');
-
-            // Exibe a visualização ativa
-            document.getElementById(`view-${tab}`).classList.remove('hidden');
-
-            // Atualiza botões
-            document.getElementById('tab-btn-prontuario').className = "py-4 px-1 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center gap-2";
-            document.getElementById('tab-btn-historico').className = "py-4 px-1 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center gap-2";
-            document.getElementById('tab-btn-documentos').className = "py-4 px-1 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center gap-2";
-
-            const activeBtn = document.getElementById(`tab-btn-${tab}`);
-            activeBtn.className = "py-4 px-1 text-sm font-bold border-b-2 border-emerald-500 text-emerald-400 transition flex items-center gap-2";
-            
-            if (tab === 'documentos') {
-                updateDocumentTemplate();
-            }
-        }
-    </script>
+  </aside>
+</div>
+
+<div id="overlay" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-40"></div>
+
+<div id="patient-modal" class="hidden fixed inset-0 z-[60] bg-black/75 backdrop-blur-sm p-4 items-center justify-center">
+  <form id="patient-form" class="card w-full max-w-2xl overflow-hidden shadow-2xl">
+    <div class="bg-slate-950 p-4 border-b border-slate-800 flex justify-between"><h2 id="patient-modal-title" class="font-bold text-white">Novo paciente</h2><button type="button" data-close-modal="patient-modal"><i class="fa-solid fa-xmark text-slate-400"></i></button></div>
+    <div class="p-5 grid md:grid-cols-2 gap-4 text-xs">
+      <input id="patient-id" type="hidden">
+      <div class="md:col-span-2"><label class="label">Nome completo *</label><input id="patient-name" class="field" required autocomplete="off"></div>
+      <div><label class="label">Data de nascimento</label><input id="patient-dob" type="date" class="field"></div>
+      <div><label class="label">Sexo/gênero</label><select id="patient-gender" class="field"><option value="Não informado">Não informado</option><option>Feminino</option><option>Masculino</option><option>Outro</option></select></div>
+      <div><label class="label">CPF</label><input id="patient-cpf" class="field" inputmode="numeric" placeholder="000.000.000-00"></div>
+      <div><label class="label">Celular</label><input id="patient-phone" class="field" inputmode="tel" placeholder="(00) 00000-0000"></div>
+      <div><label class="label">Convênio</label><input id="patient-insurance" class="field" placeholder="Particular"></div>
+      <div><label class="label">Alergias</label><input id="patient-allergies" class="field border-red-900" placeholder="Nega ou descreva"></div>
+      <div class="md:col-span-2"><label class="label">Observações cadastrais</label><textarea id="patient-notes" rows="3" class="field"></textarea></div>
+    </div>
+    <div class="p-4 border-t border-slate-800 flex justify-between"><button id="delete-patient-btn" type="button" class="btn btn-danger hidden"><i class="fa-solid fa-trash"></i>Excluir</button><div class="ml-auto flex gap-2"><button type="button" data-close-modal="patient-modal" class="btn btn-soft">Cancelar</button><button class="btn btn-primary" type="submit">Salvar paciente</button></div></div>
+  </form>
+</div>
+
+<div id="config-modal" class="hidden fixed inset-0 z-[60] bg-black/75 backdrop-blur-sm p-4 items-center justify-center">
+  <div class="card w-full max-w-lg overflow-hidden shadow-2xl">
+    <div class="bg-slate-950 p-4 border-b border-slate-800 flex justify-between"><h2 class="font-bold text-white">Configurações</h2><button data-close-modal="config-modal"><i class="fa-solid fa-xmark text-slate-400"></i></button></div>
+    <div class="p-5 space-y-4 text-xs">
+      <div><label class="label">Chave Google Gemini (somente nesta sessão)</label><input id="api-key" type="password" class="field" placeholder="Cole a chave da API"></div>
+      <div><label class="label">Modelo Gemini</label><input id="ai-model" class="field" value="gemini-2.5-flash"></div>
+      <div class="bg-amber-500/5 border border-amber-500/20 p-3 rounded-xl text-[10px] text-amber-200 leading-relaxed">Aplicações clínicas reais não devem expor a chave de API no navegador. O ideal é usar um servidor intermediário com autenticação, auditoria e política de retenção.</div>
+      <div class="grid grid-cols-2 gap-2"><button id="import-btn" class="btn btn-soft"><i class="fa-solid fa-upload"></i>Importar backup</button><button id="reset-btn" class="btn btn-danger"><i class="fa-solid fa-triangle-exclamation"></i>Apagar dados locais</button></div>
+      <input id="import-file" type="file" accept="application/json" class="hidden">
+    </div>
+    <div class="p-4 border-t border-slate-800 flex justify-end"><button data-close-modal="config-modal" class="btn btn-primary">Concluir</button></div>
+  </div>
+</div>
+
+<div id="confirm-modal" class="hidden fixed inset-0 z-[70] bg-black/75 p-4 items-center justify-center"><div class="card w-full max-w-sm p-5 space-y-4"><div class="flex gap-3"><i class="fa-solid fa-circle-exclamation text-red-400 text-xl"></i><div><h3 id="confirm-title" class="font-bold text-white">Confirmar</h3><p id="confirm-message" class="text-xs text-slate-400 mt-1"></p></div></div><div class="flex justify-end gap-2"><button id="confirm-cancel" class="btn btn-soft">Cancelar</button><button id="confirm-ok" class="btn btn-danger">Confirmar</button></div></div></div>
+<div id="toast" class="hidden fixed bottom-5 right-5 z-[90] max-w-sm rounded-xl border px-4 py-3 shadow-2xl text-xs"></div>
+<div id="print-area" class="hidden"></div>
+
+<script>
+'use strict';
+const STORAGE_KEY='medscribe_v4_data';
+const emptyTemplate=`## QUEIXA PRINCIPAL (QP)\n\n## HISTÓRIA DA DOENÇA ATUAL (HDA)\n\n## HISTÓRIA DE QUEIXAS SECUNDÁRIAS\n\n## HISTÓRIA MEDICAMENTOSA ATUAL\n\n## ALERGIAS MEDICAMENTOSAS\n\n## HISTÓRIA PATOLÓGICA PREGRESSA (HPP)\n\n## IDAS (INTERROGAÇÃO DE DIVERSOS APARELHOS)\n\n## EXAME FÍSICO\n\n## EXAMES COMPLEMENTARES\n\n## DIAGNÓSTICOS\n\n## PLANO TERAPÊUTICO\n\n## ORIENTAÇÕES`;
+let state={patients:[],activePatientId:null,today:[],activeDoc:'receita'};
+let recognition=null,isRecording=false,confirmCallback=null,saveTimer=null;
+const $=id=>document.getElementById(id);
+const uid=()=>crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);
+const activePatient=()=>state.patients.find(p=>p.id===state.activePatientId)||null;
+const todayISO=()=>new Date().toISOString().slice(0,10);
+function esc(v=''){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+function showToast(msg,type='info'){const t=$('toast');const styles={info:'bg-slate-900 border-slate-700 text-slate-200',success:'bg-emerald-950 border-emerald-700 text-emerald-200',error:'bg-red-950 border-red-700 text-red-200'};t.className=`fixed bottom-5 right-5 z-[90] max-w-sm rounded-xl border px-4 py-3 shadow-2xl text-xs ${styles[type]}`;t.textContent=msg;t.classList.remove('hidden');clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.add('hidden'),4200);}
+function confirmAction(title,message,callback){$('confirm-title').textContent=title;$('confirm-message').textContent=message;confirmCallback=callback;openModal('confirm-modal');}
+function openModal(id){$(id).classList.remove('hidden');$(id).classList.add('flex');}
+function closeModal(id){$(id).classList.add('hidden');$(id).classList.remove('flex');}
+function loadState(){try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY));if(saved&&Array.isArray(saved.patients))state={...state,...saved};}catch(e){console.error(e);}if(!state.activePatientId&&state.patients[0])state.activePatientId=state.patients[0].id;}
+function saveState(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));$('save-indicator').innerHTML='<i class="fa-solid fa-check mr-1 text-emerald-400"></i>Salvo';}
+function queueSave(){clearTimeout(saveTimer);$('save-indicator').innerHTML='<i class="fa-solid fa-rotate animate-spin mr-1"></i>Salvando';saveTimer=setTimeout(saveState,500);}
+function ageFromDob(dob){if(!dob)return 'idade não informada';const d=new Date(dob+'T12:00:00'),n=new Date();let a=n.getFullYear()-d.getFullYear();if(n<new Date(n.getFullYear(),d.getMonth(),d.getDate()))a--;return `${a} anos`;}
+function renderAll(){renderPatients();renderActive();renderHistory();renderToday();updateDocTemplate(false);}
+function renderPatients(){const q=$('patient-search').value.trim().toLowerCase();const list=state.patients.filter(p=>[p.name,p.cpf,p.phone].some(v=>(v||'').toLowerCase().includes(q)));$('patient-count').textContent=`${list.length}/${state.patients.length}`;$('patient-list').replaceChildren(...list.map(p=>{const b=document.createElement('button');b.className=`w-full text-left px-4 py-3 border-l-4 ${p.id===state.activePatientId?'border-emerald-500 bg-slate-800/60':'border-transparent hover:bg-slate-800/30'}`;b.innerHTML=`<div class="flex justify-between gap-2"><div class="min-w-0"><p class="text-xs font-bold text-slate-100 truncate">${esc(p.name)}</p><p class="text-[10px] text-slate-500 mt-1">${esc(ageFromDob(p.dob))} · ${esc(p.insurance||'Particular')}</p></div><i class="fa-solid fa-chevron-right text-[10px] ${p.id===state.activePatientId?'text-emerald-400':'text-slate-700'}"></i></div>`;b.onclick=()=>selectPatient(p.id);return b;}));if(!list.length)$('patient-list').innerHTML='<p class="p-5 text-xs text-slate-500 text-center">Nenhum paciente encontrado.</p>';}
+function renderActive(){const p=activePatient();if(!p){$('active-patient-card').innerHTML='<p class="text-xs text-slate-500">Cadastre ou selecione um paciente.</p>';$('record-patient-name').textContent='Nenhum paciente selecionado';$('pep-editor').value='';return;}$('active-patient-card').innerHTML=`<div class="flex justify-between gap-2"><div class="min-w-0"><span class="label">Em atendimento</span><p class="font-bold text-xs truncate">${esc(p.name)}</p><p class="text-[10px] text-slate-500 mt-1">${esc(p.phone||'Sem celular')}</p><p class="text-[10px] mt-2 ${p.allergies&&p.allergies.toLowerCase()!=='nega'?'text-red-300':'text-slate-500'}"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Alergias: ${esc(p.allergies||'Não informado')}</p></div><button id="edit-active" class="text-slate-500 hover:text-white h-fit" title="Editar cadastro"><i class="fa-solid fa-pen"></i></button></div>`;$('edit-active').onclick=()=>openPatientModal(p);$('record-patient-name').textContent=`${p.name} · ${ageFromDob(p.dob)}`;$('pep-editor').value=p.draft||'';updateCounts();}
+function selectPatient(id){saveDraft();state.activePatientId=id;saveState();renderAll();closePanels();showToast('Paciente selecionado.','success');}
+function saveDraft(){const p=activePatient();if(p){p.draft=$('pep-editor').value;queueSave();}}
+function openPatientModal(p=null){$('patient-form').reset();$('patient-id').value=p?.id||'';$('patient-modal-title').textContent=p?'Editar paciente':'Novo paciente';$('delete-patient-btn').classList.toggle('hidden',!p);if(p){$('patient-name').value=p.name||'';$('patient-dob').value=p.dob||'';$('patient-gender').value=p.gender||'Não informado';$('patient-cpf').value=p.cpf||'';$('patient-phone').value=p.phone||'';$('patient-insurance').value=p.insurance||'';$('patient-allergies').value=p.allergies||'';$('patient-notes').value=p.notes||'';}openModal('patient-modal');}
+function patientFromForm(){return{id:$('patient-id').value||uid(),name:$('patient-name').value.trim(),dob:$('patient-dob').value,gender:$('patient-gender').value,cpf:$('patient-cpf').value.trim(),phone:$('patient-phone').value.trim(),insurance:$('patient-insurance').value.trim()||'Particular',allergies:$('patient-allergies').value.trim()||'Não informado',notes:$('patient-notes').value.trim(),draft:'',history:[]};}
+function renderHistory(){const p=activePatient();$('history-subtitle').textContent=p?`${p.name} · ${(p.history||[]).length} registro(s)`:'';const list=$('history-list');list.innerHTML='';if(!p||!p.history?.length){list.innerHTML='<p class="text-xs text-slate-500 text-center py-8">Nenhuma evolução salva.</p>';return;}p.history.forEach(h=>{const d=document.createElement('article');d.className='bg-slate-950 border border-slate-800 rounded-xl p-4';d.innerHTML=`<div class="flex flex-wrap justify-between gap-2"><div><p class="text-xs font-bold text-white">${esc(h.title||'Evolução clínica')}</p><p class="text-[10px] text-slate-500 mt-1">${esc(new Date(h.createdAt).toLocaleString('pt-BR'))}</p></div><div class="flex gap-2"><button data-load class="btn btn-soft !py-1.5"><i class="fa-solid fa-pen-to-square"></i>Carregar</button><button data-copy class="btn btn-soft !py-1.5"><i class="fa-regular fa-copy"></i></button><button data-delete class="btn btn-danger !py-1.5"><i class="fa-solid fa-trash"></i></button></div></div><details class="mt-3"><summary class="text-xs text-emerald-400 cursor-pointer font-bold">Ver conteúdo completo</summary><pre class="mt-3 whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-slate-300 bg-slate-900 border border-slate-800 rounded-lg p-3"></pre></details>`;d.querySelector('pre').textContent=h.content;d.querySelector('[data-load]').onclick=()=>{p.draft=h.content;$('pep-editor').value=h.content;saveState();switchTab('record');showToast('Evolução carregada no editor.','success');};d.querySelector('[data-copy]').onclick=()=>copyText(h.content);d.querySelector('[data-delete]').onclick=()=>confirmAction('Excluir evolução','Esta ação não poderá ser desfeita.',()=>{p.history=p.history.filter(x=>x.id!==h.id);saveState();renderHistory();showToast('Evolução excluída.');});list.appendChild(d);});}
+function extractTitle(content){const m=content.match(/## QUEIXA PRINCIPAL \(QP\)\s*\n+([^\n#]+)/i);return m?.[1]?.trim()||'Evolução clínica';}
+function saveHistory(){const p=activePatient(),content=$('pep-editor').value.trim();if(!p)return showToast('Selecione um paciente.','error');if(!content)return showToast('O prontuário está vazio.','error');p.history=p.history||[];p.history.unshift({id:uid(),createdAt:new Date().toISOString(),title:extractTitle(content),content});p.draft=content;saveState();renderHistory();switchTab('history');showToast('Evolução salva no histórico.','success');}
+function switchTab(tab){document.querySelectorAll('.tab-view').forEach(v=>v.classList.add('hidden'));$(`tab-${tab}`).classList.remove('hidden');document.querySelectorAll('.tab-btn').forEach(b=>{const a=b.dataset.tab===tab;b.classList.toggle('tab-active',a);b.classList.toggle('tab-inactive',!a);});if(tab==='history')renderHistory();if(tab==='documents')updateDocTemplate(false);if(tab==='today')renderToday();}
+function updateCounts(){$('record-count').textContent=`${$('pep-editor').value.length.toLocaleString('pt-BR')} caracteres`;$('transcript-count').textContent=`${$('transcript').value.length.toLocaleString('pt-BR')} caracteres`;}
+async function copyText(text){try{await navigator.clipboard.writeText(text);showToast('Copiado para a área de transferência.','success');}catch{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();showToast('Copiado.','success');}}
+function localStructure(text){return `## QUEIXA PRINCIPAL (QP)\nA definir pelo médico.\n\n## HISTÓRIA DA DOENÇA ATUAL (HDA)\n${text}\n\n## HISTÓRIA DE QUEIXAS SECUNDÁRIAS\nNão informado.\n\n## HISTÓRIA MEDICAMENTOSA ATUAL\nNão informado.\n\n## ALERGIAS MEDICAMENTOSAS\n${activePatient()?.allergies||'Não informado.'}\n\n## HISTÓRIA PATOLÓGICA PREGRESSA (HPP)\nNão informado.\n\n## IDAS (INTERROGAÇÃO DE DIVERSOS APARELHOS)\nNão informado.\n\n## EXAME FÍSICO\nNão informado.\n\n## EXAMES COMPLEMENTARES\nNão informado.\n\n## DIAGNÓSTICOS\nA definir pelo médico assistente.\n\n## PLANO TERAPÊUTICO\nA definir pelo médico assistente.\n\n## ORIENTAÇÕES\nA definir pelo médico assistente.`;}
+async function structureWithAI(){const input=$('transcript').value.trim();if(!input)return showToast('Digite ou dite a consulta primeiro.','error');const btn=$('structure-btn'),mode=$('ai-mode').value,key=$('api-key').value.trim();btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner animate-spin"></i>Processando...';try{let result;if(mode==='local'||!key){if(mode==='ai'&&!key)showToast('Chave não configurada; usando modelo local conservador.');result=localStructure(input);}else result=await callGemini(input,key);$('pep-editor').value=result;saveDraft();updateCounts();switchTab('record');showToast('Consulta estruturada. Revise antes de salvar.','success');}catch(e){console.error(e);showToast(`Falha na IA: ${e.message}`,'error');}finally{btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-brain"></i>Estruturar consulta';}}
+async function callGemini(input,key){const model=$('ai-model').value.trim()||'gemini-2.5-flash';const p=activePatient();const prompt=`Você organiza transcrições médicas para prontuário. Regras absolutas: use somente informações explicitamente presentes; não invente sintomas, exames, diagnósticos, doses, condutas ou orientações; preserve incertezas e nomes de medicamentos duvidosos entre aspas; escreva em português do Brasil, objetivo e técnico. Se um dado não existir, escreva “Não informado”. Retorne apenas o prontuário com estes títulos exatos:\n## QUEIXA PRINCIPAL (QP)\n## HISTÓRIA DA DOENÇA ATUAL (HDA)\n## HISTÓRIA DE QUEIXAS SECUNDÁRIAS\n## HISTÓRIA MEDICAMENTOSA ATUAL\n## ALERGIAS MEDICAMENTOSAS\n## HISTÓRIA PATOLÓGICA PREGRESSA (HPP)\n## IDAS (INTERROGAÇÃO DE DIVERSOS APARELHOS)\n## EXAME FÍSICO\n## EXAMES COMPLEMENTARES\n## DIAGNÓSTICOS\n## PLANO TERAPÊUTICO\n## ORIENTAÇÕES\n\nCadastro disponível: nome ${p?.name||'não informado'}, nascimento ${p?.dob||'não informado'}, alergias ${p?.allergies||'não informado'}.\n\nTRANSCRIÇÃO:\n${input}`;const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.1}})});if(!r.ok){const detail=await r.text();throw new Error(`API ${r.status}: ${detail.slice(0,160)}`);}const data=await r.json();const text=data?.candidates?.[0]?.content?.parts?.map(x=>x.text||'').join('').trim();if(!text)throw new Error('Resposta vazia');return text.replace(/^```(?:markdown)?\s*|\s*```$/g,'');}
+function startMic(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return showToast('Use Chrome ou Edge com HTTPS para ditado.','error');recognition=new SR();recognition.lang='pt-BR';recognition.continuous=true;recognition.interimResults=true;let finalText=$('transcript').value;recognition.onresult=e=>{let interim='';for(let i=e.resultIndex;i<e.results.length;i++){const s=e.results[i][0].transcript;if(e.results[i].isFinal)finalText+=(finalText?' ':'')+s;else interim+=s;}$('transcript').value=finalText+(interim?' '+interim:'');updateCounts();};recognition.onerror=e=>{if(!['no-speech','aborted'].includes(e.error))showToast(`Microfone: ${e.error}`,'error');};recognition.onend=()=>{if(isRecording){try{recognition.start();}catch{}}};recognition.start();isRecording=true;$('mic-btn').className='h-10 w-10 rounded-full bg-red-600 text-white animate-pulse';$('mic-icon').className='fa-solid fa-stop';$('mic-status').textContent='Gravando... clique para parar';}
+function stopMic(){isRecording=false;if(recognition){recognition.onend=null;try{recognition.stop();}catch{}recognition=null;}$('mic-btn').className='h-10 w-10 rounded-full bg-emerald-500 text-slate-950 hover:bg-emerald-400';$('mic-icon').className='fa-solid fa-microphone';$('mic-status').textContent='Microfone desligado';}
+function docTemplate(type){const p=activePatient(),date=new Date().toLocaleDateString('pt-BR'),name=p?.name||'[NOME DO PACIENTE]',cpf=p?.cpf||'[CPF]';const header=`DR. REGINALDO CHIARINI\nCRM-SP 122194 | RQE 47342\nMédico de Família e Comunidade\n\nPaciente: ${name}\nCPF: ${cpf}\nData: ${date}\n\n`;if(type==='receita')return header+`RECEITUÁRIO MÉDICO\n\nUSO __________________________\n\n1. [MEDICAMENTO / APRESENTAÇÃO]\n   Tomar/usar: [POSOLOGIA E DURAÇÃO].\n\n\n__________________________________\nAssinatura e carimbo`;if(type==='atestado')return header+`ATESTADO MÉDICO\n\nAtesto, para os devidos fins, que o(a) paciente acima identificado(a) foi avaliado(a) nesta data e necessita de afastamento de suas atividades por ____ (________________) dia(s), a partir de ____/____/______.\n\nCID: __________________ (somente com autorização do paciente)\n\n__________________________________\nAssinatura e carimbo`;if(type==='exames')return header+`SOLICITAÇÃO DE EXAMES\n\n1. [EXAME]\n2. [EXAME]\n3. [EXAME]\n\nIndicação clínica: __________________________________________\n\n__________________________________\nAssinatura e carimbo`;return header+`ENCAMINHAMENTO MÉDICO\n\nAo(À) Dr(a). / Serviço de: ______________________________\n\nEncaminho o(a) paciente acima para avaliação de:\n\n[RESUMO CLÍNICO OBJETIVO]\n\nHipótese/diagnóstico: ______________________________________\nExames relevantes: _________________________________________\nMotivo do encaminhamento: __________________________________\n\n__________________________________\nAssinatura e carimbo`;}
+function updateDocTemplate(force=true){if(force||!$('doc-editor').value.trim())$('doc-editor').value=docTemplate(state.activeDoc);}
+function renderToday(){state.today=state.today.filter(x=>x.date===todayISO());const el=$('today-list');el.innerHTML='';if(!state.today.length){el.innerHTML='<p class="text-xs text-slate-500 text-center py-8">Nenhum paciente adicionado hoje.</p>';return;}state.today.forEach(item=>{const p=state.patients.find(x=>x.id===item.patientId);if(!p)return;const d=document.createElement('div');d.className='bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-wrap justify-between items-center gap-3';d.innerHTML=`<div><p class="text-xs font-bold text-white">${esc(p.name)}</p><p class="text-[10px] text-slate-500 mt-1">Chegada: ${esc(item.arrival)} · Status: <span class="text-emerald-300">${esc(item.status)}</span></p></div><div class="flex gap-2"><button data-open class="btn btn-soft">Abrir</button><button data-status class="btn btn-primary">${item.status==='Aguardando'?'Iniciar':'Finalizar'}</button><button data-remove class="btn btn-danger"><i class="fa-solid fa-xmark"></i></button></div>`;d.querySelector('[data-open]').onclick=()=>selectPatient(p.id);d.querySelector('[data-status]').onclick=()=>{item.status=item.status==='Aguardando'?'Em atendimento':item.status==='Em atendimento'?'Atendido':'Aguardando';saveState();renderToday();};d.querySelector('[data-remove]').onclick=()=>{state.today=state.today.filter(x=>x.id!==item.id);saveState();renderToday();};el.appendChild(d);});}
+function addToday(){const p=activePatient();if(!p)return showToast('Selecione um paciente.','error');if(state.today.some(x=>x.date===todayISO()&&x.patientId===p.id))return showToast('Paciente já está na lista de hoje.');state.today.push({id:uid(),patientId:p.id,date:todayISO(),arrival:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),status:'Aguardando'});saveState();renderToday();showToast('Paciente adicionado às consultas do dia.','success');}
+function exportJSON(data,filename){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href);}
+function closePanels(){$('patient-sidebar').classList.remove('open');$('assistant-panel').classList.remove('open');$('overlay').classList.add('hidden');}
+
+window.addEventListener('DOMContentLoaded',()=>{
+ loadState();renderAll();updateCounts();
+ $('new-patient-btn').onclick=()=>openPatientModal();$('patient-search').oninput=renderPatients;
+ $('patient-form').onsubmit=e=>{e.preventDefault();const obj=patientFromForm();if(!obj.name)return;const idx=state.patients.findIndex(p=>p.id===obj.id);if(idx>=0)obj.draft=state.patients[idx].draft,obj.history=state.patients[idx].history||[],state.patients[idx]=obj;else state.patients.unshift(obj);state.activePatientId=obj.id;saveState();closeModal('patient-modal');renderAll();showToast('Cadastro salvo.','success');};
+ $('delete-patient-btn').onclick=()=>{const id=$('patient-id').value;confirmAction('Excluir paciente','Todo o histórico local deste paciente será apagado.',()=>{state.patients=state.patients.filter(p=>p.id!==id);state.today=state.today.filter(x=>x.patientId!==id);state.activePatientId=state.patients[0]?.id||null;saveState();closeModal('patient-modal');renderAll();});};
+ document.querySelectorAll('[data-close-modal]').forEach(b=>b.onclick=()=>closeModal(b.dataset.closeModal));
+ $('confirm-cancel').onclick=()=>{confirmCallback=null;closeModal('confirm-modal');};$('confirm-ok').onclick=()=>{const cb=confirmCallback;confirmCallback=null;closeModal('confirm-modal');cb?.();};
+ document.querySelectorAll('.tab-btn').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+ $('pep-editor').oninput=()=>{saveDraft();updateCounts();};$('transcript').oninput=updateCounts;
+ $('insert-template-btn').onclick=()=>{$('pep-editor').value=emptyTemplate;saveDraft();updateCounts();};
+ $('clear-record-btn').onclick=()=>confirmAction('Limpar prontuário','Deseja apagar o rascunho atual?',()=>{$('pep-editor').value='';saveDraft();updateCounts();});
+ $('copy-record-btn').onclick=()=>copyText($('pep-editor').value);$('save-history-btn').onclick=saveHistory;
+ $('structure-btn').onclick=structureWithAI;$('mic-btn').onclick=()=>isRecording?stopMic():startMic();
+ $('append-exam-normal').onclick=()=>{const txt=`\n\n## EXAME FÍSICO\nBEG, corado, hidratado, anictérico, acianótico e afebril.\nACV: bulhas rítmicas, normofonéticas, em 2 tempos, sem sopros.\nAR: murmúrio vesicular presente bilateralmente, sem ruídos adventícios.\nABD: plano, flácido, indolor à palpação, ruídos hidroaéreos presentes, sem sinais de irritação peritoneal.\nMMII: sem edema, panturrilhas livres.\nNEUROLÓGICO: consciente, orientado, sem déficits focais evidentes ao exame sumário.`;$('pep-editor').value+=txt;saveDraft();updateCounts();switchTab('record');};
+ $('move-transcript').onclick=()=>{const t=$('transcript').value.trim();if(t){$('pep-editor').value+=($('pep-editor').value?'\n\n':'')+t;saveDraft();updateCounts();switchTab('record');}};
+ document.querySelectorAll('.doc-btn').forEach(b=>b.onclick=()=>{state.activeDoc=b.dataset.doc;document.querySelectorAll('.doc-btn').forEach(x=>{x.classList.remove('btn-primary');x.classList.add('btn-soft')});b.classList.remove('btn-soft');b.classList.add('btn-primary');updateDocTemplate(true);});
+ $('copy-doc-btn').onclick=()=>copyText($('doc-editor').value);$('print-doc-btn').onclick=()=>{$('print-area').textContent=$('doc-editor').value;$('print-area').style.whiteSpace='pre-wrap';window.print();};
+ $('add-today-btn').onclick=addToday;
+ $('backup-btn').onclick=()=>exportJSON({...state,exportedAt:new Date().toISOString()},`medscribe-backup-${todayISO()}.json`);
+ $('export-patient-btn').onclick=()=>{const p=activePatient();if(p)exportJSON(p,`paciente-${p.name.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}.json`);};
+ $('config-btn').onclick=()=>openModal('config-modal');$('import-btn').onclick=()=>$('import-file').click();$('import-file').onchange=async e=>{try{const data=JSON.parse(await e.target.files[0].text());if(!Array.isArray(data.patients))throw new Error();confirmAction('Importar backup','Os dados locais atuais serão substituídos.',()=>{state={...state,...data};saveState();renderAll();closeModal('config-modal');showToast('Backup importado.','success');});}catch{showToast('Arquivo de backup inválido.','error');}};
+ $('reset-btn').onclick=()=>confirmAction('Apagar todos os dados','Pacientes, históricos e agenda local serão excluídos.',()=>{localStorage.removeItem(STORAGE_KEY);state={patients:[],activePatientId:null,today:[],activeDoc:'receita'};renderAll();closeModal('config-modal');showToast('Dados locais apagados.');});
+ $('hide-privacy').onclick=()=>$('privacy-alert').remove();
+ $('patient-toggle').onclick=()=>{$('patient-sidebar').classList.toggle('open');$('overlay').classList.toggle('hidden');};$('assistant-toggle').onclick=()=>{$('assistant-panel').classList.toggle('open');$('overlay').classList.toggle('hidden');};$('close-assistant').onclick=closePanels;$('overlay').onclick=closePanels;
+ window.addEventListener('beforeunload',saveDraft);
+});
+</script>
 </body>
 </html>
