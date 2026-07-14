@@ -69,7 +69,7 @@
             <!-- Alerta Inteligente de Protocolo de Segurança Local -->
             <div id="security-protocol-badge" class="hidden flex items-center gap-2 bg-amber-500/10 border border-amber-500/25 px-3 py-1.5 rounded-xl text-xs text-amber-300">
                 <i class="fa-solid fa-shield-halved animate-pulse text-amber-500"></i>
-                <span>Rodando Localmente. Use o botão <strong>"Preview"</strong> no topo direito para habilitar o microfone!</span>
+                <span>Rodando Localmente. Use o GitHub Pages para habilitar o microfone de forma segura!</span>
             </div>
 
             <button onclick="toggleConfigModal(true)" class="bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition border border-slate-700">
@@ -276,7 +276,7 @@
                     
                     <div id="recording-status-indicator" class="hidden flex items-center gap-2 text-[10px] text-emerald-400 animate-pulse font-medium">
                         <span class="h-2 w-2 bg-emerald-400 rounded-full animate-ping"></span>
-                        Gravando áudio... Clique para finalizar a frase.
+                        Microfone ativo... Fale livremente.
                     </div>
                 </div>
 
@@ -300,7 +300,7 @@
 
                 <!-- Botão de Processar IA -->
                 <button id="btn-process-medical-ai" onclick="generateStructuredRecord()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold py-3.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition active:scale-95 disabled:opacity-50">
-                    <i class="fa-solid fa-brain"></i> ESTRUTURAR CONSULTA COM IA
+                    <i class="fa-solid fa-brain"></i> ESTRUTURAR CONSULTA WITH IA
                 </button>
 
                 <!-- CARD DE RESULTADO DA INTELIGÊNCIA ARTIFICIAL -->
@@ -389,7 +389,7 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1.5">Alergias Conocidas</label>
+                    <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1.5">Alergias Conhecidas</label>
                     <input id="new-patient-allergies" type="text" placeholder="Ex: Nega ou Dipirona" class="w-full bg-slate-50 border border-red-200 text-red-500 font-semibold rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500/25">
                 </div>
 
@@ -665,8 +665,49 @@
             showToast("Paciente carregado no prontuário com sucesso!", "success");
         }
 
-        // --- STREAMING_CHUNK: Registrando novo paciente com validação ---
-        // --- STREAMING_CHUNK: Implementando o motor do Reconhecimento de Voz corrigido com Diagnóstico ---
+        function registerPatient() {
+            const nome = document.getElementById('new-patient-name').value.trim();
+            const idade = document.getElementById('new-patient-age').value.trim();
+            const genero = document.getElementById('new-patient-gender').value;
+            const convenio = document.getElementById('new-patient-convenio').value.trim() || 'Particular';
+            const cpf = document.getElementById('new-patient-cpf').value.trim() || 'Não informado';
+            const allergies = document.getElementById('new-patient-allergies').value.trim() || 'Nega';
+
+            if (!nome || !idade) {
+                showToast("Por favor, preencha o Nome e a Idade do paciente.", "error");
+                return;
+            }
+
+            const newPatientObj = {
+                id: String(patients.length + 1),
+                nome,
+                idade: parseInt(idade),
+                genero,
+                convenio,
+                cpf,
+                alergias: allergies,
+                historicoConsultas: []
+            };
+
+            patients.push(newPatientObj);
+            saveLocalData();
+            activePatientId = newPatientObj.id;
+            
+            renderPatientList();
+            renderActivePatient();
+            togglePatientModal(false);
+            
+            // Limpa campos do formulário
+            document.getElementById('new-patient-name').value = '';
+            document.getElementById('new-patient-age').value = '';
+            document.getElementById('new-patient-convenio').value = '';
+            document.getElementById('new-patient-cpf').value = '';
+            document.getElementById('new-patient-allergies').value = '';
+            
+            showToast("Novo paciente cadastrado e selecionado!", "success");
+        }
+
+        // --- SISTEMA DE DIRETRIZ DE GRAVAÇÃO COM RECONEXÃO AUTOMÁTICA CONTÍNUA ---
         function toggleSpeechRecording() {
             const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
             
@@ -698,11 +739,11 @@
                     };
 
                     speechInstance.onerror = (event) => {
-                        console.error("Erro no microfone:", event.error);
-                        isRecording = false;
-                        resetAudioUi();
+                        console.error("Erro no microfone detectado:", event.error);
                         
                         if (event.error === 'not-allowed') {
+                            isRecording = false;
+                            resetAudioUi();
                             if (window.location.protocol === 'file:') {
                                 showMicDiagnostic(
                                     "Bloqueio de Arquivo Local",
@@ -717,8 +758,15 @@
                                 );
                             }
                         } else if (event.error === 'no-speech') {
-                            showToast("Nenhum som foi detectado. Tente falar mais perto.", "info");
+                            // Não interrompe o fluxo de gravação, o onend se encarregará de reiniciar
+                            console.log("Nenhuma fala detectada no canal. Aguardando atividade...");
+                        } else if (event.error === 'network') {
+                            // Registra erro de rede mas mantém a intenção de gravação ativa para reconectar
+                            console.warn("Instabilidade de rede na API Speech do Google. Tentando reestabelecer conexão...");
+                            showToast("Instabilidade de rede temporária na transcrição. Reconectando...", "info");
                         } else {
+                            isRecording = false;
+                            resetAudioUi();
                             showMicDiagnostic(
                                 `Erro: ${event.error}`,
                                 "Ocorreu uma falha na captura do som.",
@@ -728,8 +776,21 @@
                     };
 
                     speechInstance.onend = () => {
-                        isRecording = false;
-                        resetAudioUi();
+                        // Se o médico ainda possui intenção de gravar (isRecording === true), reinicia automaticamente!
+                        if (isRecording) {
+                            console.log("Reiniciando gravação automaticamente...");
+                            setTimeout(() => {
+                                if (isRecording) {
+                                    try {
+                                        speechInstance.start();
+                                    } catch (err) {
+                                        console.error("Erro na tentativa de reconexão do microfone:", err);
+                                    }
+                                }
+                            }, 400); // Curto delay de segurança para desobstruir barramento de áudio
+                        } else {
+                            resetAudioUi();
+                        }
                     };
                 } catch (e) {
                     showToast("Erro ao configurar motor de voz: " + e.message, "error");
@@ -738,14 +799,18 @@
             }
 
             if (isRecording) {
+                isRecording = false; // Altera primeiro para o 'onend' saber que não deve reconectar
                 speechInstance.stop();
+                resetAudioUi();
+                showToast("Gravação pausada de forma segura.", "info");
             } else {
                 try {
-                    speechInstance.start();
                     isRecording = true;
+                    speechInstance.start();
                     document.getElementById('btn-audio-dictation').className = "h-10 w-10 bg-red-600 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition shadow-lg animate-pulse";
                     document.getElementById('audio-dictation-icon').className = "fa-solid fa-microphone-slash text-sm";
                     document.getElementById('recording-status-indicator').classList.remove('hidden');
+                    showToast("Microfone ativo! Pode ditar a consulta.", "success");
                 } catch (err) {
                     isRecording = false;
                     resetAudioUi();
@@ -783,7 +848,7 @@
             showToast("Cenário clínico simulado carregado com sucesso!", "info");
         }
 
-        // --- STREAMING_CHUNK: Configurações de API Key do Gemini ---
+        // --- CONFIGURAÇÃO CHAVE GEMINI ---
         function saveApiKey() {
             const key = document.getElementById('gemini-api-key').value.trim();
             if (key) {
@@ -802,7 +867,7 @@
             toggleConfigModal(false);
         }
 
-        // --- STREAMING_CHUNK: Mecanismo de Inteligência Artificial para Estruturação ---
+        // --- MECANISMO DE INTELIGÊNCIA ARTIFICIAL ---
         async function generateStructuredRecord() {
             const transcript = document.getElementById('audio-transcript-box').value.trim();
             if (!transcript) {
@@ -823,7 +888,7 @@
                     renderAiResult(aiResultData, true);
                 } catch (err) {
                     console.error("Falha ao comunicar com Gemini. Iniciando heurística médica local...", err);
-                    showToast("Gemini API retornou erro ou está indisponível. Utilizando motor heurístico local!", "error");
+                    showToast("Gemini API retornou erro. Utilizando motor heurístico local!", "error");
                     runLocalMedicalHeuristics(transcript, patient);
                 }
             } else {
@@ -939,7 +1004,7 @@ Você deve retornar obrigatoriamente um objeto JSON com as seguintes chaves de d
             showToast("Consulta estruturada com sucesso pela inteligência artificial!", "success");
         }
 
-        // --- STREAMING_CHUNK: Transferência de Dados da IA para o Prontuário ---
+        // --- TRANSFERÊNCIA DE DADOS DA IA ---
         function injectAiDataIntoRecord() {
             if (!aiResultData) return;
 
@@ -950,7 +1015,7 @@ Você deve retornar obrigatoriamente um objeto JSON com as seguintes chaves de d
             document.getElementById('input-conduta').value = aiResultData.conduta;
             document.getElementById('input-cid').value = aiResultData.cid;
 
-            // Altera para a primeira aba de Prontuário para que o médico veja o formulário preenchido
+            // Altera para a primeira aba de Prontuário
             switchActiveTab('prontuario');
             updateDocumentTemplate();
 
@@ -1051,7 +1116,6 @@ Você deve retornar obrigatoriamente um objeto JSON com as seguintes chaves de d
             const cidVal = document.getElementById('input-cid').value.trim() || 'R10.4 (Dor Abdominal)';
 
             if (activeDocType === 'receita') {
-                // Checa se o caso possui dor abdominal para prescrever Lactulose
                 const qpText = document.getElementById('input-qp').value.toLowerCase();
                 let medicamentosText = "1. Paracetamol 750mg ------------------ Tomar 1 comp. de 6 em 6 horas se dor ou febre.";
                 
@@ -1067,15 +1131,10 @@ Você deve retornar obrigatoriamente um objeto JSON com as seguintes chaves de d
             }
         }
 
-        // Impressão limpa apenas do documento
         function printClinicalDocument() {
             const editorValue = document.getElementById('doc-editor').value;
             const printArea = document.getElementById('printable-document-area');
-            
-            // Formata quebras de linha para o HTML de impressão
             printArea.innerHTML = editorValue.replace(/\n/g, '<br>');
-            
-            // Chama a API de impressão do navegador
             window.print();
         }
 
