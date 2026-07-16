@@ -776,6 +776,8 @@ window.addEventListener('DOMContentLoaded',()=>{
  $('confirm-cancel').onclick=()=>{confirmCallback=null;closeModal('confirm-modal');};$('confirm-ok').onclick=()=>{const cb=confirmCallback;confirmCallback=null;closeModal('confirm-modal');cb?.();};
  document.querySelectorAll('.tab-btn').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
  $('pep-editor').oninput=()=>{saveDraft();updateCounts();};$('transcript').oninput=updateCounts;
+ $('pep-editor').addEventListener('copy',e=>{const ta=e.target;const selected=ta.value.substring(ta.selectionStart,ta.selectionEnd);if(!selected)return;e.preventDefault();e.clipboardData.setData('text/plain',stripMarkdownForCopy(selected));});
+ $('history-list').addEventListener('copy',e=>{if(!e.target.closest('pre'))return;const selected=window.getSelection().toString();if(!selected)return;e.preventDefault();e.clipboardData.setData('text/plain',stripMarkdownForCopy(selected));});
  $('insert-template-btn').onclick=()=>{$('pep-editor').value=emptyTemplate;saveDraft();updateCounts();};
  $('clear-record-btn').onclick=()=>confirmAction('Limpar prontuário','Deseja apagar o rascunho atual?',()=>{$('pep-editor').value='';saveDraft();updateCounts();});
  $('copy-record-btn').onclick=()=>copyText(stripMarkdownForCopy($('pep-editor').value));$('save-history-btn').onclick=saveHistory;
