@@ -241,6 +241,12 @@ textarea.field{resize:vertical;min-height:90px}
         <button id="t-reset" class="btn btn-soft"><i class="fa-solid fa-rotate-left"></i></button>
         <button id="t-fullscreen" class="btn btn-soft"><i class="fa-solid fa-expand"></i></button>
       </div>
+      <button id="t-record" class="btn btn-danger w-full" disabled><i class="fa-solid fa-circle"></i>Gravar vídeo</button>
+      <p class="text-[10px] text-slate-500">Ative a câmera para poder gravar. A gravação inclui o áudio do microfone, se permitido.</p>
+      <div id="t-record-result" class="hidden space-y-2">
+        <video id="t-record-preview" class="w-full rounded-lg" controls></video>
+        <button id="t-download-video" class="btn btn-primary w-full"><i class="fa-solid fa-download"></i>Baixar vídeo (.webm)</button>
+      </div>
     </div>
     <div id="t-stage" class="card relative overflow-hidden bg-black" style="height:70vh">
       <video id="t-video" class="absolute inset-0 w-full h-full object-cover hidden" autoplay playsinline muted></video>
@@ -1014,14 +1020,69 @@ $('t-size').addEventListener('input', applyFontSize);
 $('t-text').addEventListener('input', tpSetText);
 async function tpStartCamera(){
   try{
-    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}, audio:false});
+    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}, audio:true});
     tpStream=stream; $('t-video').srcObject=stream;
-  }catch(e){ showToast('Não foi possível acessar a câmera: '+e.message,'error'); $('t-camera').checked=false; }
+  }catch(e){
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}, audio:false});
+      tpStream=stream; $('t-video').srcObject=stream;
+      showToast('Câmera ativada sem áudio (microfone indisponível ou bloqueado).','info');
+    }catch(e2){
+      showToast('Não foi possível acessar a câmera: '+e2.message,'error');
+      $('t-camera').checked=false;
+    }
+  }
 }
 function tpStopCamera(){ if(tpStream){ tpStream.getTracks().forEach(t=>t.stop()); tpStream=null; $('t-video').srcObject=null; } }
 $('t-camera').addEventListener('change', async e=>{
-  if(e.target.checked){ await tpStartCamera(); $('t-video').classList.remove('hidden'); }
-  else { tpStopCamera(); $('t-video').classList.add('hidden'); }
+  if(e.target.checked){
+    await tpStartCamera();
+    $('t-video').classList.remove('hidden');
+    $('t-record').disabled=!tpStream;
+  } else {
+    if(mediaRecorder && mediaRecorder.state==='recording') mediaRecorder.stop();
+    tpStopCamera();
+    $('t-video').classList.add('hidden');
+    $('t-record').disabled=true;
+  }
+});
+
+/* ---------- Gravação de vídeo (teleprompter) ---------- */
+let mediaRecorder=null, recordedChunks=[], recordedBlobUrl=null;
+function pickRecorderMimeType(){
+  const candidates=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+  for(const c of candidates){ if(window.MediaRecorder && MediaRecorder.isTypeSupported(c)) return c; }
+  return '';
+}
+function tpToggleRecord(){
+  if(!tpStream) return showToast('Ative a câmera primeiro.','error');
+  if(!window.MediaRecorder) return showToast('Este navegador não suporta gravação de vídeo.','error');
+  if(!mediaRecorder || mediaRecorder.state==='inactive'){
+    recordedChunks=[];
+    const mime=pickRecorderMimeType();
+    try{ mediaRecorder = mime? new MediaRecorder(tpStream,{mimeType:mime}) : new MediaRecorder(tpStream); }
+    catch(e){ return showToast('Não foi possível iniciar a gravação: '+e.message,'error'); }
+    mediaRecorder.ondataavailable = e=>{ if(e.data && e.data.size>0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = ()=>{
+      const blob=new Blob(recordedChunks, {type: (mediaRecorder && mediaRecorder.mimeType) || 'video/webm'});
+      if(recordedBlobUrl) URL.revokeObjectURL(recordedBlobUrl);
+      recordedBlobUrl=URL.createObjectURL(blob);
+      $('t-record-preview').src=recordedBlobUrl;
+      $('t-record-result').classList.remove('hidden');
+      showToast('Gravação finalizada. Baixe o vídeo abaixo.','success');
+    };
+    mediaRecorder.start();
+    $('t-record').innerHTML='<i class="fa-solid fa-stop"></i>Parar gravação';
+    showToast('Gravando...','success');
+  } else {
+    mediaRecorder.stop();
+    $('t-record').innerHTML='<i class="fa-solid fa-circle"></i>Gravar vídeo';
+  }
+}
+$('t-record').addEventListener('click', tpToggleRecord);
+$('t-download-video').addEventListener('click', ()=>{
+  if(!recordedBlobUrl) return;
+  const a=document.createElement('a'); a.href=recordedBlobUrl; a.download='teleprompter-'+Date.now()+'.webm'; a.click();
 });
 function refreshTeleprompterLibrarySelect(){
   $('t-library').innerHTML = state.library.length
