@@ -299,7 +299,7 @@ function copyText(text){ navigator.clipboard.writeText(text).then(()=>showToast(
 
 const state = {
   brand: loadLS('cgc_brand', {clinic:'',doctor:'',crm:'',rqe:'',specialty:'',whatsapp:'',instagram:'',facebook:'',site:'',address:'',color1:'#10b981',color2:'#0f172a',logo:''}),
-  settings: loadLS('cgc_settings', {mode:'local',geminiKey:'',geminiModel:'gemini-flash-latest'}),
+  settings: loadLS('cgc_settings', {mode:'local',provider:'gemini',geminiKey:'',geminiModel:'gemini-flash-latest',openaiKey:'',openaiModel:'gpt-5-mini',claudeKey:'',claudeModel:'claude-sonnet-4-5'}),
   library: loadLS('cgc_library', []),
   plan: loadLS('cgc_plan', {freq:3,weeks:[[],[],[],[]]}),
   art: loadLS('cgc_art', {format:'1080x1080',title:'',subtitle:'',bgmode:'gradient',bgcolor:'#0f172a',bgImage:'',titlesize:82,subsize:36,align:'center',logopos:'br',logosize:16,footer:true,logobg:true})
@@ -348,20 +348,36 @@ $('b-logo-remove').addEventListener('click', ()=>{ state.brand.logo=''; logoImgE
 $('b-save').addEventListener('click', ()=>{ persistBrand(); showToast('Marca salva com sucesso.','success'); });
 
 /* ---------- IA (opcional) / Configurações ---------- */
+const PROVIDER_LABEL={gemini:'Google Gemini',openai:'OpenAI',claude:'Anthropic Claude'};
 function updateModeBadge(){
-  $('g-mode-badge').textContent = (state.settings.mode==='ai' && state.settings.geminiKey) ? 'Modo: IA (Gemini)' : 'Modo: Local — 100% grátis, funciona sem internet';
+  const p=state.settings.provider||'gemini';
+  const hasKey = p==='gemini'? !!state.settings.geminiKey : p==='openai'? !!state.settings.openaiKey : !!state.settings.claudeKey;
+  $('g-mode-badge').textContent = (state.settings.mode==='ai' && hasKey) ? ('Modo: IA ('+PROVIDER_LABEL[p]+')') : 'Modo: Local — 100% grátis, funciona sem internet';
 }
 function openAISettings(){
   openModal('<h3 class="font-bold text-sm mb-3 flex items-center gap-2"><i class="fa-solid fa-robot text-emerald-400"></i>Configurações de IA</h3>'+
-    '<p class="text-[11px] text-slate-500 mb-3">O app funciona 100% grátis e offline com o gerador local. Se quiser, cole uma chave gratuita do Google Gemini (Google AI Studio) para respostas mais variadas.</p>'+
-    '<label class="flex items-center gap-2 text-xs mb-3"><input type="checkbox" id="m-ai-enable" '+(state.settings.mode==='ai'?'checked':'')+'>Usar IA (Gemini) quando disponível</label>'+
-    '<label class="label">Chave Gemini</label><input id="m-gemini-key" type="password" class="field mb-3" value="'+escapeHtml(state.settings.geminiKey||'')+'" placeholder="AIza...">'+
-    '<label class="label">Modelo</label><input id="m-gemini-model" class="field mb-4" value="'+escapeHtml(state.settings.geminiModel||'gemini-flash-latest')+'">'+
+    '<p class="text-[11px] text-slate-500 mb-3">O app funciona 100% grátis e offline com o gerador local. Se quiser, cole uma chave de IA (Gemini, OpenAI ou Claude) para respostas mais variadas — as chaves ficam salvas só neste navegador.</p>'+
+    '<label class="flex items-center gap-2 text-xs mb-3"><input type="checkbox" id="m-ai-enable" '+(state.settings.mode==='ai'?'checked':'')+'>Usar IA quando disponível</label>'+
+    '<label class="label">Provedor preferencial</label><select id="m-ai-provider" class="field mb-3">'+
+    '<option value="gemini" '+(state.settings.provider==='gemini'?'selected':'')+'>Google Gemini</option>'+
+    '<option value="openai" '+(state.settings.provider==='openai'?'selected':'')+'>OpenAI</option>'+
+    '<option value="claude" '+(state.settings.provider==='claude'?'selected':'')+'>Anthropic Claude</option></select>'+
+    '<div class="grid md:grid-cols-3 gap-3 mb-3">'+
+    '<div><label class="label">Chave Gemini</label><input id="m-gemini-key" type="password" class="field" placeholder="AIza..." value="'+escapeHtml(state.settings.geminiKey||'')+'"><label class="label mt-2">Modelo</label><input id="m-gemini-model" class="field" value="'+escapeHtml(state.settings.geminiModel||'gemini-flash-latest')+'"></div>'+
+    '<div><label class="label">Chave OpenAI</label><input id="m-openai-key" type="password" class="field" placeholder="sk-..." value="'+escapeHtml(state.settings.openaiKey||'')+'"><label class="label mt-2">Modelo</label><input id="m-openai-model" class="field" value="'+escapeHtml(state.settings.openaiModel||'gpt-5-mini')+'"></div>'+
+    '<div><label class="label">Chave Claude</label><input id="m-claude-key" type="password" class="field" placeholder="sk-ant-..." value="'+escapeHtml(state.settings.claudeKey||'')+'"><label class="label mt-2">Modelo</label><input id="m-claude-model" class="field" value="'+escapeHtml(state.settings.claudeModel||'claude-sonnet-4-5')+'"></div>'+
+    '</div>'+
+    '<div class="bg-amber-500/5 border border-amber-500/20 p-3 rounded-xl text-[10px] text-amber-200 leading-relaxed mb-4">As chaves ficam salvas apenas neste navegador (não entram no backup em JSON). A conexão direta com a OpenAI/Claude pode ser bloqueada pelo navegador em alguns casos; se falhar, o app usa automaticamente o gerador local.</div>'+
     '<div class="flex justify-end gap-2"><button class="btn btn-soft" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="m-ai-save">Salvar</button></div>');
   $('m-ai-save').addEventListener('click', ()=>{
     state.settings.mode = $('m-ai-enable').checked? 'ai':'local';
+    state.settings.provider = $('m-ai-provider').value;
     state.settings.geminiKey=$('m-gemini-key').value.trim();
     state.settings.geminiModel=$('m-gemini-model').value.trim()||'gemini-flash-latest';
+    state.settings.openaiKey=$('m-openai-key').value.trim();
+    state.settings.openaiModel=$('m-openai-model').value.trim()||'gpt-5-mini';
+    state.settings.claudeKey=$('m-claude-key').value.trim();
+    state.settings.claudeModel=$('m-claude-model').value.trim()||'claude-sonnet-4-5';
     saveLS('cgc_settings', state.settings);
     closeModal(); showToast('Configurações salvas.','success'); updateModeBadge();
   });
@@ -379,6 +395,36 @@ async function callGeminiJSON(prompt,key,model){
   const text=data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts ? data.candidates[0].content.parts.map(x=>x.text||'').join('') : '';
   if(!text) throw new Error('Resposta vazia do Gemini.');
   return JSON.parse(stripFence(text));
+}
+async function callOpenAIJSON(prompt,key,model){
+  const r=await fetch('https://api.openai.com/v1/responses',{
+    method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body:JSON.stringify({model,input:prompt})
+  });
+  if(!r.ok) throw new Error('OpenAI '+r.status+': '+(await r.text()).slice(0,180));
+  const data=await r.json();
+  let text=data.output_text||'';
+  if(!text && Array.isArray(data.output)) text=data.output.flatMap(o=>o.content||[]).filter(c=>c.type==='output_text').map(c=>c.text||'').join('');
+  if(!text) throw new Error('Resposta vazia da OpenAI.');
+  return JSON.parse(stripFence(text));
+}
+async function callClaudeJSON(prompt,key,model){
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model,max_tokens:4000,temperature:0.7,messages:[{role:'user',content:prompt}]})
+  });
+  if(!r.ok) throw new Error('Claude '+r.status+': '+(await r.text()).slice(0,180));
+  const data=await r.json();
+  const text=(data.content||[]).filter(x=>x.type==='text').map(x=>x.text||'').join('');
+  if(!text) throw new Error('Resposta vazia do Claude.');
+  return JSON.parse(stripFence(text));
+}
+async function callAIJSON(prompt){
+  const p=state.settings.provider||'gemini';
+  if(p==='openai'){ if(!state.settings.openaiKey) throw new Error('Configure a chave da OpenAI em Configurações de IA.'); return callOpenAIJSON(prompt, state.settings.openaiKey, state.settings.openaiModel||'gpt-5-mini'); }
+  if(p==='claude'){ if(!state.settings.claudeKey) throw new Error('Configure a chave do Claude em Configurações de IA.'); return callClaudeJSON(prompt, state.settings.claudeKey, state.settings.claudeModel||'claude-sonnet-4-5'); }
+  if(!state.settings.geminiKey) throw new Error('Configure a chave do Gemini em Configurações de IA.');
+  return callGeminiJSON(prompt, state.settings.geminiKey, state.settings.geminiModel||'gemini-flash-latest');
 }
 function buildAIPrompt(ctx, formats){
   return 'Você é um especialista em marketing médico ético no Brasil. Gere conteúdo para redes sociais sobre o tema "'+ctx.tema+'" para uma clínica.\n'+
@@ -611,9 +657,10 @@ async function handleGenerate(){
   const btn=$('g-generate'); btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner animate-spin"></i>Gerando...';
   try{
     let result;
-    if(state.settings.mode==='ai' && state.settings.geminiKey){
+    const hasAnyKey = !!(state.settings.geminiKey || state.settings.openaiKey || state.settings.claudeKey);
+    if(state.settings.mode==='ai' && hasAnyKey){
       try{
-        const ai=await callGeminiJSON(buildAIPrompt(ctx,formats), state.settings.geminiKey, state.settings.geminiModel||'gemini-flash-latest');
+        const ai=await callAIJSON(buildAIPrompt(ctx,formats));
         result=normalizeResult(ai,ctx);
       }catch(e){
         console.error(e); showToast('IA falhou, usando gerador local: '+e.message,'error');
