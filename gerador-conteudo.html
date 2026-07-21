@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>Gerador de Conteúdo — Clínica</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box} body{font-family:Inter,sans-serif;background:#080d17;color:#e2e8f0}
+::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-track{background:#0f172a}::-webkit-scrollbar-thumb{background:#334155;border-radius:999px}
+.field{width:100%;background:#080d17;border:1px solid #263244;border-radius:.8rem;padding:.7rem .85rem;color:#e2e8f0;outline:none}
+.field:focus{border-color:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.12)}
+textarea.field{resize:vertical;min-height:90px}
+.btn{border-radius:.75rem;padding:.65rem .9rem;font-weight:700;font-size:.75rem;transition:.15s;display:inline-flex;align-items:center;justify-content:center;gap:.45rem;cursor:pointer;border:none}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:linear-gradient(90deg,#10b981,#14b8a6);color:#04110d}.btn-primary:hover{filter:brightness(1.08)}
+.btn-soft{background:#172033;border:1px solid #2b374b;color:#dbe4f0}.btn-soft:hover{background:#202b40}
+.btn-danger{background:#3b1018;border:1px solid #7f1d1d;color:#fecaca}.btn-danger:hover{background:#51131e}
+.btn-xs{padding:.4rem .6rem;font-size:.65rem;border-radius:.6rem}
+.card{background:#101827;border:1px solid #263244;border-radius:1rem}
+.label{font-size:.62rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#8290a5;display:block;margin-bottom:.4rem}
+.tab-btn{cursor:pointer;background:none;border:none}
+.tab-active{color:#34d399;border-bottom-color:#10b981;font-weight:800}.tab-inactive{color:#94a3b8;border-bottom-color:transparent}
+.chip{font-size:.65rem;background:#172033;border:1px solid #2b374b;border-radius:999px;padding:.45rem .8rem;color:#cbd5e1;cursor:pointer;user-select:none;text-align:center}
+.chip.active{background:rgba(16,185,129,.15);border-color:#10b981;color:#6ee7b7}
+.hidden{display:none!important}
+#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100;display:flex;align-items:center;justify-content:center;padding:1rem}
+#modal-body{background:#101827;border:1px solid #263244;border-radius:1rem;padding:1.25rem;max-width:560px;width:100%;max-height:88vh;overflow-y:auto}
+#toast-wrap{position:fixed;bottom:1rem;right:1rem;z-index:200;max-width:320px}
+#t-stage:fullscreen,#t-stage:-webkit-full-screen{height:100vh!important}
+@media print{header,nav,button,#modal-overlay{display:none!important}body{background:#fff;color:#000}.card{border-color:#ccc}}
+</style>
+</head>
+<body>
+
+<header class="h-[64px] bg-slate-950 border-b border-slate-800 px-4 lg:px-6 flex items-center justify-between shadow-lg">
+  <div class="flex items-center gap-3 min-w-0">
+    <div class="bg-emerald-500/10 border border-emerald-500/25 rounded-xl p-2.5 text-emerald-400"><i class="fa-solid fa-bullhorn text-xl"></i></div>
+    <div class="min-w-0">
+      <h1 class="font-extrabold text-sm md:text-lg truncate">Gerador de Conteúdo <span class="text-[9px] bg-emerald-500/15 text-emerald-300 px-2 py-1 rounded-full">GRÁTIS</span></h1>
+      <p class="hidden sm:block text-[11px] text-slate-500">Instagram, Facebook, WhatsApp, vídeo, carrossel e artes — com sua marca e regras éticas</p>
+    </div>
+  </div>
+  <div class="flex items-center gap-2">
+    <button id="backup-btn" class="btn btn-soft"><i class="fa-solid fa-download"></i><span class="hidden md:inline">Backup</span></button>
+    <button id="ai-settings-btn" class="btn btn-soft"><i class="fa-solid fa-robot text-emerald-400"></i><span class="hidden md:inline">IA</span></button>
+    <a href="index.html" class="btn btn-soft" title="Voltar ao prontuário"><i class="fa-solid fa-notes-medical"></i><span class="hidden md:inline">Prontuário</span></a>
+  </div>
+</header>
+
+<nav id="tabs-nav" class="bg-slate-900 border-b border-slate-800 px-2 md:px-6 flex gap-4 overflow-x-auto">
+  <button data-tab="marca" class="tab-btn tab-active py-3 border-b-2 text-xs whitespace-nowrap"><i class="fa-solid fa-stamp mr-2"></i>Minha marca</button>
+  <button data-tab="gerador" class="tab-btn tab-inactive py-3 border-b-2 text-xs whitespace-nowrap"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Gerador</button>
+  <button data-tab="planejador" class="tab-btn tab-inactive py-3 border-b-2 text-xs whitespace-nowrap"><i class="fa-solid fa-calendar-week mr-2"></i>Planejador 4 semanas</button>
+  <button data-tab="biblioteca" class="tab-btn tab-inactive py-3 border-b-2 text-xs whitespace-nowrap"><i class="fa-solid fa-box-archive mr-2"></i>Biblioteca</button>
+  <button data-tab="artes" class="tab-btn tab-inactive py-3 border-b-2 text-xs whitespace-nowrap"><i class="fa-solid fa-image mr-2"></i>Artes</button>
+  <button data-tab="teleprompter" class="tab-btn tab-inactive py-3 border-b-2 text-xs whitespace-nowrap"><i class="fa-solid fa-video mr-2"></i>Teleprompter</button>
+</nav>
+
+<main class="max-w-[1400px] mx-auto p-4 md:p-6">
+
+<section id="tab-marca">
+  <div class="grid lg:grid-cols-[1fr_360px] gap-5">
+    <div class="card p-5 space-y-5">
+      <h2 class="font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-stamp text-emerald-400"></i>Minha marca</h2>
+      <p class="text-xs text-slate-500">Cadastre uma única vez. Esses dados são aplicados automaticamente em todo conteúdo gerado e nas artes.</p>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div><label class="label">Nome da clínica</label><input id="b-clinic" class="field" placeholder="Clínica Chiarini"></div>
+        <div><label class="label">Nome do(a) médico(a) responsável</label><input id="b-doctor" class="field" placeholder="Dr(a). Nome Completo"></div>
+        <div><label class="label">CRM</label><input id="b-crm" class="field" placeholder="CRM/UF 000000"></div>
+        <div><label class="label">RQE (se especialista)</label><input id="b-rqe" class="field" placeholder="RQE 00000"></div>
+        <div><label class="label">Especialidade</label><input id="b-specialty" class="field" placeholder="Ex.: Dermatologia"></div>
+        <div><label class="label">WhatsApp</label><input id="b-whatsapp" class="field" placeholder="(11) 90000-0000"></div>
+        <div><label class="label">Instagram</label><input id="b-instagram" class="field" placeholder="@suaclinica"></div>
+        <div><label class="label">Facebook</label><input id="b-facebook" class="field" placeholder="/suaclinica"></div>
+        <div><label class="label">Site (opcional)</label><input id="b-site" class="field" placeholder="www.suaclinica.com.br"></div>
+        <div><label class="label">Cidade/Endereço (opcional)</label><input id="b-address" class="field" placeholder="Cidade - UF"></div>
+        <div><label class="label">Cor primária</label><input id="b-color1" type="color" class="field !p-1 h-11" value="#10b981"></div>
+        <div><label class="label">Cor secundária</label><input id="b-color2" type="color" class="field !p-1 h-11" value="#0f172a"></div>
+      </div>
+      <div>
+        <label class="label">Logo da clínica</label>
+        <div class="flex items-center gap-4 flex-wrap">
+          <div id="b-logo-preview" class="w-24 h-24 rounded-xl bg-slate-950 border border-dashed border-slate-700 flex items-center justify-center overflow-hidden text-slate-600 text-[10px] text-center p-2">Sem logo</div>
+          <div class="flex flex-col gap-2">
+            <input id="b-logo-file" type="file" accept="image/*" class="text-xs">
+            <button id="b-logo-remove" class="btn btn-danger btn-xs w-fit"><i class="fa-solid fa-trash"></i>Remover logo</button>
+          </div>
+        </div>
+        <p class="text-[10px] text-slate-500 mt-2">Cadastrada aqui, a logo é inserida automaticamente nas artes (pode reposicionar/redimensionar na aba Artes).</p>
+      </div>
+      <button id="b-save" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i>Salvar marca</button>
+    </div>
+    <div class="card p-5 space-y-3 h-fit">
+      <h3 class="font-bold text-xs flex items-center gap-2 text-amber-300"><i class="fa-solid fa-scale-balanced"></i>Regras éticas aplicadas automaticamente</h3>
+      <ul class="text-[11px] text-slate-400 space-y-2 list-disc pl-4">
+        <li>Sem promessa de cura, resultado garantido ou percentuais de sucesso.</li>
+        <li>Sem termos sensacionalistas ("o melhor", "único", "milagroso") nem comparação com outros profissionais.</li>
+        <li>Sem uso promocional de fotos de antes/depois nem depoimentos de pacientes como propaganda.</li>
+        <li>Sem sorteio, desconto ou brinde vinculado a procedimento médico.</li>
+        <li>Conteúdo de caráter educativo, sempre identificando o médico responsável, CRM (e RQE, quando aplicável).</li>
+      </ul>
+      <p class="text-[10px] text-slate-500">Baseado no Código de Ética Médica e nas normas do CFM sobre publicidade médica. O app aplica sua assinatura (nome, CRM, RQE, WhatsApp) automaticamente e evita os termos acima — revise sempre antes de publicar.</p>
+    </div>
+  </div>
+</section>
+
+<section id="tab-gerador" class="hidden space-y-5">
+  <div class="card p-5 space-y-4">
+    <h2 class="font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles text-emerald-400"></i>Gerar conteúdo a partir de um tema</h2>
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="md:col-span-2"><label class="label">Tema</label><input id="g-tema" class="field" placeholder="Ex.: Cuidados com a pele no verão"></div>
+      <div><label class="label">Objetivo</label><select id="g-objetivo" class="field">
+        <option value="educar">Educar / informar</option>
+        <option value="atrair">Atrair novos pacientes</option>
+        <option value="engajar">Engajamento / interação</option>
+        <option value="campanha">Divulgar campanha / horário</option>
+        <option value="humanizar">Humanizar a clínica / bastidores</option>
+      </select></div>
+      <div><label class="label">Tom de voz</label><select id="g-tom" class="field">
+        <option value="acolhedor">Acolhedor</option>
+        <option value="profissional">Profissional</option>
+        <option value="descontraido">Descontraído</option>
+        <option value="inspirador">Inspirador</option>
+      </select></div>
+      <div><label class="label">Público-alvo (opcional)</label><input id="g-publico" class="field" placeholder="Ex.: mulheres 30-50 anos"></div>
+      <div><label class="label">Duração do roteiro de vídeo</label><select id="g-duracao" class="field">
+        <option value="30">30 segundos</option>
+        <option value="45">45 segundos</option>
+        <option value="60">1 minuto</option>
+        <option value="90">1 minuto e 30</option>
+        <option value="120">2 minutos</option>
+        <option value="180">3 minutos</option>
+      </select></div>
+      <div><label class="label">Slides do carrossel</label><input id="g-slides" type="number" min="4" max="10" value="6" class="field"></div>
+    </div>
+    <div>
+      <label class="label">Formatos a gerar</label>
+      <div id="g-formats" class="flex flex-wrap gap-2">
+        <button type="button" class="chip active" data-fmt="instagram"><i class="fa-brands fa-instagram mr-1"></i>Instagram</button>
+        <button type="button" class="chip active" data-fmt="facebook"><i class="fa-brands fa-facebook mr-1"></i>Facebook</button>
+        <button type="button" class="chip active" data-fmt="whatsapp"><i class="fa-brands fa-whatsapp mr-1"></i>WhatsApp</button>
+        <button type="button" class="chip active" data-fmt="status"><i class="fa-solid fa-circle-notch mr-1"></i>Status</button>
+        <button type="button" class="chip active" data-fmt="video"><i class="fa-solid fa-clapperboard mr-1"></i>Roteiro de vídeo</button>
+        <button type="button" class="chip active" data-fmt="carousel"><i class="fa-solid fa-images mr-1"></i>Carrossel</button>
+      </div>
+    </div>
+    <div class="flex items-center gap-3 flex-wrap">
+      <button id="g-generate" class="btn btn-primary"><i class="fa-solid fa-bolt"></i>Gerar conteúdo</button>
+      <span id="g-mode-badge" class="text-[10px] text-slate-500"></span>
+    </div>
+  </div>
+  <div id="g-ethics-banner" class="hidden text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/25 rounded-xl p-3"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Revise antes de publicar: evite promessas de resultado e mantenha o caráter educativo (regras em "Minha marca").</div>
+  <div id="g-output" class="space-y-4"></div>
+</section>
+
+<section id="tab-planejador" class="hidden space-y-5">
+  <div class="card p-5 space-y-4">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h2 class="font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-calendar-week text-emerald-400"></i>Planejador de 4 semanas</h2>
+      <div class="flex items-center gap-2 flex-wrap">
+        <label class="text-[11px] text-slate-400">Posts por semana</label>
+        <select id="p-freq" class="field !w-auto !py-2 text-xs"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="7">7</option></select>
+        <button id="p-generate" class="btn btn-primary btn-xs"><i class="fa-solid fa-wand-magic-sparkles"></i>Gerar plano</button>
+        <button id="p-print" class="btn btn-soft btn-xs"><i class="fa-solid fa-print"></i>Imprimir</button>
+        <button id="p-clear" class="btn btn-danger btn-xs"><i class="fa-solid fa-broom"></i>Limpar</button>
+      </div>
+    </div>
+    <p class="text-xs text-slate-500">Gere ideias para 4 semanas com base na sua especialidade. Edite tema, formato e status livremente — tudo é salvo automaticamente.</p>
+  </div>
+  <div id="p-grid" class="space-y-5"></div>
+</section>
+
+<section id="tab-biblioteca" class="hidden space-y-4">
+  <div class="card p-4 flex flex-wrap items-center gap-3">
+    <input id="l-search" class="field !w-auto flex-1 min-w-[180px] text-xs" placeholder="Buscar por tema ou conteúdo...">
+    <select id="l-filter-tipo" class="field !w-auto text-xs"><option value="">Todos os tipos</option><option>Instagram</option><option>Facebook</option><option>WhatsApp</option><option>Status</option><option>Vídeo</option><option>Carrossel</option></select>
+    <button id="l-export" class="btn btn-soft btn-xs"><i class="fa-solid fa-file-export"></i>Exportar</button>
+  </div>
+  <div id="l-list" class="grid md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+  <p id="l-empty" class="text-xs text-slate-500 hidden">Nenhum conteúdo salvo ainda. Gere conteúdo na aba Gerador e clique em "Salvar".</p>
+</section>
+
+<section id="tab-artes" class="hidden">
+  <div class="grid lg:grid-cols-[360px_1fr] gap-5">
+    <div class="card p-4 space-y-4">
+      <h2 class="font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-image text-emerald-400"></i>Criar arte com seu logo</h2>
+      <div class="flex gap-2">
+        <button data-fmt="1080x1080" class="chip active flex-1">Quadrado 1080×1080</button>
+        <button data-fmt="1080x1920" class="chip flex-1">Vertical 1080×1920</button>
+      </div>
+      <div><label class="label">Título</label><input id="a-title" class="field" placeholder="Título de destaque"></div>
+      <div><label class="label">Subtítulo</label><textarea id="a-subtitle" class="field" rows="2" placeholder="Texto de apoio (opcional)"></textarea></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="label">Fundo</label><select id="a-bgmode" class="field"><option value="gradient">Gradiente da marca</option><option value="solid">Cor sólida</option><option value="image">Foto (upload)</option></select></div>
+        <div><label class="label">Cor sólida</label><input id="a-bgcolor" type="color" class="field !p-1 h-11" value="#0f172a"></div>
+      </div>
+      <div id="a-bgimage-wrap" class="hidden"><label class="label">Imagem de fundo</label><input id="a-bgimage" type="file" accept="image/*" class="text-xs"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="label">Tamanho do título</label><input id="a-titlesize" type="range" min="40" max="140" value="82" class="w-full"></div>
+        <div><label class="label">Tamanho do subtítulo</label><input id="a-subsize" type="range" min="20" max="70" value="36" class="w-full"></div>
+      </div>
+      <div><label class="label">Alinhamento do texto</label>
+        <div class="flex gap-2"><button data-align="left" class="chip flex-1">Esquerda</button><button data-align="center" class="chip active flex-1">Centro</button></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="label">Posição do logo</label><select id="a-logopos" class="field">
+          <option value="br">Inferior direita</option><option value="bl">Inferior esquerda</option>
+          <option value="tr">Superior direita</option><option value="tl">Superior esquerda</option>
+          <option value="center">Centralizado</option></select></div>
+        <div><label class="label">Tamanho do logo</label><input id="a-logosize" type="range" min="8" max="35" value="16" class="w-full"></div>
+      </div>
+      <label class="flex items-center gap-2 text-xs text-slate-400"><input id="a-footer" type="checkbox" checked>Mostrar rodapé com nome, CRM e WhatsApp</label>
+      <label class="flex items-center gap-2 text-xs text-slate-400"><input id="a-logobg" type="checkbox" checked>Fundo branco atrás do logo</label>
+      <button id="a-download" class="btn btn-primary w-full"><i class="fa-solid fa-download"></i>Baixar PNG</button>
+    </div>
+    <div class="card p-4 flex items-center justify-center">
+      <canvas id="a-canvas" width="1080" height="1080" style="max-width:100%;max-height:70vh;border-radius:.75rem;box-shadow:0 10px 35px rgba(0,0,0,.4)"></canvas>
+    </div>
+  </div>
+</section>
+
+<section id="tab-teleprompter" class="hidden">
+  <div class="grid lg:grid-cols-[340px_1fr] gap-5">
+    <div class="card p-4 space-y-4">
+      <h2 class="font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-video text-emerald-400"></i>Teleprompter</h2>
+      <div><label class="label">Roteiro</label><textarea id="t-text" class="field" rows="8" placeholder="Cole ou digite o roteiro aqui..."></textarea></div>
+      <div><label class="label">Carregar da biblioteca</label>
+        <div class="flex gap-2"><select id="t-library" class="field text-xs"></select><button id="t-load" class="btn btn-soft btn-xs">Carregar</button></div>
+      </div>
+      <div><label class="label">Velocidade</label><input id="t-speed" type="range" min="10" max="200" value="45" class="w-full"></div>
+      <div><label class="label">Tamanho da fonte</label><input id="t-size" type="range" min="20" max="100" value="48" class="w-full"></div>
+      <label class="flex items-center gap-2 text-xs text-slate-400"><input id="t-mirror" type="checkbox">Espelhar texto (vidro teleprompter)</label>
+      <label class="flex items-center gap-2 text-xs text-slate-400"><input id="t-camera" type="checkbox">Ativar câmera</label>
+      <div class="flex gap-2 flex-wrap">
+        <button id="t-play" class="btn btn-primary flex-1"><i class="fa-solid fa-play"></i>Iniciar</button>
+        <button id="t-reset" class="btn btn-soft"><i class="fa-solid fa-rotate-left"></i></button>
+        <button id="t-fullscreen" class="btn btn-soft"><i class="fa-solid fa-expand"></i></button>
+      </div>
+    </div>
+    <div id="t-stage" class="card relative overflow-hidden bg-black" style="height:70vh">
+      <video id="t-video" class="absolute inset-0 w-full h-full object-cover hidden" autoplay playsinline muted></video>
+      <div class="absolute left-0 right-0 top-1/2 border-t-2 border-emerald-400/60 pointer-events-none"></div>
+      <div id="t-overlay" class="absolute inset-0 overflow-hidden">
+        <div id="t-scroll" class="absolute left-0 right-0 px-8 text-center text-white font-extrabold whitespace-pre-wrap" style="top:100%"></div>
+      </div>
+      <div id="t-countdown" class="hidden absolute inset-0 flex items-center justify-center text-white text-8xl font-black bg-black/60"></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<div id="modal-overlay" class="hidden"><div id="modal-body"></div></div>
+<div id="toast-wrap"></div>
+
+<script>
+function $(id){ return document.getElementById(id); }
+function loadLS(key,fallback){ try{ const v=JSON.parse(localStorage.getItem(key)); return v==null?fallback:v; }catch(e){ return fallback; } }
+function saveLS(key,val){ localStorage.setItem(key, JSON.stringify(val)); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+function escapeHtml(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function formatDate(ts){ return new Date(ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'}); }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function lower(s){ return (s||'').toLowerCase(); }
+function capitalize(s){ return s? s[0].toUpperCase()+s.slice(1) : s; }
+function slugFile(text){ return (text||'arte').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')||'arte'; }
+function slug(text){ return (text||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,''); }
+const STOPWORDS=new Set(['de','da','do','das','dos','e','em','para','com','que','os','as','uma','um','no','na','nos','nas','por','sobre','sua','seu','ao','a','o']);
+function slugWords(text){
+  return (text||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9\s]/g,'').split(/\s+/).filter(w=>w && w.length>2 && !STOPWORDS.has(w));
+}
+function fill(tpl,ctx){ return tpl.replace(/\{tema\}/g, ctx.tema||'').replace(/\{specialty\}/g, (ctx.brand&&ctx.brand.specialty)||'sua especialidade'); }
+function firstSentence(text){ const line=(text||'').split('\n').find(l=>l.trim())||''; return line.length>90? line.slice(0,87)+'...' : line; }
+function fmtTime(s){ const m=Math.floor(s/60), sec=Math.round(s%60); return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'); }
+function durationLabel(total){
+  if(total<60) return total+' segundos';
+  if(total===60) return '1 minuto';
+  if(total%60===0) return (total/60)+' minutos';
+  return Math.floor(total/60)+' min '+(total%60)+'s';
+}
+function emoji(tom){ return {acolhedor:'💚',profissional:'🩺',descontraido:'😊',inspirador:'✨'}[tom]||'💚'; }
+
+function showToast(msg,type){
+  const wrap=$('toast-wrap');
+  const el=document.createElement('div');
+  el.className='text-xs font-semibold px-4 py-3 rounded-xl shadow-lg mb-2 '+(type==='error'?'bg-red-500/90 text-white':type==='success'?'bg-emerald-500/90 text-emerald-950':'bg-slate-800 text-slate-200');
+  el.textContent=msg; wrap.appendChild(el);
+  setTimeout(()=>{ el.style.transition='.3s'; el.style.opacity='0'; setTimeout(()=>el.remove(),300); },2600);
+}
+function openModal(html){ $('modal-body').innerHTML=html; $('modal-overlay').classList.remove('hidden'); }
+function closeModal(){ $('modal-overlay').classList.add('hidden'); }
+$('modal-overlay').addEventListener('click', e=>{ if(e.target.id==='modal-overlay') closeModal(); });
+function copyText(text){ navigator.clipboard.writeText(text).then(()=>showToast('Copiado!','success')).catch(()=>showToast('Não foi possível copiar.','error')); }
+
+const state = {
+  brand: loadLS('cgc_brand', {clinic:'',doctor:'',crm:'',rqe:'',specialty:'',whatsapp:'',instagram:'',facebook:'',site:'',address:'',color1:'#10b981',color2:'#0f172a',logo:''}),
+  settings: loadLS('cgc_settings', {mode:'local',geminiKey:'',geminiModel:'gemini-flash-latest'}),
+  library: loadLS('cgc_library', []),
+  plan: loadLS('cgc_plan', {freq:3,weeks:[[],[],[],[]]}),
+  art: loadLS('cgc_art', {format:'1080x1080',title:'',subtitle:'',bgmode:'gradient',bgcolor:'#0f172a',bgImage:'',titlesize:82,subsize:36,align:'center',logopos:'br',logosize:16,footer:true,logobg:true})
+};
+function persistBrand(){ saveLS('cgc_brand', state.brand); }
+function persistLibrary(){ saveLS('cgc_library', state.library); }
+function persistPlan(){ saveLS('cgc_plan', state.plan); }
+function persistArt(){ saveLS('cgc_art', state.art); }
+
+let lastResult=null, bgImgEl=null, logoImgEl=null;
+
+/* ---------- Navegação ---------- */
+function switchTab(name){
+  document.querySelectorAll('#tabs-nav .tab-btn').forEach(b=>{
+    const active=b.dataset.tab===name;
+    b.classList.toggle('tab-active',active); b.classList.toggle('tab-inactive',!active);
+  });
+  document.querySelectorAll('main > section').forEach(s=> s.id===('tab-'+name) ? s.classList.remove('hidden') : s.classList.add('hidden'));
+  if(name==='biblioteca') renderLibrary();
+  if(name==='planejador') renderPlanGrid();
+  if(name==='artes') renderArt();
+  if(name==='teleprompter') refreshTeleprompterLibrarySelect();
+  history.replaceState(null,'','#'+name);
+}
+document.querySelectorAll('#tabs-nav .tab-btn').forEach(b=> b.addEventListener('click', ()=> switchTab(b.dataset.tab)));
+
+/* ---------- Minha marca ---------- */
+const BRAND_FIELDS={clinic:'b-clinic',doctor:'b-doctor',crm:'b-crm',rqe:'b-rqe',specialty:'b-specialty',whatsapp:'b-whatsapp',instagram:'b-instagram',facebook:'b-facebook',site:'b-site',address:'b-address',color1:'b-color1',color2:'b-color2'};
+function fillBrandForm(){
+  for(const k in BRAND_FIELDS){ $(BRAND_FIELDS[k]).value = state.brand[k] || (k==='color1'?'#10b981':k==='color2'?'#0f172a':''); }
+  renderLogoPreview();
+}
+function bindBrandInputs(){
+  for(const k in BRAND_FIELDS){ $(BRAND_FIELDS[k]).addEventListener('input', ()=>{ state.brand[k]=$(BRAND_FIELDS[k]).value; }); }
+}
+function renderLogoPreview(){
+  $('b-logo-preview').innerHTML = state.brand.logo? '<img src="'+state.brand.logo+'" class="w-full h-full object-contain">' : 'Sem logo';
+}
+$('b-logo-file').addEventListener('change', e=>{
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{ state.brand.logo=reader.result; logoImgEl=null; renderLogoPreview(); persistBrand(); };
+  reader.readAsDataURL(file);
+});
+$('b-logo-remove').addEventListener('click', ()=>{ state.brand.logo=''; logoImgEl=null; renderLogoPreview(); persistBrand(); });
+$('b-save').addEventListener('click', ()=>{ persistBrand(); showToast('Marca salva com sucesso.','success'); });
+
+/* ---------- IA (opcional) / Configurações ---------- */
+function updateModeBadge(){
+  $('g-mode-badge').textContent = (state.settings.mode==='ai' && state.settings.geminiKey) ? 'Modo: IA (Gemini)' : 'Modo: Local — 100% grátis, funciona sem internet';
+}
+function openAISettings(){
+  openModal('<h3 class="font-bold text-sm mb-3 flex items-center gap-2"><i class="fa-solid fa-robot text-emerald-400"></i>Configurações de IA</h3>'+
+    '<p class="text-[11px] text-slate-500 mb-3">O app funciona 100% grátis e offline com o gerador local. Se quiser, cole uma chave gratuita do Google Gemini (Google AI Studio) para respostas mais variadas.</p>'+
+    '<label class="flex items-center gap-2 text-xs mb-3"><input type="checkbox" id="m-ai-enable" '+(state.settings.mode==='ai'?'checked':'')+'>Usar IA (Gemini) quando disponível</label>'+
+    '<label class="label">Chave Gemini</label><input id="m-gemini-key" type="password" class="field mb-3" value="'+escapeHtml(state.settings.geminiKey||'')+'" placeholder="AIza...">'+
+    '<label class="label">Modelo</label><input id="m-gemini-model" class="field mb-4" value="'+escapeHtml(state.settings.geminiModel||'gemini-flash-latest')+'">'+
+    '<div class="flex justify-end gap-2"><button class="btn btn-soft" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="m-ai-save">Salvar</button></div>');
+  $('m-ai-save').addEventListener('click', ()=>{
+    state.settings.mode = $('m-ai-enable').checked? 'ai':'local';
+    state.settings.geminiKey=$('m-gemini-key').value.trim();
+    state.settings.geminiModel=$('m-gemini-model').value.trim()||'gemini-flash-latest';
+    saveLS('cgc_settings', state.settings);
+    closeModal(); showToast('Configurações salvas.','success'); updateModeBadge();
+  });
+}
+$('ai-settings-btn').addEventListener('click', openAISettings);
+
+function stripFence(s){ return s.trim().replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/```\s*$/,'').trim(); }
+async function callGeminiJSON(prompt,key,model){
+  const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+':generateContent?key='+encodeURIComponent(key),{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.7}})
+  });
+  if(!r.ok) throw new Error('Gemini '+r.status+': '+(await r.text()).slice(0,180));
+  const data=await r.json();
+  const text=data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts ? data.candidates[0].content.parts.map(x=>x.text||'').join('') : '';
+  if(!text) throw new Error('Resposta vazia do Gemini.');
+  return JSON.parse(stripFence(text));
+}
+function buildAIPrompt(ctx, formats){
+  return 'Você é um especialista em marketing médico ético no Brasil. Gere conteúdo para redes sociais sobre o tema "'+ctx.tema+'" para uma clínica.\n'+
+  'Clínica: '+(ctx.brand.clinic||'')+'\nMédico(a): '+(ctx.brand.doctor||'')+'\nCRM: '+(ctx.brand.crm||'')+' '+(ctx.brand.rqe?('RQE: '+ctx.brand.rqe):'')+'\nEspecialidade: '+(ctx.brand.specialty||'')+'\nWhatsApp: '+(ctx.brand.whatsapp||'')+'\nInstagram: '+(ctx.brand.instagram||'')+'\n'+
+  'Objetivo: '+ctx.objetivo+'. Tom de voz: '+ctx.tom+'. Público-alvo: '+(ctx.publico||'geral')+'.\n'+
+  'Duração do roteiro de vídeo: '+ctx.duracao+' segundos. Número de slides do carrossel: '+ctx.slidesCount+'.\n\n'+
+  'REGRAS ÉTICAS OBRIGATÓRIAS (CFM):\n- NUNCA prometa cura, resultado garantido ou percentuais de sucesso.\n- NUNCA use termos sensacionalistas ("o melhor", "único", "milagroso") nem compare com outros profissionais/clínicas.\n- NUNCA sugira uso promocional de fotos antes/depois nem depoimentos de pacientes como propaganda.\n- NUNCA ofereça sorteio, desconto ou brinde vinculado a procedimento médico.\n- Mantenha caráter educativo/informativo.\n\n'+
+  'Responda APENAS com um JSON válido (sem markdown, sem comentários) no formato: {"instagram":{"caption":"...","hashtags":"..."},"facebook":{"post":"..."},"whatsapp":{"broadcast":"...","status":["...","..."]},"video":{"beats":[{"start":0,"end":5,"label":"Gancho","narration":"...","onscreen":"..."}],"editing":["...","..."]},"carousel":{"slides":[{"title":"...","body":"..."}]}}\n'+
+  'Gere somente as chaves para os formatos solicitados: '+formats.join(', ')+'. Texto em português do Brasil.';
+}
+
+/* ---------- Gerador local (100% grátis, sem IA) ---------- */
+const HOOKS={
+  educar:['Você sabia que {tema} pode mudar sua rotina de saúde?','Vamos falar sobre {tema} de um jeito simples e direto.','{tema}: o que vale saber, na prática.'],
+  atrair:['Já pensou em cuidar de {tema} com quem entende do assunto?','Marque sua consulta e tire suas dúvidas sobre {tema}.','Buscando informação confiável sobre {tema}? Chegou ao lugar certo.'],
+  engajar:['Conta pra gente nos comentários: o que você sabe sobre {tema}?','Você já ouviu falar sobre {tema}?','Salve esse post sobre {tema} para consultar depois.'],
+  campanha:['Semana especial: vamos falar sobre {tema}.','Nossa agenda tem horários abertos para tratar de {tema}.','Fique de olho: novidades sobre {tema} na nossa clínica.'],
+  humanizar:['Bastidores da nossa clínica: hoje o assunto é {tema}.','Nossa equipe se dedica todos os dias a temas como {tema}.','Um dia pensando em como te ajudar com {tema}.']
+};
+const CTA_MAP={
+  educar:'Ficou com dúvidas? Comenta aqui embaixo 👇',
+  atrair:'WHATSAPP',
+  engajar:'Compartilhe esse post com alguém que precisa ler isso.',
+  campanha:'WHATSAPP_VAGAS',
+  humanizar:'Segue a gente para acompanhar nosso dia a dia. 💚'
+};
+function cta(ctx){
+  const key=CTA_MAP[ctx.objetivo]||CTA_MAP.educar;
+  if(key==='WHATSAPP') return 'Agende sua consulta pelo WhatsApp'+(ctx.brand.whatsapp? (' '+ctx.brand.whatsapp):'')+'.';
+  if(key==='WHATSAPP_VAGAS') return 'Vagas limitadas — fale conosco pelo WhatsApp'+(ctx.brand.whatsapp? (' '+ctx.brand.whatsapp):'')+'.';
+  return key;
+}
+function bodyPoint1(ctx){
+  return 'Na especialidade de '+(ctx.brand.specialty||'nossa área')+', '+lower(ctx.tema)+' é um dos assuntos que mais recebemos dúvidas — e informação de qualidade muda a forma como você cuida da sua saúde.';
+}
+function bodyPoint2(ctx){
+  return '💡 Dica: agende uma avaliação individual para entender como '+lower(ctx.tema)+' se aplica ao seu caso. Cada pessoa é única e merece orientação personalizada.';
+}
+function contentTips(ctx){
+  return [
+    'Primeiro ponto sobre '+lower(ctx.tema)+': procure sempre orientação individualizada.',
+    'Segundo ponto: pequenos hábitos diários fazem diferença no cuidado com '+lower(ctx.tema)+'.',
+    'Terceiro ponto: fique atento aos sinais de alerta e não hesite em buscar avaliação.',
+    'Quarto ponto: existem opções de acompanhamento — converse com seu médico sobre a mais adequada para você.',
+    'Quinto ponto: acompanhamento regular é essencial para bons resultados a longo prazo.'
+  ];
+}
+function signature(brand){
+  const parts=[];
+  const crmLine=[brand.crm?('CRM '+brand.crm):'', brand.rqe?('RQE '+brand.rqe):''].filter(Boolean).join(' • ');
+  if(brand.doctor) parts.push('👨‍⚕️ '+brand.doctor+(crmLine? (' — '+crmLine):''));
+  else if(crmLine) parts.push(crmLine);
+  if(brand.clinic) parts.push('📍 '+brand.clinic);
+  if(brand.whatsapp) parts.push('📲 '+brand.whatsapp);
+  return parts.join('\n');
+}
+function buildHashtags(ctx){
+  const base=['#saude','#saudeebemestar','#educacaoemsaude','#clinica','#medicina'];
+  const specialty=ctx.brand.specialty? ['#'+slug(ctx.brand.specialty)]:[];
+  const temaTags=slugWords(ctx.tema).slice(0,4).map(w=>'#'+w);
+  const brandTag=ctx.brand.clinic? ['#'+slug(ctx.brand.clinic)]:[];
+  const cityTag=ctx.brand.address? ['#'+slug(ctx.brand.address)]:[];
+  return Array.from(new Set([...temaTags,...specialty,...base,...brandTag,...cityTag])).filter(Boolean).slice(0,18).join(' ');
+}
+function genInstagram(ctx){
+  const hook=fill(pick(HOOKS[ctx.objetivo]),ctx);
+  const caption=[hook,'',bodyPoint1(ctx),bodyPoint2(ctx),'',cta(ctx)].join('\n')+(ctx.includeSignature? ('\n\n'+signature(ctx.brand)):'');
+  return {caption, hashtags:buildHashtags(ctx)};
+}
+function genFacebook(ctx){
+  const text=[fill(pick(HOOKS[ctx.objetivo]),ctx),'',bodyPoint1(ctx),'','Na prática, isso significa observar sinais, buscar orientação especializada e não deixar dúvidas acumularem. '+bodyPoint2(ctx),'',cta(ctx)].join('\n')+(ctx.includeSignature? ('\n\n'+signature(ctx.brand)):'');
+  return {post:text};
+}
+function genWhatsapp(ctx){
+  const broadcast=['Olá! 👋','Hoje falamos sobre *'+ctx.tema+'*.','',bodyPoint1(ctx),'',cta(ctx),ctx.brand.whatsapp? ('Responda esta mensagem ou chame no '+ctx.brand.whatsapp+' para agendar.'):''].filter(Boolean).join('\n')+(ctx.includeSignature? ('\n\n'+signature(ctx.brand)):'');
+  const status=[
+    emoji(ctx.tom)+' '+ctx.tema,
+    'Toque para saber mais no nosso perfil.',
+    'Agende: '+(ctx.brand.whatsapp||'chame no WhatsApp')
+  ];
+  return {broadcast, status};
+}
+function genVideoScript(ctx){
+  const total=Number(ctx.duracao);
+  const beats=[]; let t=0;
+  const push=(len,label,narration,onscreen)=>{ beats.push({start:t,end:t+len,label,narration,onscreen}); t+=len; };
+  const hookLen=Math.max(3,Math.round(total*0.12));
+  push(hookLen,'Gancho', fill(pick(HOOKS[ctx.objetivo]),ctx)+' (olhe para a câmera)', ctx.tema.toUpperCase());
+  const problemLen=Math.round(total*0.2);
+  push(problemLen,'Problema/Contexto', 'Muitos pacientes chegam com dúvidas sobre '+lower(ctx.tema)+'. Isso é mais comum do que parece.', 'Você sabia?');
+  const ctaLen=Math.max(4,Math.round(total*0.15));
+  const contentTotal=Math.max(0,total-hookLen-problemLen-ctaLen);
+  const tips=contentTips(ctx);
+  const nTips= total<=45?2: total<=90?3: total<=150?4:5;
+  const per=Math.max(4,Math.round(contentTotal/nTips));
+  for(let i=0;i<nTips;i++){ push(per, 'Ponto '+(i+1), tips[i%tips.length], 'Dica '+(i+1)); }
+  push(Math.max(4,total-t), 'CTA final', cta(ctx)+' Deixe seu like e siga'+(ctx.brand.instagram? (' '+ctx.brand.instagram):'.'), 'Agende sua consulta');
+  const editing=[
+    'Formato vertical 9:16, cortes a cada 2-4s.',
+    'Legenda dinâmica destacando as palavras-chave.',
+    'Texto na tela reforçando: "'+ctx.tema+'".',
+    'Zoom sutil (Ken Burns) nos closes explicativos.',
+    'B-roll: consultório, exames, equipe em atendimento (com autorização de imagem).',
+    'Trilha instrumental leve, sem letra, volume baixo.',
+    'Últimos 3s: CTA com WhatsApp/Instagram na tela.'
+  ];
+  return {durationLabel:durationLabel(total), beats, editing};
+}
+function genCarousel(ctx){
+  const n=Math.min(10,Math.max(4,Number(ctx.slidesCount)||6));
+  const slides=[{title:fill(pick(HOOKS[ctx.objetivo]),ctx), body:''}];
+  const tips=contentTips(ctx);
+  for(let i=0;i<n-2;i++){ slides.push({title:'Ponto '+(i+1), body:tips[i%tips.length]}); }
+  slides.push({title:'Agende sua avaliação', body:cta(ctx)});
+  return {slides};
+}
+function localGenerateAll(ctx){
+  return { instagram:genInstagram(ctx), facebook:genFacebook(ctx), whatsapp:genWhatsapp(ctx), video:genVideoScript(ctx), carousel:genCarousel(ctx) };
+}
+function normalizeResult(ai,ctx){
+  const local=localGenerateAll(ctx);
+  return {
+    instagram: (ai.instagram && ai.instagram.caption) ? ai.instagram : local.instagram,
+    facebook: (ai.facebook && ai.facebook.post) ? ai.facebook : local.facebook,
+    whatsapp: (ai.whatsapp && ai.whatsapp.broadcast) ? ai.whatsapp : local.whatsapp,
+    video: (ai.video && Array.isArray(ai.video.beats) && ai.video.beats.length) ? Object.assign({},ai.video,{durationLabel:local.video.durationLabel}) : local.video,
+    carousel: (ai.carousel && Array.isArray(ai.carousel.slides) && ai.carousel.slides.length) ? ai.carousel : local.carousel
+  };
+}
+function videoScriptText(video){
+  let out='Roteiro de vídeo ('+(video.durationLabel||'')+')\n\n';
+  video.beats.forEach(b=>{ out+='['+fmtTime(b.start)+'–'+fmtTime(b.end)+'] '+b.label+'\nFala: '+b.narration+'\nTela: '+b.onscreen+'\n\n'; });
+  out+='Comandos de edição:\n'+(video.editing||[]).map(e=>'• '+e).join('\n');
+  return out;
+}
+function carouselText(carousel){ return carousel.slides.map((s,i)=>'Slide '+(i+1)+': '+s.title+'\n'+s.body).join('\n\n'); }
+
+/* ---------- Aba Gerador: UI ---------- */
+document.querySelectorAll('#g-formats .chip').forEach(c=> c.addEventListener('click', ()=> c.classList.toggle('active')));
+
+function saveToLibrary(tipo,tema,content,meta){
+  state.library.unshift({id:uid(),createdAt:Date.now(),tipo,tema,content,meta:meta||{}});
+  persistLibrary();
+  showToast('Salvo na biblioteca.','success');
+  if(!$('tab-biblioteca').classList.contains('hidden')) renderLibrary();
+}
+function sendToArt(title,subtitle){
+  state.art.title=(title||'').slice(0,120);
+  state.art.subtitle=(subtitle||'').slice(0,200);
+  persistArt();
+  switchTab('artes');
+  fillArtForm();
+  renderArt();
+}
+
+function renderInstagramCard(data){
+  return '<div class="card p-4 space-y-3"><h3 class="font-bold text-xs flex items-center gap-2"><i class="fa-brands fa-instagram text-pink-400"></i>Instagram — legenda</h3>'+
+    '<div class="whitespace-pre-wrap text-xs text-slate-300 leading-relaxed bg-slate-950/40 rounded-lg p-3">'+escapeHtml(data.caption)+'</div>'+
+    '<div class="text-[11px] text-emerald-400">'+escapeHtml(data.hashtags)+'</div>'+
+    '<div class="flex gap-2 flex-wrap">'+
+    '<button class="btn btn-soft btn-xs" data-act="copy" data-fmt="instagram"><i class="fa-solid fa-copy"></i>Copiar</button>'+
+    '<button class="btn btn-soft btn-xs" data-act="save" data-fmt="instagram"><i class="fa-solid fa-bookmark"></i>Salvar</button>'+
+    '<button class="btn btn-soft btn-xs" data-act="art" data-fmt="instagram"><i class="fa-solid fa-image"></i>Baixar arte</button></div></div>';
+}
+function renderFacebookCard(data){
+  return '<div class="card p-4 space-y-3"><h3 class="font-bold text-xs flex items-center gap-2"><i class="fa-brands fa-facebook text-blue-400"></i>Facebook — publicação</h3>'+
+    '<div class="whitespace-pre-wrap text-xs text-slate-300 leading-relaxed bg-slate-950/40 rounded-lg p-3">'+escapeHtml(data.post)+'</div>'+
+    '<div class="flex gap-2 flex-wrap">'+
+    '<button class="btn btn-soft btn-xs" data-act="copy" data-fmt="facebook"><i class="fa-solid fa-copy"></i>Copiar</button>'+
+    '<button class="btn btn-soft btn-xs" data-act="save" data-fmt="facebook"><i class="fa-solid fa-bookmark"></i>Salvar</button>'+
+    '<button class="btn btn-soft btn-xs" data-act="art" data-fmt="facebook"><i class="fa-solid fa-image"></i>Baixar arte</button></div></div>';
+}
+function renderWhatsappCard(data){
+  return '<div class="card p-4 space-y-3"><h3 class="font-bold text-xs flex items-center gap-2"><i class="fa-brands fa-whatsapp text-emerald-400"></i>WhatsApp — broadcast</h3>'+
+    '<div class="whitespace-pre-wrap text-xs text-slate-300 leading-relaxed bg-slate-950/40 rounded-lg p-3">'+escapeHtml(data.broadcast)+'</div>'+
+    '<div class="flex gap-2 flex-wrap">'+
+    '<button class="btn btn-soft btn-xs" data-act="copy" data-fmt="whatsapp"><i class="fa-solid fa-copy"></i>Copiar</button>'+
+    '<button class="btn btn-soft btn-xs" data-act="save" data-fmt="whatsapp"><i class="fa-solid fa-bookmark"></i>Salvar</button>'+
+    '<button class="btn btn-soft btn-xs" data-act="art" data-fmt="whatsapp"><i class="fa-solid fa-image"></i>Baixar arte</button></div></div>';
+}
+function renderStatusCard(status){
+  const items=status.map((s,i)=>'<div class="bg-slate-950/40 rounded-lg p-3 flex items-center justify-between gap-2">'+
+    '<p class="text-xs whitespace-pre-wrap flex-1">'+escapeHtml(s)+'</p>'+
+    '<div class="flex gap-1"><button class="btn btn-soft btn-xs" data-act="copy" data-fmt="whatsapp-status" data-idx="'+i+'"><i class="fa-solid fa-copy"></i></button>'+
+    '<button class="btn btn-soft btn-xs" data-act="art" data-fmt="whatsapp-status" data-idx="'+i+'"><i class="fa-solid fa-image"></i></button></div></div>').join('');
+  return '<div class="card p-4 space-y-3"><h3 class="font-bold text-xs flex items-center gap-2"><i class="fa-solid fa-circle-notch text-emerald-400"></i>Status (WhatsApp/Instagram)</h3>'+
+    '<div class="space-y-2">'+items+'</div>'+
+    '<button class="btn btn-soft btn-xs" data-act="save" data-fmt="whatsapp-status"><i class="fa-solid fa-bookmark"></i>Salvar todos</button></div>';
+}
+function renderVideoCard(video){
+  const beats=video.beats.map(b=>'<div class="bg-slate-950/40 rounded-lg p-3"><div class="text-[10px] font-bold text-emerald-400 mb-1">['+fmtTime(b.start)+'–'+fmtTime(b.end)+'] '+escapeHtml(b.label)+'</div>'+
+    '<p class="text-xs text-slate-300"><b>Fala:</b> '+escapeHtml(b.narration)+'</p><p class="text-[11px] text-slate-500"><b>Tela:</b> '+escapeHtml(b.onscreen)+'</p></div>').join('');
+  const editing=(video.editing||[]).map(e=>'<li>'+escapeHtml(e)+'</li>').join('');
+  return '<div class="card p-4 space-y-3"><h3 class="font-bold text-xs flex items-center gap-2"><i class="fa-solid fa-clapperboard text-amber-400"></i>Roteiro de vídeo — '+escapeHtml(video.durationLabel||'')+'</h3>'+
+    '<div class="space-y-2">'+beats+'</div>'+
+    '<div><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Comandos de edição</p><ul class="text-[11px] text-slate-400 list-disc pl-4 space-y-1">'+editing+'</ul></div>'+
+    '<div class="flex gap-2 flex-wrap">'+
+    '<button class="btn btn-soft btn-xs" data-act="copy" data-fmt="video"><i class="fa-solid fa-copy"></i>Copiar roteiro</button>'+
+    '<button class="btn btn-soft btn-xs" data-act="save" data-fmt="video"><i class="fa-solid fa-bookmark"></i>Salvar</button>'+
+    '<button class="btn btn-soft btn-xs" data-act="tele" data-fmt="video"><i class="fa-solid fa-video"></i>Abrir no teleprompter</button></div></div>';
+}
+function renderCarouselCard(data){
+  const slidesHtml=data.slides.map((s,i)=>'<div class="bg-slate-950/40 rounded-lg p-3 space-y-1">'+
+    '<div class="flex items-center justify-between"><span class="text-[10px] text-slate-500 font-bold">SLIDE '+(i+1)+'</span>'+
+    '<button class="btn btn-soft btn-xs" data-act="art" data-fmt="carousel" data-idx="'+i+'"><i class="fa-solid fa-image"></i>Arte</button></div>'+
+    '<p class="text-xs font-bold">'+escapeHtml(s.title)+'</p><p class="text-[11px] text-slate-400 whitespace-pre-wrap">'+escapeHtml(s.body)+'</p></div>').join('');
+  return '<div class="card p-4 space-y-3"><h3 class="font-bold text-xs flex items-center gap-2"><i class="fa-solid fa-images text-sky-400"></i>Carrossel ('+data.slides.length+' slides)</h3>'+
+    '<div class="grid sm:grid-cols-2 gap-2">'+slidesHtml+'</div>'+
+    '<div class="flex gap-2 flex-wrap">'+
+    '<button class="btn btn-soft btn-xs" data-act="copy" data-fmt="carousel"><i class="fa-solid fa-copy"></i>Copiar tudo</button>'+
+    '<button class="btn btn-soft btn-xs" data-act="save" data-fmt="carousel"><i class="fa-solid fa-bookmark"></i>Salvar</button></div></div>';
+}
+function renderOutput(ctx,result,formats){
+  const blocks=[];
+  if(formats.includes('instagram')) blocks.push(renderInstagramCard(result.instagram));
+  if(formats.includes('facebook')) blocks.push(renderFacebookCard(result.facebook));
+  if(formats.includes('whatsapp')) blocks.push(renderWhatsappCard(result.whatsapp));
+  if(formats.includes('status')) blocks.push(renderStatusCard(result.whatsapp.status));
+  if(formats.includes('video')) blocks.push(renderVideoCard(result.video));
+  if(formats.includes('carousel')) blocks.push(renderCarouselCard(result.carousel));
+  $('g-output').innerHTML=blocks.join('');
+}
+
+async function handleGenerate(){
+  const tema=$('g-tema').value.trim();
+  if(!tema) return showToast('Digite um tema.','error');
+  const formats=[...document.querySelectorAll('#g-formats .chip.active')].map(c=>c.dataset.fmt);
+  if(!formats.length) return showToast('Selecione ao menos um formato.','error');
+  const ctx={tema, objetivo:$('g-objetivo').value, tom:$('g-tom').value, publico:$('g-publico').value.trim(), duracao:$('g-duracao').value, slidesCount:$('g-slides').value, brand:state.brand, includeSignature:true};
+  const btn=$('g-generate'); btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner animate-spin"></i>Gerando...';
+  try{
+    let result;
+    if(state.settings.mode==='ai' && state.settings.geminiKey){
+      try{
+        const ai=await callGeminiJSON(buildAIPrompt(ctx,formats), state.settings.geminiKey, state.settings.geminiModel||'gemini-flash-latest');
+        result=normalizeResult(ai,ctx);
+      }catch(e){
+        console.error(e); showToast('IA falhou, usando gerador local: '+e.message,'error');
+        result=localGenerateAll(ctx);
+      }
+    } else {
+      result=localGenerateAll(ctx);
+    }
+    lastResult={ctx,result,formats};
+    renderOutput(ctx,result,formats);
+    $('g-ethics-banner').classList.remove('hidden');
+  } finally {
+    btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-bolt"></i>Gerar conteúdo';
+  }
+}
+$('g-generate').addEventListener('click', handleGenerate);
+
+$('g-output').addEventListener('click', e=>{
+  const btn=e.target.closest('[data-act]'); if(!btn || !lastResult) return;
+  const act=btn.dataset.act, fmt=btn.dataset.fmt, idx=btn.dataset.idx;
+  const ctx=lastResult.ctx, result=lastResult.result;
+  if(fmt==='instagram'){
+    const text=result.instagram.caption+'\n\n'+result.instagram.hashtags;
+    if(act==='copy') copyText(text);
+    if(act==='save') saveToLibrary('Instagram',ctx.tema,text,{});
+    if(act==='art') sendToArt(ctx.tema, firstSentence(result.instagram.caption));
+  } else if(fmt==='facebook'){
+    const text=result.facebook.post;
+    if(act==='copy') copyText(text);
+    if(act==='save') saveToLibrary('Facebook',ctx.tema,text,{});
+    if(act==='art') sendToArt(ctx.tema, firstSentence(text));
+  } else if(fmt==='whatsapp'){
+    const text=result.whatsapp.broadcast;
+    if(act==='copy') copyText(text);
+    if(act==='save') saveToLibrary('WhatsApp',ctx.tema,text,{});
+    if(act==='art') sendToArt(ctx.tema, firstSentence(text));
+  } else if(fmt==='whatsapp-status'){
+    if(idx!==undefined){
+      const text=result.whatsapp.status[idx];
+      if(act==='copy') copyText(text);
+      if(act==='art') sendToArt(ctx.tema, text);
+    } else if(act==='save'){
+      saveToLibrary('Status',ctx.tema,result.whatsapp.status.join('\n---\n'),{});
+    }
+  } else if(fmt==='video'){
+    const text=videoScriptText(result.video);
+    if(act==='copy') copyText(text);
+    if(act==='save') saveToLibrary('Vídeo',ctx.tema,text,{duracao:ctx.duracao});
+    if(act==='tele'){ $('t-text').value=text; tpSetText(); switchTab('teleprompter'); }
+  } else if(fmt==='carousel'){
+    if(idx!==undefined){
+      const s=result.carousel.slides[idx];
+      if(act==='art') sendToArt(s.title, s.body);
+    } else {
+      const text=carouselText(result.carousel);
+      if(act==='copy') copyText(text);
+      if(act==='save') saveToLibrary('Carrossel',ctx.tema,text,{});
+    }
+  }
+});
+
+/* ---------- Planejador de 4 semanas ---------- */
+const PILLARS=[
+  'Mito ou verdade: {specialty}',
+  'Sinais de alerta que merecem atenção',
+  'Cuidados no dia a dia para sua saúde',
+  'Perguntas frequentes dos pacientes',
+  'Bastidores da nossa clínica',
+  'Prevenção: o que você pode fazer hoje',
+  'Quando é hora de procurar um médico',
+  'Cuidados após a consulta',
+  'Curiosidade sobre {specialty}',
+  'Rotina saudável no dia a dia',
+  'Como funciona a primeira consulta',
+  'Dúvida comum respondida em poucas palavras'
+];
+const PLAN_FORMATS=['Instagram','Carrossel','WhatsApp','Vídeo','Facebook','Status'];
+function renderPlanGrid(){
+  const grid=$('p-grid'); grid.innerHTML='';
+  $('p-freq').value=state.plan.freq||3;
+  state.plan.weeks.forEach((week,w)=>{
+    const rows=week.map((slot,i)=>
+      '<div class="grid md:grid-cols-[1fr_150px_150px_100px] gap-2 items-center bg-slate-950/40 border border-slate-800 rounded-lg p-2">'+
+      '<input class="field !py-2 text-xs" data-w="'+w+'" data-i="'+i+'" data-f="tema" value="'+escapeHtml(slot.tema)+'">'+
+      '<select class="field !py-2 text-xs" data-w="'+w+'" data-i="'+i+'" data-f="formato">'+PLAN_FORMATS.map(f=>'<option '+(slot.formato===f?'selected':'')+'>'+f+'</option>').join('')+'</select>'+
+      '<select class="field !py-2 text-xs" data-w="'+w+'" data-i="'+i+'" data-f="status">'+['Planejado','Em produção','Publicado'].map(s=>'<option '+(slot.status===s?'selected':'')+'>'+s+'</option>').join('')+'</select>'+
+      '<button class="btn btn-soft btn-xs" data-w="'+w+'" data-i="'+i+'" data-goto="1"><i class="fa-solid fa-arrow-right"></i>Gerar</button></div>'
+    ).join('');
+    grid.innerHTML += '<div class="card p-4 space-y-2"><h3 class="font-bold text-xs text-emerald-400">Semana '+(w+1)+'</h3>'+(rows||'<p class="text-[11px] text-slate-500">Clique em "Gerar plano" para preencher.</p>')+'</div>';
+  });
+}
+function planFieldUpdate(e){
+  const t=e.target; if(!t.dataset.f) return;
+  state.plan.weeks[t.dataset.w][t.dataset.i][t.dataset.f]=t.value;
+  persistPlan();
+}
+$('p-grid').addEventListener('input', planFieldUpdate);
+$('p-grid').addEventListener('change', planFieldUpdate);
+$('p-grid').addEventListener('click', e=>{
+  const btn=e.target.closest('[data-goto]'); if(!btn) return;
+  const slot=state.plan.weeks[btn.dataset.w][btn.dataset.i];
+  $('g-tema').value=slot.tema;
+  switchTab('gerador');
+  $('g-tema').focus();
+});
+$('p-generate').addEventListener('click', ()=>{
+  const freq=Number($('p-freq').value);
+  state.plan.freq=freq;
+  const weeks=[[],[],[],[]];
+  let p=0;
+  for(let w=0; w<4; w++){
+    for(let i=0;i<freq;i++){
+      const tema=fill(PILLARS[p % PILLARS.length], {tema:'', brand:state.brand});
+      weeks[w].push({tema, formato:PLAN_FORMATS[p%PLAN_FORMATS.length], status:'Planejado'});
+      p++;
+    }
+  }
+  state.plan.weeks=weeks;
+  persistPlan(); renderPlanGrid();
+  showToast('Plano de 4 semanas gerado. Edite livremente cada card.','success');
+});
+$('p-clear').addEventListener('click', ()=>{
+  if(!confirm('Limpar todo o planejamento?')) return;
+  state.plan.weeks=[[],[],[],[]]; persistPlan(); renderPlanGrid();
+});
+$('p-print').addEventListener('click', ()=> window.print());
+
+/* ---------- Biblioteca ---------- */
+function renderLibrary(){
+  const q=($('l-search').value||'').toLowerCase();
+  const tipoFilter=$('l-filter-tipo').value;
+  const items=state.library.filter(it=> (!tipoFilter||it.tipo===tipoFilter) && (!q || (it.tema+it.content).toLowerCase().includes(q)));
+  $('l-empty').classList.toggle('hidden', state.library.length>0);
+  $('l-list').innerHTML = items.map(it=>
+    '<div class="card p-4 space-y-2" data-id="'+it.id+'">'+
+    '<div class="flex items-center justify-between"><span class="chip active">'+escapeHtml(it.tipo)+'</span><span class="text-[10px] text-slate-500">'+formatDate(it.createdAt)+'</span></div>'+
+    '<h4 class="font-bold text-xs">'+escapeHtml(it.tema)+'</h4>'+
+    '<p class="text-[11px] text-slate-400 whitespace-pre-wrap" style="display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden">'+escapeHtml(it.content)+'</p>'+
+    '<div class="flex gap-2 flex-wrap pt-1">'+
+    '<button class="btn btn-soft btn-xs" data-lact="view"><i class="fa-solid fa-eye"></i>Ver</button>'+
+    '<button class="btn btn-soft btn-xs" data-lact="copy"><i class="fa-solid fa-copy"></i>Copiar</button>'+
+    '<button class="btn btn-soft btn-xs" data-lact="art"><i class="fa-solid fa-image"></i>Arte</button>'+
+    '<button class="btn btn-soft btn-xs" data-lact="tele"><i class="fa-solid fa-video"></i>Teleprompter</button>'+
+    '<button class="btn btn-danger btn-xs" data-lact="delete"><i class="fa-solid fa-trash"></i></button></div></div>'
+  ).join('');
+}
+$('l-list').addEventListener('click', e=>{
+  const btn=e.target.closest('[data-lact]'); if(!btn) return;
+  const card=btn.closest('[data-id]'); const id=card.dataset.id;
+  const it=state.library.find(x=>x.id===id); if(!it) return;
+  const act=btn.dataset.lact;
+  if(act==='copy') copyText(it.content);
+  if(act==='delete'){ if(confirm('Excluir este conteúdo da biblioteca?')){ state.library=state.library.filter(x=>x.id!==id); persistLibrary(); renderLibrary(); } }
+  if(act==='art'){ sendToArt(it.tema, firstSentence(it.content)); }
+  if(act==='tele'){ $('t-text').value=it.content; tpSetText(); switchTab('teleprompter'); }
+  if(act==='view'){
+    openModal('<h3 class="font-bold text-sm mb-2">'+escapeHtml(it.tipo)+' — '+escapeHtml(it.tema)+'</h3>'+
+      '<textarea id="m-view-text" class="field" rows="14">'+escapeHtml(it.content)+'</textarea>'+
+      '<div class="flex justify-end gap-2 mt-3"><button class="btn btn-soft" onclick="closeModal()">Fechar</button><button class="btn btn-primary" id="m-view-save">Salvar edição</button></div>');
+    $('m-view-save').addEventListener('click', ()=>{ it.content=$('m-view-text').value; persistLibrary(); closeModal(); renderLibrary(); showToast('Atualizado.','success'); });
+  }
+});
+$('l-search').addEventListener('input', renderLibrary);
+$('l-filter-tipo').addEventListener('change', renderLibrary);
+$('l-export').addEventListener('click', ()=>{
+  const text=state.library.map(it=>'### '+it.tipo+' — '+it.tema+' ('+formatDate(it.createdAt)+')\n'+it.content).join('\n\n---\n\n');
+  const blob=new Blob([text],{type:'text/plain'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='biblioteca-conteudo.txt'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+});
+
+/* ---------- Artes (canvas com logo) ---------- */
+function loadImage(src){ return new Promise((res,rej)=>{ const img=new Image(); img.onload=()=>res(img); img.onerror=rej; img.src=src; }); }
+async function ensureLogoImage(){
+  if(state.brand.logo){ if(!logoImgEl){ try{ logoImgEl=await loadImage(state.brand.logo); }catch(e){ logoImgEl=null; } } }
+  else logoImgEl=null;
+}
+function wrapText(ctx,text,x,y,maxWidth,lineHeight,align){
+  const words=(text||'').split(/\s+/).filter(Boolean);
+  let line='', cy=y;
+  for(let i=0;i<words.length;i++){
+    const test=line? line+' '+words[i] : words[i];
+    if(ctx.measureText(test).width>maxWidth && line){ ctx.fillText(line,x,cy); line=words[i]; cy+=lineHeight; }
+    else line=test;
+  }
+  if(line){ ctx.fillText(line,x,cy); cy+=lineHeight; }
+  return cy;
+}
+function drawCover(ctx,img,x,y,w,h){
+  const ir=img.width/img.height, tr=w/h;
+  let sw,sh,sx,sy;
+  if(ir>tr){ sh=img.height; sw=sh*tr; sx=(img.width-sw)/2; sy=0; }
+  else { sw=img.width; sh=sw/tr; sx=0; sy=(img.height-sh)/2; }
+  ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);
+}
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath(); ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+async function renderArt(){
+  const canvas=$('a-canvas');
+  const parts=state.art.format.split('x'); const w=Number(parts[0]), h=Number(parts[1]);
+  canvas.width=w; canvas.height=h;
+  const ctx=canvas.getContext('2d');
+  await ensureLogoImage();
+  if(state.art.bgmode==='image' && bgImgEl){
+    drawCover(ctx,bgImgEl,0,0,w,h);
+    ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(0,0,w,h);
+  } else if(state.art.bgmode==='solid'){
+    ctx.fillStyle=state.art.bgcolor; ctx.fillRect(0,0,w,h);
+  } else {
+    const g=ctx.createLinearGradient(0,0,w,h);
+    g.addColorStop(0, state.brand.color1||'#10b981'); g.addColorStop(1, state.brand.color2||'#0f172a');
+    ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+  }
+  const align=state.art.align;
+  const padding=w*0.08;
+  ctx.textAlign= align==='center'?'center':'left';
+  ctx.textBaseline='alphabetic';
+  const tx= align==='center'? w/2 : padding;
+  let ty=h*0.42;
+  ctx.fillStyle='#ffffff';
+  ctx.font='800 '+state.art.titlesize+'px Inter, sans-serif';
+  ty=wrapText(ctx, state.art.title||'', tx, ty, w-padding*2, state.art.titlesize*1.15, align);
+  if(state.art.subtitle){
+    ctx.font='500 '+state.art.subsize+'px Inter, sans-serif';
+    ctx.fillStyle='rgba(255,255,255,.88)';
+    ty=wrapText(ctx, state.art.subtitle, tx, ty+state.art.subsize*0.6, w-padding*2, state.art.subsize*1.3, align);
+  }
+  const footerH= state.art.footer? h*0.09 : 0;
+  if(state.art.footer){
+    ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(0,h-footerH,w,footerH);
+    ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.font='700 '+Math.round(footerH*0.28)+'px Inter, sans-serif';
+    const line1=[state.brand.doctor, state.brand.crm?('CRM '+state.brand.crm):'', state.brand.rqe?('RQE '+state.brand.rqe):''].filter(Boolean).join('  •  ');
+    ctx.fillText(line1, w/2, h-footerH+footerH*0.42);
+    ctx.font='500 '+Math.round(footerH*0.22)+'px Inter, sans-serif'; ctx.fillStyle='rgba(255,255,255,.8)';
+    const line2=[state.brand.clinic, state.brand.whatsapp].filter(Boolean).join('  •  ');
+    ctx.fillText(line2, w/2, h-footerH+footerH*0.72);
+  }
+  if(logoImgEl){
+    const size=w*(state.art.logosize/100);
+    const ratio=logoImgEl.width/logoImgEl.height || 1;
+    const lw=size, lh=size/ratio;
+    const margin=w*0.05;
+    let lx,ly;
+    switch(state.art.logopos){
+      case 'tl': lx=margin; ly=margin; break;
+      case 'tr': lx=w-margin-lw; ly=margin; break;
+      case 'bl': lx=margin; ly=h-margin-lh-footerH; break;
+      case 'center': lx=w/2-lw/2; ly=h/2-lh/2; break;
+      default: lx=w-margin-lw; ly=h-margin-lh-footerH;
+    }
+    if(state.art.logobg){
+      const pad=size*0.12;
+      roundRect(ctx, lx-pad, ly-pad, lw+pad*2, lh+pad*2, size*0.12);
+      ctx.fillStyle='rgba(255,255,255,.92)'; ctx.fill();
+    }
+    ctx.drawImage(logoImgEl, lx, ly, lw, lh);
+  }
+}
+function fillArtForm(){
+  $('a-title').value=state.art.title||'';
+  $('a-subtitle').value=state.art.subtitle||'';
+  $('a-bgmode').value=state.art.bgmode;
+  $('a-bgcolor').value=state.art.bgcolor;
+  $('a-titlesize').value=state.art.titlesize;
+  $('a-subsize').value=state.art.subsize;
+  $('a-logopos').value=state.art.logopos;
+  $('a-logosize').value=state.art.logosize;
+  $('a-footer').checked=!!state.art.footer;
+  $('a-logobg').checked=!!state.art.logobg;
+  $('a-bgimage-wrap').classList.toggle('hidden', state.art.bgmode!=='image');
+  document.querySelectorAll('#tab-artes [data-fmt]').forEach(b=> b.classList.toggle('active', b.dataset.fmt===state.art.format));
+  document.querySelectorAll('#tab-artes [data-align]').forEach(b=> b.classList.toggle('active', b.dataset.align===state.art.align));
+  if(state.art.bgImage && !bgImgEl){ loadImage(state.art.bgImage).then(img=>{ bgImgEl=img; renderArt(); }); }
+}
+document.querySelectorAll('#tab-artes [data-fmt]').forEach(b=> b.addEventListener('click', ()=>{
+  document.querySelectorAll('#tab-artes [data-fmt]').forEach(x=>x.classList.remove('active')); b.classList.add('active');
+  state.art.format=b.dataset.fmt; persistArt(); renderArt();
+}));
+document.querySelectorAll('#tab-artes [data-align]').forEach(b=> b.addEventListener('click', ()=>{
+  document.querySelectorAll('#tab-artes [data-align]').forEach(x=>x.classList.remove('active')); b.classList.add('active');
+  state.art.align=b.dataset.align; persistArt(); renderArt();
+}));
+(function bindArtInputs(){
+  const map={'a-title':'title','a-subtitle':'subtitle','a-bgmode':'bgmode','a-bgcolor':'bgcolor','a-titlesize':'titlesize','a-subsize':'subsize','a-logopos':'logopos','a-logosize':'logosize'};
+  for(const id in map){
+    $(id).addEventListener('input', ()=>{
+      const key=map[id]; let v=$(id).value;
+      if(key==='titlesize'||key==='subsize'||key==='logosize') v=Number(v);
+      state.art[key]=v;
+      if(id==='a-bgmode') $('a-bgimage-wrap').classList.toggle('hidden', v!=='image');
+      persistArt(); renderArt();
+    });
+  }
+  $('a-footer').addEventListener('change', ()=>{ state.art.footer=$('a-footer').checked; persistArt(); renderArt(); });
+  $('a-logobg').addEventListener('change', ()=>{ state.art.logobg=$('a-logobg').checked; persistArt(); renderArt(); });
+  $('a-bgimage').addEventListener('change', e=>{
+    const file=e.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=async ()=>{ state.art.bgImage=reader.result; bgImgEl=await loadImage(reader.result); persistArt(); renderArt(); };
+    reader.readAsDataURL(file);
+  });
+})();
+$('a-download').addEventListener('click', ()=>{
+  const canvas=$('a-canvas');
+  canvas.toBlob(blob=>{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=slugFile(state.art.title||'arte')+'-'+state.art.format+'.png';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  },'image/png');
+});
+
+/* ---------- Teleprompter ---------- */
+let tpPlaying=false, tpPos=0, tpLastTs=null, tpStream=null;
+function tpSpeed(){ return Number($('t-speed').value); }
+function applyFontSize(){ $('t-scroll').style.fontSize=$('t-size').value+'px'; $('t-scroll').style.lineHeight='1.5'; }
+function tpSetText(){ $('t-scroll').textContent=$('t-text').value || 'Cole seu roteiro ao lado.'; }
+function tpStep(ts){
+  if(tpLastTs==null) tpLastTs=ts;
+  const dt=(ts-tpLastTs)/1000; tpLastTs=ts;
+  if(tpPlaying){ tpPos -= tpSpeed()*dt; $('t-scroll').style.transform='translateY('+tpPos+'px)'; }
+  requestAnimationFrame(tpStep);
+}
+requestAnimationFrame(tpStep);
+function tpCountdownThenPlay(){
+  let n=3; const el=$('t-countdown'); el.classList.remove('hidden');
+  const iv=setInterval(()=>{
+    el.textContent = n>0? String(n) : 'Vai!';
+    n--;
+    if(n<-1){ clearInterval(iv); el.classList.add('hidden'); tpPlaying=true; tpLastTs=null; $('t-play').innerHTML='<i class="fa-solid fa-pause"></i>Pausar'; }
+  },700);
+}
+$('t-play').addEventListener('click', ()=>{
+  if(!tpPlaying){ tpCountdownThenPlay(); }
+  else { tpPlaying=false; $('t-play').innerHTML='<i class="fa-solid fa-play"></i>Continuar'; }
+});
+$('t-reset').addEventListener('click', ()=>{
+  tpPlaying=false; tpPos=0; $('t-scroll').style.transform='translateY(0px)'; $('t-play').innerHTML='<i class="fa-solid fa-play"></i>Iniciar';
+});
+$('t-fullscreen').addEventListener('click', ()=>{
+  const el=$('t-stage');
+  if(!document.fullscreenElement) el.requestFullscreen && el.requestFullscreen();
+  else document.exitFullscreen && document.exitFullscreen();
+});
+$('t-mirror').addEventListener('change', ()=>{ $('t-overlay').style.transform=$('t-mirror').checked? 'scaleX(-1)':'none'; });
+$('t-size').addEventListener('input', applyFontSize);
+$('t-text').addEventListener('input', tpSetText);
+async function tpStartCamera(){
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}, audio:false});
+    tpStream=stream; $('t-video').srcObject=stream;
+  }catch(e){ showToast('Não foi possível acessar a câmera: '+e.message,'error'); $('t-camera').checked=false; }
+}
+function tpStopCamera(){ if(tpStream){ tpStream.getTracks().forEach(t=>t.stop()); tpStream=null; $('t-video').srcObject=null; } }
+$('t-camera').addEventListener('change', async e=>{
+  if(e.target.checked){ await tpStartCamera(); $('t-video').classList.remove('hidden'); }
+  else { tpStopCamera(); $('t-video').classList.add('hidden'); }
+});
+function refreshTeleprompterLibrarySelect(){
+  $('t-library').innerHTML = state.library.length
+    ? state.library.map((it,i)=>'<option value="'+i+'">'+escapeHtml(it.tipo)+' — '+escapeHtml(it.tema)+'</option>').join('')
+    : '<option value="">(biblioteca vazia)</option>';
+}
+$('t-load').addEventListener('click', ()=>{
+  const idx=$('t-library').value;
+  if(idx==='' || !state.library[idx]) return showToast('Nenhum item selecionado.','error');
+  $('t-text').value=state.library[idx].content; tpSetText();
+});
+
+/* ---------- Backup geral ---------- */
+$('backup-btn').addEventListener('click', ()=>{
+  const data={brand:state.brand, library:state.library, plan:state.plan, art:state.art, exportedAt:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='backup-conteudo-'+Date.now()+'.json'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+});
+
+/* ---------- Inicialização ---------- */
+function init(){
+  fillBrandForm(); bindBrandInputs();
+  fillArtForm(); renderArt();
+  updateModeBadge();
+  applyFontSize(); tpSetText();
+  const startTab=(location.hash||'').replace('#','') || 'marca';
+  switchTab(startTab);
+  ensureLogoImage();
+  if(document.fonts && document.fonts.ready){ document.fonts.ready.then(()=> renderArt()); }
+}
+init();
+</script>
+</body>
+</html>
