@@ -1020,15 +1020,29 @@ $('t-mirror').addEventListener('change', ()=>{ $('t-overlay').style.transform=$(
 $('t-size').addEventListener('input', applyFontSize);
 $('t-text').addEventListener('input', tpSetText);
 const TP_VIDEO_CONSTRAINTS={facingMode:'user', width:{ideal:1280,max:1280}, height:{ideal:720,max:720}, frameRate:{ideal:30,max:30}};
+let tpMicPermissionState='unknown';
+async function checkMicPermissionState(){
+  try{
+    if(navigator.permissions && navigator.permissions.query){
+      const status=await navigator.permissions.query({name:'microphone'});
+      return status.state;
+    }
+  }catch(e){}
+  return 'unknown';
+}
 function updateAudioStatus(){
   const el=$('t-audio-status');
   if(!tpStream){ el.classList.add('hidden'); return; }
   const hasAudio = tpStream.getAudioTracks().length>0;
   el.classList.remove('hidden');
   if(hasAudio){ el.textContent='🎙️ Áudio do microfone ativo — será incluído na gravação.'; el.className='text-[10px] rounded-lg px-2 py-1.5 bg-emerald-500/10 text-emerald-300 border border-emerald-500/25'; }
-  else { el.textContent='🔇 Sem áudio — o microfone foi bloqueado ou não está disponível. O vídeo será gravado mudo.'; el.className='text-[10px] rounded-lg px-2 py-1.5 bg-amber-500/10 text-amber-300 border border-amber-500/25'; }
+  else if(tpMicPermissionState==='denied'){
+    el.textContent='🔇 Microfone BLOQUEADO para este site — o vídeo vai gravar mudo. Para liberar: clique no cadeado 🔒 ao lado do endereço → Permissões do site → Microfone → Permitir, depois recarregue a página.';
+    el.className='text-[10px] rounded-lg px-2 py-1.5 bg-red-500/10 text-red-300 border border-red-500/25';
+  } else { el.textContent='🔇 Sem áudio — o microfone foi bloqueado ou não está disponível. O vídeo será gravado mudo.'; el.className='text-[10px] rounded-lg px-2 py-1.5 bg-amber-500/10 text-amber-300 border border-amber-500/25'; }
 }
 async function tpStartCamera(){
+  tpMicPermissionState = await checkMicPermissionState();
   try{
     const stream=await navigator.mediaDevices.getUserMedia({video:TP_VIDEO_CONSTRAINTS, audio:{echoCancellation:true,noiseSuppression:true}});
     tpStream=stream; $('t-video').srcObject=stream;
@@ -1036,7 +1050,8 @@ async function tpStartCamera(){
     try{
       const stream=await navigator.mediaDevices.getUserMedia({video:TP_VIDEO_CONSTRAINTS, audio:false});
       tpStream=stream; $('t-video').srcObject=stream;
-      showToast('Câmera ativada sem áudio (microfone indisponível ou bloqueado).','info');
+      if(tpMicPermissionState==='denied') showToast('Microfone bloqueado para este site — veja como liberar no aviso abaixo do botão de câmera.','error');
+      else showToast('Câmera ativada sem áudio (microfone indisponível ou bloqueado).','info');
     }catch(e2){
       showToast('Não foi possível acessar a câmera: '+e2.message,'error');
       $('t-camera').checked=false;
