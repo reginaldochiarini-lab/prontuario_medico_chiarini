@@ -237,6 +237,10 @@ textarea.field{resize:vertical;min-height:90px}
       <label class="flex items-center gap-2 text-xs text-slate-400"><input id="t-mirror" type="checkbox">Espelhar texto (vidro teleprompter)</label>
       <label class="flex items-center gap-2 text-xs text-slate-400"><input id="t-camera" type="checkbox">Ativar câmera</label>
       <p id="t-audio-status" class="hidden text-[10px] rounded-lg px-2 py-1.5"></p>
+      <div id="t-audio-meter-wrap" class="hidden space-y-1">
+        <p class="text-[10px] text-slate-500">Fale algo — a barra abaixo deve se mexer se o microfone estiver captando som de verdade:</p>
+        <div class="h-3 w-full bg-slate-800 rounded-full overflow-hidden"><div id="t-audio-meter-bar" class="h-full bg-emerald-400" style="width:0%;transition:width .05s linear"></div></div>
+      </div>
       <div class="flex gap-2 flex-wrap">
         <button id="t-play" class="btn btn-primary flex-1"><i class="fa-solid fa-play"></i>Iniciar</button>
         <button id="t-reset" class="btn btn-soft"><i class="fa-solid fa-rotate-left"></i></button>
@@ -1030,21 +1034,59 @@ async function checkMicPermissionState(){
   }catch(e){}
   return 'unknown';
 }
+let audioCtx=null, audioAnalyser=null, audioMeterRAF=null;
+function startAudioMeter(stream){
+  stopAudioMeter();
+  if(!stream || !stream.getAudioTracks().length) return;
+  try{
+    audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const source=audioCtx.createMediaStreamSource(stream);
+    audioAnalyser=audioCtx.createAnalyser();
+    audioAnalyser.fftSize=512;
+    source.connect(audioAnalyser);
+    $('t-audio-meter-wrap').classList.remove('hidden');
+    const data=new Uint8Array(audioAnalyser.frequencyBinCount);
+    const loop=()=>{
+      if(!audioAnalyser) return;
+      audioAnalyser.getByteTimeDomainData(data);
+      let sum=0;
+      for(let i=0;i<data.length;i++){ const v=(data[i]-128)/128; sum+=v*v; }
+      const rms=Math.sqrt(sum/data.length);
+      const pct=Math.min(100, Math.round(rms*400));
+      $('t-audio-meter-bar').style.width=pct+'%';
+      audioMeterRAF=requestAnimationFrame(loop);
+    };
+    loop();
+  }catch(e){ /* Web Audio indisponível — segue sem o medidor */ }
+}
+function stopAudioMeter(){
+  if(audioMeterRAF) cancelAnimationFrame(audioMeterRAF);
+  audioMeterRAF=null;
+  if(audioCtx){ audioCtx.close().catch(()=>{}); audioCtx=null; }
+  audioAnalyser=null;
+  $('t-audio-meter-wrap').classList.add('hidden');
+  $('t-audio-meter-bar').style.width='0%';
+}
 function updateAudioStatus(){
   const el=$('t-audio-status');
-  if(!tpStream){ el.classList.add('hidden'); return; }
+  if(!tpStream){ el.classList.add('hidden'); stopAudioMeter(); return; }
   const hasAudio = tpStream.getAudioTracks().length>0;
   el.classList.remove('hidden');
-  if(hasAudio){ el.textContent='🎙️ Áudio do microfone ativo — será incluído na gravação.'; el.className='text-[10px] rounded-lg px-2 py-1.5 bg-emerald-500/10 text-emerald-300 border border-emerald-500/25'; }
-  else if(tpMicPermissionState==='denied'){
-    el.textContent='🔇 Microfone BLOQUEADO para este site — o vídeo vai gravar mudo. Para liberar: clique no cadeado 🔒 ao lado do endereço → Permissões do site → Microfone → Permitir, depois recarregue a página.';
-    el.className='text-[10px] rounded-lg px-2 py-1.5 bg-red-500/10 text-red-300 border border-red-500/25';
-  } else { el.textContent='🔇 Sem áudio — o microfone foi bloqueado ou não está disponível. O vídeo será gravado mudo.'; el.className='text-[10px] rounded-lg px-2 py-1.5 bg-amber-500/10 text-amber-300 border border-amber-500/25'; }
+  if(hasAudio){
+    el.textContent='🎙️ Áudio do microfone ativo — será incluído na gravação.'; el.className='text-[10px] rounded-lg px-2 py-1.5 bg-emerald-500/10 text-emerald-300 border border-emerald-500/25';
+    startAudioMeter(tpStream);
+  } else {
+    stopAudioMeter();
+    if(tpMicPermissionState==='denied'){
+      el.textContent='🔇 Microfone BLOQUEADO para este site — o vídeo vai gravar mudo. Para liberar: clique no cadeado 🔒 ao lado do endereço → Permissões do site → Microfone → Permitir, depois recarregue a página.';
+      el.className='text-[10px] rounded-lg px-2 py-1.5 bg-red-500/10 text-red-300 border border-red-500/25';
+    } else { el.textContent='🔇 Sem áudio — o microfone foi bloqueado ou não está disponível. O vídeo será gravado mudo.'; el.className='text-[10px] rounded-lg px-2 py-1.5 bg-amber-500/10 text-amber-300 border border-amber-500/25'; }
+  }
 }
 async function tpStartCamera(){
   tpMicPermissionState = await checkMicPermissionState();
   try{
-    const stream=await navigator.mediaDevices.getUserMedia({video:TP_VIDEO_CONSTRAINTS, audio:{echoCancellation:true,noiseSuppression:true}});
+    const stream=await navigator.mediaDevices.getUserMedia({video:TP_VIDEO_CONSTRAINTS, audio:true});
     tpStream=stream; $('t-video').srcObject=stream;
   }catch(e){
     try{
