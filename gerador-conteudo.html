@@ -991,7 +991,16 @@ $('a-download').addEventListener('click', ()=>{
 /* ---------- Teleprompter ---------- */
 let tpPlaying=false, tpPos=0, tpLastTs=null, tpStream=null;
 function tpSpeed(){ return Number($('t-speed').value); }
-function applyFontSize(){ $('t-scroll').style.fontSize=$('t-size').value+'px'; $('t-scroll').style.lineHeight='1.5'; }
+function applyFontSize(){
+  const size=Number($('t-size').value);
+  const el=$('t-scroll');
+  el.style.fontSize=size+'px';
+  el.style.lineHeight='1.5';
+  const strokeW=Math.max(1, Math.round(size/26));
+  el.style.webkitTextStroke=strokeW+'px #000';
+  const sh=Math.max(2, Math.round(size/18));
+  el.style.textShadow = '-'+sh+'px -'+sh+'px 0 #000, '+sh+'px -'+sh+'px 0 #000, -'+sh+'px '+sh+'px 0 #000, '+sh+'px '+sh+'px 0 #000, 0 '+sh+'px 0 #000, '+sh+'px 0 0 #000, -'+sh+'px 0 0 #000, 0 -'+sh+'px 0 #000';
+}
 function tpSetText(){ $('t-scroll').textContent=$('t-text').value || 'Cole seu roteiro ao lado.'; }
 function tpStep(ts){
   if(tpLastTs==null) tpLastTs=ts;
