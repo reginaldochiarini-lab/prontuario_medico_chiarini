@@ -189,9 +189,10 @@ textarea.field{resize:vertical;min-height:90px}
   <div class="grid lg:grid-cols-[360px_1fr] gap-5">
     <div class="card p-4 space-y-4">
       <h2 class="font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-image text-emerald-400"></i>Criar arte com seu logo</h2>
-      <div class="flex gap-2">
-        <button data-fmt="1080x1080" class="chip active flex-1">Quadrado 1080×1080</button>
-        <button data-fmt="1080x1920" class="chip flex-1">Vertical 1080×1920</button>
+      <div class="flex gap-2 flex-wrap">
+        <button data-fmt="1080x1080" class="chip active flex-1 min-w-[100px]">Quadrado 1080×1080</button>
+        <button data-fmt="1080x1350" class="chip flex-1 min-w-[100px]">Retrato 4:5 (feed)</button>
+        <button data-fmt="1080x1920" class="chip flex-1 min-w-[100px]">Vertical 1080×1920</button>
       </div>
       <div><label class="label">Título</label><input id="a-title" class="field" placeholder="Título de destaque"></div>
       <div><label class="label">Subtítulo</label><textarea id="a-subtitle" class="field" rows="2" placeholder="Texto de apoio (opcional)"></textarea></div>
@@ -298,6 +299,16 @@ function slugWords(text){
 }
 function fill(tpl,ctx){ return tpl.replace(/\{tema\}/g, ctx.tema||'').replace(/\{specialty\}/g, (ctx.brand&&ctx.brand.specialty)||'sua especialidade'); }
 function firstSentence(text){ const line=(text||'').split('\n').find(l=>l.trim())||''; return line.length>90? line.slice(0,87)+'...' : line; }
+function artHeadlineFromText(text){
+  const lines=(text||'').split('\n').map(l=>l.trim()).filter(Boolean);
+  const idx=lines.findIndex(l=>l.length>14);
+  const titleLine = idx>=0 ? lines[idx] : (lines[0]||'');
+  const subLine = lines.slice((idx>=0?idx:0)+1).find(l=>l.length>8) || '';
+  return {
+    title: titleLine.length>90? titleLine.slice(0,87)+'...' : titleLine,
+    subtitle: subLine.length>150? subLine.slice(0,147)+'...' : subLine
+  };
+}
 function fmtTime(s){ const m=Math.floor(s/60), sec=Math.round(s%60); return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'); }
 function durationLabel(total){
   if(total<60) return total+' segundos';
@@ -696,7 +707,8 @@ function renderCarouselCard(data){
     '<div class="grid sm:grid-cols-2 gap-2">'+slidesHtml+'</div>'+
     '<div class="flex gap-2 flex-wrap">'+
     '<button class="btn btn-soft btn-xs" data-act="copy" data-fmt="carousel"><i class="fa-solid fa-copy"></i>Copiar tudo</button>'+
-    '<button class="btn btn-soft btn-xs" data-act="save" data-fmt="carousel"><i class="fa-solid fa-bookmark"></i>Salvar</button></div></div>';
+    '<button class="btn btn-soft btn-xs" data-act="save" data-fmt="carousel"><i class="fa-solid fa-bookmark"></i>Salvar</button>'+
+    '<button class="btn btn-primary btn-xs" data-act="art-all" data-fmt="carousel"><i class="fa-solid fa-images"></i>Baixar todas as artes do carrossel</button></div></div>';
 }
 function renderOutput(ctx,result,formats){
   const blocks=[];
@@ -747,22 +759,22 @@ $('g-output').addEventListener('click', e=>{
     const text=result.instagram.caption+'\n\n'+result.instagram.hashtags;
     if(act==='copy') copyText(text);
     if(act==='save') saveToLibrary('Instagram',ctx.tema,text,{});
-    if(act==='art') sendToArt(ctx.tema, firstSentence(result.instagram.caption));
+    if(act==='art'){ const h=artHeadlineFromText(result.instagram.caption); sendToArt(h.title, h.subtitle); }
   } else if(fmt==='facebook'){
     const text=result.facebook.post;
     if(act==='copy') copyText(text);
     if(act==='save') saveToLibrary('Facebook',ctx.tema,text,{});
-    if(act==='art') sendToArt(ctx.tema, firstSentence(text));
+    if(act==='art'){ const h=artHeadlineFromText(text); sendToArt(h.title, h.subtitle); }
   } else if(fmt==='whatsapp'){
     const text=result.whatsapp.broadcast;
     if(act==='copy') copyText(text);
     if(act==='save') saveToLibrary('WhatsApp',ctx.tema,text,{});
-    if(act==='art') sendToArt(ctx.tema, firstSentence(text));
+    if(act==='art'){ const h=artHeadlineFromText(text); sendToArt(h.title, h.subtitle); }
   } else if(fmt==='whatsapp-status'){
     if(idx!==undefined){
       const text=result.whatsapp.status[idx];
       if(act==='copy') copyText(text);
-      if(act==='art') sendToArt(ctx.tema, text);
+      if(act==='art') sendToArt(text, ctx.tema);
     } else if(act==='save'){
       saveToLibrary('Status',ctx.tema,result.whatsapp.status.join('\n---\n'),{});
     }
@@ -775,6 +787,8 @@ $('g-output').addEventListener('click', e=>{
     if(idx!==undefined){
       const s=result.carousel.slides[idx];
       if(act==='art') sendToArt(s.title, s.body);
+    } else if(act==='art-all'){
+      downloadCarouselAsArt(result.carousel.slides, ctx.tema);
     } else {
       const text=carouselText(result.carousel);
       if(act==='copy') copyText(text);
@@ -875,7 +889,7 @@ $('l-list').addEventListener('click', e=>{
   const act=btn.dataset.lact;
   if(act==='copy') copyText(it.content);
   if(act==='delete'){ if(confirm('Excluir este conteúdo da biblioteca?')){ state.library=state.library.filter(x=>x.id!==id); persistLibrary(); renderLibrary(); } }
-  if(act==='art'){ sendToArt(it.tema, firstSentence(it.content)); }
+  if(act==='art'){ const h=artHeadlineFromText(it.content); sendToArt(h.title, h.subtitle); }
   if(act==='tele'){ $('t-text').value=it.content; tpSetText(); switchTab('teleprompter'); }
   if(act==='view'){
     openModal('<h3 class="font-bold text-sm mb-2">'+escapeHtml(it.tipo)+' — '+escapeHtml(it.tema)+'</h3>'+
@@ -1027,16 +1041,36 @@ document.querySelectorAll('#tab-artes [data-align]').forEach(b=> b.addEventListe
     reader.readAsDataURL(file);
   });
 })();
+function downloadArtCanvas(filename){
+  return new Promise(resolve=>{
+    const canvas=$('a-canvas');
+    canvas.toBlob(blob=>{
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=filename;
+      a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(a.href); resolve(); },500);
+    },'image/png');
+  });
+}
 $('a-download').addEventListener('click', ()=>{
-  const canvas=$('a-canvas');
-  canvas.toBlob(blob=>{
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(blob);
-    a.download=slugFile(state.art.title||'arte')+'-'+state.art.format+'.png';
-    a.click();
-    setTimeout(()=>URL.revokeObjectURL(a.href),2000);
-  },'image/png');
+  downloadArtCanvas(slugFile(state.art.title||'arte')+'-'+state.art.format+'.png');
 });
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+async function downloadCarouselAsArt(slides, baseName){
+  const originalTitle=state.art.title, originalSubtitle=state.art.subtitle;
+  switchTab('artes'); fillArtForm();
+  for(let i=0;i<slides.length;i++){
+    state.art.title=slides[i].title; state.art.subtitle=slides[i].body;
+    fillArtForm(); await renderArt();
+    showToast('Baixando slide '+(i+1)+' de '+slides.length+'...','info');
+    await downloadArtCanvas(slugFile(baseName)+'-slide-'+(i+1)+'.png');
+    await sleep(350);
+  }
+  state.art.title=originalTitle; state.art.subtitle=originalSubtitle;
+  persistArt(); fillArtForm(); renderArt();
+  showToast('Todos os '+slides.length+' slides baixados.','success');
+}
 
 /* ---------- Teleprompter ---------- */
 let tpPlaying=false, tpPos=0, tpLastTs=null, tpStream=null;
