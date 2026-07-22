@@ -1119,19 +1119,27 @@ function updateAudioStatus(){
 }
 async function tpStartCamera(){
   tpMicPermissionState = await checkMicPermissionState();
+  let videoStream=null;
   try{
-    const stream=await navigator.mediaDevices.getUserMedia({video:getVideoConstraints(), audio:true});
-    tpStream=stream; $('t-video').srcObject=stream;
+    videoStream=await navigator.mediaDevices.getUserMedia({video:getVideoConstraints()});
   }catch(e){
-    try{
-      const stream=await navigator.mediaDevices.getUserMedia({video:getVideoConstraints(), audio:false});
-      tpStream=stream; $('t-video').srcObject=stream;
-      if(tpMicPermissionState==='denied') showToast('Microfone bloqueado para este site — veja como liberar no aviso abaixo do botão de câmera.','error');
-      else showToast('Câmera ativada sem áudio (microfone indisponível ou bloqueado).','info');
-    }catch(e2){
-      showToast('Não foi possível acessar a câmera: '+e2.message,'error');
-      $('t-camera').checked=false;
-    }
+    showToast('Não foi possível acessar a câmera: '+e.message,'error');
+    $('t-camera').checked=false;
+    updateAudioStatus();
+    return;
+  }
+  // Pede o áudio numa chamada separada: em alguns celulares Android, pedir câmera+microfone
+  // juntos numa única chamada faz o microfone "silenciar" mesmo com permissão concedida.
+  let audioTrack=null;
+  try{
+    const audioStream=await navigator.mediaDevices.getUserMedia({audio:true});
+    audioTrack=audioStream.getAudioTracks()[0]||null;
+  }catch(e){ audioTrack=null; }
+  tpStream = audioTrack ? new MediaStream([...videoStream.getVideoTracks(), audioTrack]) : videoStream;
+  $('t-video').srcObject=tpStream;
+  if(!audioTrack){
+    if(tpMicPermissionState==='denied') showToast('Microfone bloqueado para este site — veja como liberar no aviso abaixo do botão de câmera.','error');
+    else showToast('Câmera ativada sem áudio (microfone indisponível ou bloqueado).','info');
   }
   updateAudioStatus();
 }
