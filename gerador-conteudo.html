@@ -235,6 +235,12 @@ textarea.field{resize:vertical;min-height:90px}
       <div><label class="label">Velocidade</label><input id="t-speed" type="range" min="10" max="200" value="45" class="w-full"></div>
       <div><label class="label">Tamanho da fonte</label><input id="t-size" type="range" min="20" max="100" value="48" class="w-full"></div>
       <label class="flex items-center gap-2 text-xs text-slate-400"><input id="t-mirror" type="checkbox">Espelhar texto (vidro teleprompter)</label>
+      <div><label class="label">Qualidade da gravação</label><select id="t-quality" class="field text-xs">
+        <option value="leve">Leve (celulares mais fracos — evita travar)</option>
+        <option value="media" selected>Média (recomendado)</option>
+        <option value="alta">Alta (só se o aparelho for potente)</option>
+      </select>
+      <p class="text-[10px] text-slate-500 mt-1">Se o vídeo travar durante a gravação, mude para "Leve".</p></div>
       <label class="flex items-center gap-2 text-xs text-slate-400"><input id="t-camera" type="checkbox">Ativar câmera</label>
       <p id="t-audio-status" class="hidden text-[10px] rounded-lg px-2 py-1.5"></p>
       <div id="t-audio-meter-wrap" class="hidden space-y-1">
@@ -1032,7 +1038,26 @@ $('t-fullscreen').addEventListener('click', ()=>{
 $('t-mirror').addEventListener('change', ()=>{ $('t-overlay').style.transform=$('t-mirror').checked? 'scaleX(-1)':'none'; });
 $('t-size').addEventListener('input', applyFontSize);
 $('t-text').addEventListener('input', tpSetText);
-const TP_VIDEO_CONSTRAINTS={facingMode:'user', width:{ideal:1280,max:1280}, height:{ideal:720,max:720}, frameRate:{ideal:30,max:30}};
+const TP_QUALITY_PRESETS={
+  leve:  {width:640,  height:360,  frameRate:20, videoBitsPerSecond:700000},
+  media: {width:1280, height:720,  frameRate:30, videoBitsPerSecond:2500000},
+  alta:  {width:1920, height:1080, frameRate:30, videoBitsPerSecond:4000000}
+};
+function currentQuality(){ return TP_QUALITY_PRESETS[$('t-quality').value] || TP_QUALITY_PRESETS.media; }
+function getVideoConstraints(){
+  const q=currentQuality();
+  return {facingMode:'user', width:{ideal:q.width,max:q.width}, height:{ideal:q.height,max:q.height}, frameRate:{ideal:q.frameRate,max:q.frameRate}};
+}
+$('t-quality').addEventListener('change', async ()=>{
+  if(tpStream){
+    if(mediaRecorder && mediaRecorder.state==='recording') mediaRecorder.stop();
+    tpStopCamera();
+    await tpStartCamera();
+    $('t-video').classList.remove('hidden');
+    $('t-record').disabled=!tpStream;
+    showToast('Qualidade da câmera atualizada.','info');
+  }
+});
 let tpMicPermissionState='unknown';
 async function checkMicPermissionState(){
   try{
@@ -1095,11 +1120,11 @@ function updateAudioStatus(){
 async function tpStartCamera(){
   tpMicPermissionState = await checkMicPermissionState();
   try{
-    const stream=await navigator.mediaDevices.getUserMedia({video:TP_VIDEO_CONSTRAINTS, audio:true});
+    const stream=await navigator.mediaDevices.getUserMedia({video:getVideoConstraints(), audio:true});
     tpStream=stream; $('t-video').srcObject=stream;
   }catch(e){
     try{
-      const stream=await navigator.mediaDevices.getUserMedia({video:TP_VIDEO_CONSTRAINTS, audio:false});
+      const stream=await navigator.mediaDevices.getUserMedia({video:getVideoConstraints(), audio:false});
       tpStream=stream; $('t-video').srcObject=stream;
       if(tpMicPermissionState==='denied') showToast('Microfone bloqueado para este site — veja como liberar no aviso abaixo do botão de câmera.','error');
       else showToast('Câmera ativada sem áudio (microfone indisponível ou bloqueado).','info');
@@ -1128,7 +1153,7 @@ $('t-camera').addEventListener('change', async e=>{
 let mediaRecorder=null, recordedChunks=[], recordedBlobUrl=null;
 function pickRecorderOptions(){
   const candidates=['video/webm;codecs=vp8,opus','video/webm;codecs=h264,opus','video/webm;codecs=vp9,opus','video/webm'];
-  const base={videoBitsPerSecond:2500000, audioBitsPerSecond:128000};
+  const base={videoBitsPerSecond:currentQuality().videoBitsPerSecond, audioBitsPerSecond:128000};
   for(const c of candidates){ if(window.MediaRecorder && MediaRecorder.isTypeSupported(c)) return Object.assign({mimeType:c}, base); }
   return base;
 }
