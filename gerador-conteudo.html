@@ -241,6 +241,11 @@ textarea.field{resize:vertical;min-height:90px}
         <option value="alta">Alta (só se o aparelho for potente)</option>
       </select>
       <p class="text-[10px] text-slate-500 mt-1">Se o vídeo travar durante a gravação, mude para "Leve".</p></div>
+      <div><label class="label">Câmera</label><select id="t-facing" class="field text-xs">
+        <option value="user" selected>Frontal (selfie)</option>
+        <option value="environment">Traseira</option>
+      </select>
+      <p class="text-[10px] text-slate-500 mt-1">Se o áudio não funcionar na frontal, tente a traseira — em alguns celulares elas têm circuitos diferentes.</p></div>
       <label class="flex items-center gap-2 text-xs text-slate-400"><input id="t-camera" type="checkbox">Ativar câmera</label>
       <p id="t-audio-status" class="hidden text-[10px] rounded-lg px-2 py-1.5"></p>
       <div id="t-audio-meter-wrap" class="hidden space-y-1">
@@ -1046,18 +1051,21 @@ const TP_QUALITY_PRESETS={
 function currentQuality(){ return TP_QUALITY_PRESETS[$('t-quality').value] || TP_QUALITY_PRESETS.media; }
 function getVideoConstraints(){
   const q=currentQuality();
-  return {facingMode:'user', width:{ideal:q.width,max:q.width}, height:{ideal:q.height,max:q.height}, frameRate:{ideal:q.frameRate,max:q.frameRate}};
+  const facing=($('t-facing') && $('t-facing').value) || 'user';
+  return {facingMode:facing, width:{ideal:q.width,max:q.width}, height:{ideal:q.height,max:q.height}, frameRate:{ideal:q.frameRate,max:q.frameRate}};
 }
-$('t-quality').addEventListener('change', async ()=>{
+async function tpRestartCameraIfActive(msg){
   if(tpStream){
     if(mediaRecorder && mediaRecorder.state==='recording') mediaRecorder.stop();
     tpStopCamera();
     await tpStartCamera();
     $('t-video').classList.remove('hidden');
     $('t-record').disabled=!tpStream;
-    showToast('Qualidade da câmera atualizada.','info');
+    if(msg) showToast(msg,'info');
   }
-});
+}
+$('t-quality').addEventListener('change', ()=> tpRestartCameraIfActive('Qualidade da câmera atualizada.'));
+$('t-facing').addEventListener('change', ()=> tpRestartCameraIfActive('Câmera trocada.'));
 let tpMicPermissionState='unknown';
 async function checkMicPermissionState(){
   try{
@@ -1132,9 +1140,16 @@ async function tpStartCamera(){
   // juntos numa única chamada faz o microfone "silenciar" mesmo com permissão concedida.
   let audioTrack=null;
   try{
-    const audioStream=await navigator.mediaDevices.getUserMedia({audio:true});
+    // Tenta primeiro sem processamento (eco/ruído/ganho automático) — em alguns aparelhos
+    // esse processamento tem bug e devolve um track de áudio sem sinal nenhum.
+    const audioStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:false}});
     audioTrack=audioStream.getAudioTracks()[0]||null;
-  }catch(e){ audioTrack=null; }
+  }catch(e){
+    try{
+      const audioStream2=await navigator.mediaDevices.getUserMedia({audio:true});
+      audioTrack=audioStream2.getAudioTracks()[0]||null;
+    }catch(e2){ audioTrack=null; }
+  }
   tpStream = audioTrack ? new MediaStream([...videoStream.getVideoTracks(), audioTrack]) : videoStream;
   $('t-video').srcObject=tpStream;
   if(!audioTrack){
