@@ -47,7 +47,7 @@ textarea.field{resize:vertical;min-height:90px}
   </div>
   <div class="flex items-center gap-2">
     <button id="backup-btn" class="btn btn-soft"><i class="fa-solid fa-download"></i><span class="hidden md:inline">Backup</span></button>
-    <button id="ai-settings-btn" class="btn btn-soft"><i class="fa-solid fa-robot text-emerald-400"></i><span class="hidden md:inline">IA</span></button>
+    <button id="ai-settings-btn" class="btn btn-soft"><i class="fa-solid fa-robot text-emerald-400"></i><span>IA</span></button>
     <a href="index.html" class="btn btn-soft" title="Voltar ao prontuário"><i class="fa-solid fa-notes-medical"></i><span class="hidden md:inline">Prontuário</span></a>
   </div>
 </header>
@@ -151,7 +151,7 @@ textarea.field{resize:vertical;min-height:90px}
     </div>
     <div class="flex items-center gap-3 flex-wrap">
       <button id="g-generate" class="btn btn-primary"><i class="fa-solid fa-bolt"></i>Gerar conteúdo</button>
-      <span id="g-mode-badge" class="text-[10px] text-slate-500"></span>
+      <button type="button" id="g-mode-badge" class="text-[10px] text-slate-500 underline decoration-dotted hover:text-emerald-400"></button>
     </div>
   </div>
   <div id="g-ethics-banner" class="hidden text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/25 rounded-xl p-3"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Revise antes de publicar: evite promessas de resultado e mantenha o caráter educativo (regras em "Minha marca").</div>
@@ -374,8 +374,9 @@ const PROVIDER_LABEL={gemini:'Google Gemini',openai:'OpenAI',claude:'Anthropic C
 function updateModeBadge(){
   const p=state.settings.provider||'gemini';
   const hasKey = p==='gemini'? !!state.settings.geminiKey : p==='openai'? !!state.settings.openaiKey : !!state.settings.claudeKey;
-  $('g-mode-badge').textContent = (state.settings.mode==='ai' && hasKey) ? ('Modo: IA ('+PROVIDER_LABEL[p]+')') : 'Modo: Local — 100% grátis, funciona sem internet';
+  $('g-mode-badge').textContent = ((state.settings.mode==='ai' && hasKey) ? ('Modo: IA ('+PROVIDER_LABEL[p]+')') : 'Modo: Local — 100% grátis, funciona sem internet') + ' · configurar chave de IA';
 }
+$('g-mode-badge').addEventListener('click', openAISettings);
 function openAISettings(){
   openModal('<h3 class="font-bold text-sm mb-3 flex items-center gap-2"><i class="fa-solid fa-robot text-emerald-400"></i>Configurações de IA</h3>'+
     '<p class="text-[11px] text-slate-500 mb-3">O app funciona 100% grátis e offline com o gerador local. Se quiser, cole uma chave de IA (Gemini, OpenAI ou Claude) para respostas mais variadas — as chaves ficam salvas só neste navegador.</p>'+
