@@ -48,6 +48,7 @@
   </div>
   <div class="flex items-center gap-2">
     <span id="save-indicator" class="hidden sm:inline text-[10px] text-slate-500"><i class="fa-solid fa-cloud-arrow-down mr-1"></i>Salvo</span>
+    <a href="gerador-conteudo.html" target="_blank" rel="noopener" class="btn btn-soft" title="Gerador de conteúdo para redes sociais"><i class="fa-solid fa-bullhorn text-emerald-400"></i><span class="hidden md:inline">Conteúdo</span></a>
     <button id="backup-btn" class="btn btn-soft"><i class="fa-solid fa-download"></i><span class="hidden md:inline">Backup</span></button>
     <button id="config-btn" class="btn btn-soft"><i class="fa-solid fa-sliders text-emerald-400"></i><span class="hidden md:inline">Configurações</span></button>
     <button id="assistant-toggle" class="btn btn-primary !p-2.5" aria-label="Abrir assistente"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
@@ -279,9 +280,9 @@
       <section class="space-y-3"><h3 class="font-bold text-white border-b border-slate-800 pb-2">Inteligência artificial</h3>
         <div><label class="label">Provedor preferencial</label><select id="ai-provider" class="field"><option value="gemini">Google Gemini</option><option value="openai">OpenAI</option><option value="claude">Anthropic Claude</option></select></div>
         <div class="grid md:grid-cols-3 gap-3">
-          <div><label class="label">Chave Gemini</label><input id="gemini-api-key" type="password" class="field" placeholder="AIza..."><label class="label mt-2">Modelo</label><input id="gemini-model" class="field" value="gemini-flash-latest"></div>
-          <div><label class="label">Chave OpenAI</label><input id="openai-api-key" type="password" class="field" placeholder="sk-..."><label class="label mt-2">Modelo</label><input id="openai-model" class="field" value="gpt-5-mini"></div>
-          <div><label class="label">Chave Claude</label><input id="claude-api-key" type="password" class="field" placeholder="sk-ant-..."><label class="label mt-2">Modelo</label><input id="claude-model" class="field" value="claude-sonnet-4-5"></div>
+          <div><label class="label">Chave Gemini</label><input id="gemini-api-key" type="password" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" class="field" placeholder="AIza..." onfocus="var el=this;setTimeout(function(){el.select();},0)" onmouseup="event.preventDefault();this.select();"><label class="label mt-2">Modelo</label><input id="gemini-model" class="field" value="gemini-flash-latest"></div>
+          <div><label class="label">Chave OpenAI</label><input id="openai-api-key" type="password" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" class="field" placeholder="sk-..." onfocus="var el=this;setTimeout(function(){el.select();},0)" onmouseup="event.preventDefault();this.select();"><label class="label mt-2">Modelo</label><input id="openai-model" class="field" value="gpt-5-mini"></div>
+          <div><label class="label">Chave Claude</label><input id="claude-api-key" type="password" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" class="field" placeholder="sk-ant-..." onfocus="var el=this;setTimeout(function(){el.select();},0)" onmouseup="event.preventDefault();this.select();"><label class="label mt-2">Modelo</label><input id="claude-model" class="field" value="claude-sonnet-4-5"></div>
         </div>
         <div class="bg-amber-500/5 border border-amber-500/20 p-3 rounded-xl text-[10px] text-amber-200 leading-relaxed">As chaves ficam apenas nesta aba do navegador e não entram no backup. Em uso clínico real, o mais seguro é utilizar um servidor intermediário. A conexão direta da OpenAI pode ser bloqueada pelo navegador; neste caso, configure um proxy seguro.</div>
       </section>
