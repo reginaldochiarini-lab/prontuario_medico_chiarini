@@ -728,6 +728,7 @@ function scheduleMicRestart(){
 function restartRecognition(force=false){
  if(!isRecording||isMicPaused)return;
  clearTimeout(micRestartTimer);
+ micFinalText=normalizeSpeechText($('transcript').value);
  if(recognition){
    recognition.onend=null;recognition.onerror=null;
    try{recognition.abort();}catch{}
