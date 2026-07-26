@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="color-scheme" content="dark">
+<meta name="color-scheme" content="light dark">
 <title>Gerador de Prontuário Hospitalar</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -21,6 +21,40 @@
 .btn-danger{background:#3b1018;border:1px solid #7f1d1d;color:#fecaca}.btn-danger:hover{background:#51131e}
 .card{background:#101827;border:1px solid #263244;border-radius:1rem}
 .label{font-size:.62rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#8290a5;display:block;margin-bottom:.4rem}
+
+body.light{background:#eef2f7;color:#1e293b}
+body.light ::-webkit-scrollbar-track{background:#e2e8f0}
+body.light ::-webkit-scrollbar-thumb{background:#b9c4d4}
+body.light .field{background:#ffffff;border-color:#c7d0dd;color:#0f172a}
+body.light .field:focus{border-color:#059669;box-shadow:0 0 0 3px rgba(5,150,105,.15)}
+body.light .card{background:#ffffff;border-color:#d7dee8;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+body.light .label{color:#5b6b82}
+body.light .btn-soft{background:#eef2f7;border-color:#c7d0dd;color:#334155}
+body.light .btn-soft:hover{background:#e2e8f0}
+body.light .btn-danger{background:#fee2e2;border-color:#fca5a5;color:#991b1b}
+body.light .btn-danger:hover{background:#fecaca}
+body.light .btn-primary{color:#04110d}
+body.light .bg-slate-950{background:#ffffff!important}
+body.light .bg-slate-900{background:#f8fafc!important}
+body.light .bg-slate-800{background:#e7edf5!important}
+body.light .bg-emerald-950{background:#d1fae5!important}
+body.light .bg-red-950{background:#fee2e2!important}
+body.light .border-slate-800{border-color:#dbe3ee!important}
+body.light .border-slate-700{border-color:#c7d0dd!important}
+body.light .border-emerald-700{border-color:#6ee7b7!important}
+body.light .border-red-700{border-color:#fca5a5!important}
+body.light .text-white{color:#0f172a!important}
+body.light .text-slate-200{color:#1e293b!important}
+body.light .text-slate-300{color:#334155!important}
+body.light .text-slate-400{color:#475569!important}
+body.light .text-slate-500{color:#64748b!important}
+body.light .text-emerald-200{color:#065f46!important}
+body.light .text-emerald-300{color:#047857!important}
+body.light .text-emerald-400{color:#059669!important}
+body.light .text-red-200{color:#991b1b!important}
+body.light .text-red-400{color:#dc2626!important}
+body.light .text-amber-300{color:#92400e!important}
+body.light .text-amber-400{color:#b45309!important}
 </style>
 </head>
 <body class="text-slate-200">
@@ -32,7 +66,10 @@
       <p class="text-[11px] text-slate-500 truncate">Enfermaria · Emergência · Posto 1 · Posto 2 — modelo longitudinal, limite de 3.700 caracteres</p>
     </div>
   </div>
-  <button id="config-btn" class="btn btn-soft shrink-0"><i class="fa-solid fa-gear"></i><span class="hidden sm:inline">Configurar IA</span></button>
+  <div class="flex items-center gap-2 shrink-0">
+    <button id="theme-toggle-btn" class="btn btn-soft"><i class="fa-solid fa-sun"></i><span class="hidden sm:inline">Modo claro</span></button>
+    <button id="config-btn" class="btn btn-soft"><i class="fa-solid fa-gear"></i><span class="hidden sm:inline">Configurar IA</span></button>
+  </div>
 </header>
 
 <main class="max-w-5xl mx-auto p-4 md:p-6 space-y-4">
@@ -148,6 +185,7 @@
 <script>
 'use strict';
 const STORAGE_KEY='prontuario_hospitalar_v1';
+const THEME_KEY='prontuario_hospitalar_theme';
 const $=id=>document.getElementById(id);
 const uid=()=>crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);
 const todayISO=()=>new Date().toISOString().slice(0,10);
@@ -952,6 +990,11 @@ function showToast(msg,type='info'){const t=$('toast');const styles={info:'bg-sl
 function openModal(id){$(id).classList.remove('hidden');$(id).classList.add('flex');$('overlay').classList.remove('hidden');}
 function closeModal(id){$(id).classList.add('hidden');$(id).classList.remove('flex');$('overlay').classList.add('hidden');}
 function stripFence(text=''){return text.trim().replace(/^```(?:markdown|text)?\s*|\s*```$/g,'');}
+function applyTheme(theme){
+  document.body.classList.toggle('light',theme==='light');
+  $('theme-toggle-btn').innerHTML=theme==='light'?'<i class="fa-solid fa-moon"></i><span class="hidden sm:inline">Modo escuro</span>':'<i class="fa-solid fa-sun"></i><span class="hidden sm:inline">Modo claro</span>';
+  localStorage.setItem(THEME_KEY,theme);
+}
 function formatDateBR(iso){if(!iso)return'';const[y,m,d]=iso.split('-');return `${d}/${m}/${y}`;}
 
 let pendingHospImage=null;
@@ -1141,6 +1184,8 @@ function renderHistoryList(){
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
+  applyTheme(localStorage.getItem(THEME_KEY)||'light');
+  $('theme-toggle-btn').onclick=()=>applyTheme(document.body.classList.contains('light')?'dark':'light');
   loadLocal();
   $('hosp-previous').value=draft.previous||'';
   $('hosp-date-sv').value=draft.dateSV||todayISO();
