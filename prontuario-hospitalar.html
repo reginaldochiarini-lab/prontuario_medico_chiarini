@@ -60,15 +60,30 @@
 
     <div>
       <label class="label">Foto/print dos sinais vitais (opcional)</label>
-      <div class="flex flex-wrap items-center gap-2">
-        <label class="btn btn-soft cursor-pointer"><i class="fa-solid fa-image"></i>Anexar print<input id="hosp-vitals-image" type="file" accept="image/*" class="hidden"></label>
+      <div class="flex flex-wrap items-center gap-2 mb-2">
+        <label class="btn btn-soft cursor-pointer"><i class="fa-solid fa-image"></i>Anexar arquivo<input id="hosp-vitals-image" type="file" accept="image/*" class="hidden"></label>
         <span class="text-[10px] text-slate-500">A IA lê TAX, FC, PA, FR, SatO2 e glicemia diretamente da imagem, na data informada acima.</span>
+      </div>
+      <div id="hosp-vitals-pastezone" tabindex="0" class="border border-dashed border-slate-700 rounded-lg p-3 text-[11px] text-slate-500 text-center cursor-text focus:border-emerald-500 focus:text-emerald-300 focus:outline-none">
+        <i class="fa-solid fa-clipboard mr-1"></i>Clique aqui e pressione Ctrl+V (ou Cmd+V) para colar o print copiado
       </div>
       <div id="hosp-pending-image" class="hidden flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-lg p-2 mt-2">
         <img id="hosp-pending-image-preview" class="h-14 w-14 object-cover rounded" alt="Prévia do print de sinais vitais">
         <span class="text-[11px] text-slate-300 flex-1">Print anexado, pronto para enviar</span>
         <button id="hosp-remove-image-btn" class="text-slate-400 hover:text-white" aria-label="Remover imagem" type="button"><i class="fa-solid fa-xmark"></i></button>
       </div>
+    </div>
+
+    <div>
+      <label class="label">Exames para inserir (opcional)</label>
+      <div class="flex flex-wrap items-center gap-2 mb-2">
+        <label class="btn btn-soft cursor-pointer"><i class="fa-solid fa-file-medical"></i>Anexar arquivo(s)<input id="hosp-exam-images" type="file" accept="image/*" multiple class="hidden"></label>
+        <span class="text-[10px] text-slate-500">Prints de laudos/resultados (até 6). A IA lê os valores e insere no bloco de exames, mantendo os já registrados.</span>
+      </div>
+      <div id="hosp-exam-pastezone" tabindex="0" class="border border-dashed border-slate-700 rounded-lg p-3 text-[11px] text-slate-500 text-center cursor-text focus:border-emerald-500 focus:text-emerald-300 focus:outline-none">
+        <i class="fa-solid fa-clipboard mr-1"></i>Clique aqui e pressione Ctrl+V (ou Cmd+V) para colar o print do exame
+      </div>
+      <div id="hosp-exam-images-list" class="flex flex-wrap gap-2 mt-2"></div>
     </div>
 
     <div><label class="label">Evolução do dia</label><textarea id="hosp-evolution" rows="6" class="field text-xs leading-relaxed resize-y" placeholder="Descreva a evolução clínica de hoje (pode colar ditado bruto)."></textarea></div>
@@ -938,8 +953,65 @@ function stripFence(text=''){return text.trim().replace(/^```(?:markdown|text)?\
 function formatDateBR(iso){if(!iso)return'';const[y,m,d]=iso.split('-');return `${d}/${m}/${y}`;}
 
 let pendingHospImage=null;
+let pendingExamImages=[];
 let draft={previous:'',dateSV:todayISO(),dateNews2:todayISO(),evolution:'',examChanges:'',planChanges:'',output:''};
 let history=[];
+
+function fileToImageObj(file){
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onload=()=>{const dataUrl=r.result;resolve({mimeType:file.type||'image/png',base64:dataUrl.split(',')[1],dataUrl});};
+    r.onerror=reject;
+    r.readAsDataURL(file);
+  });
+}
+async function setVitalsImage(file){
+  if(!file)return;
+  if(!file.type||!file.type.startsWith('image/')){showToast('Cole ou anexe um arquivo de imagem.','error');return;}
+  if(file.size>4_000_000){showToast('Use uma imagem de até 4 MB.','error');return;}
+  try{
+    const img=await fileToImageObj(file);
+    pendingHospImage=img;
+    $('hosp-pending-image-preview').src=img.dataUrl;
+    $('hosp-pending-image').classList.remove('hidden');
+    showToast('Print dos sinais vitais anexado.','success');
+  }catch(err){console.error(err);showToast('Falha ao ler a imagem.','error');}
+}
+async function addExamImage(file){
+  if(!file)return;
+  if(!file.type||!file.type.startsWith('image/')){showToast('Cole ou anexe um arquivo de imagem.','error');return;}
+  if(file.size>4_000_000){showToast('Use uma imagem de até 4 MB.','error');return;}
+  if(pendingExamImages.length>=6){showToast('Máximo de 6 imagens de exames por geração.','error');return;}
+  try{
+    const img=await fileToImageObj(file);
+    img.id=uid();
+    pendingExamImages.push(img);
+    renderExamImages();
+    showToast('Print de exame anexado.','success');
+  }catch(err){console.error(err);showToast('Falha ao ler a imagem.','error');}
+}
+function renderExamImages(){
+  const el=$('hosp-exam-images-list');
+  el.innerHTML='';
+  pendingExamImages.forEach(img=>{
+    const d=document.createElement('div');
+    d.className='relative';
+    d.innerHTML=`<img src="${img.dataUrl}" class="h-16 w-16 object-cover rounded border border-slate-700" alt="Print de exame"><button data-remove class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full h-5 w-5 flex items-center justify-center text-[10px]" aria-label="Remover imagem de exame" type="button"><i class="fa-solid fa-xmark"></i></button>`;
+    d.querySelector('[data-remove]').onclick=()=>{pendingExamImages=pendingExamImages.filter(x=>x.id!==img.id);renderExamImages();};
+    el.appendChild(d);
+  });
+}
+function handlePasteEvent(e,onImage){
+  const items=(e.clipboardData||window.clipboardData)?.items;
+  if(!items)return;
+  for(const item of items){
+    if(item.type&&item.type.startsWith('image/')){
+      const file=item.getAsFile();
+      if(file){e.preventDefault();onImage(file);return;}
+    }
+  }
+  showToast('Nenhuma imagem encontrada na área de transferência. Copie o print (não apenas o arquivo) e tente novamente.','error');
+}
 
 function loadLocal(){
   try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY));if(saved){draft={...draft,...(saved.draft||{})};history=Array.isArray(saved.history)?saved.history:[];}}catch(e){console.error(e);}
@@ -947,16 +1019,16 @@ function loadLocal(){
 function saveLocal(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({draft,history}));}catch(e){console.error(e);}}
 function syncDraftFromForm(){draft={previous:$('hosp-previous').value,dateSV:$('hosp-date-sv').value,dateNews2:$('hosp-date-news2').value,evolution:$('hosp-evolution').value,examChanges:$('hosp-exam-changes').value,planChanges:$('hosp-plan-changes').value,output:$('hosp-output').value};saveLocal();}
 
-async function callGemini(userText,imageObj,systemText,key,model){
-  const parts=[];if(userText)parts.push({text:userText});if(imageObj)parts.push({inlineData:{mimeType:imageObj.mimeType,data:imageObj.base64}});
+async function callGemini(userText,images,systemText,key,model){
+  const parts=[];if(userText)parts.push({text:userText});images.forEach(img=>parts.push({inlineData:{mimeType:img.mimeType,data:img.base64}}));
   const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{role:'user',parts}],systemInstruction:{parts:[{text:systemText}]},generationConfig:{temperature:0.1}})});
   if(!r.ok)throw new Error(`Gemini ${r.status}: ${(await r.text()).slice(0,180)}`);
   const data=await r.json(),text=data?.candidates?.[0]?.content?.parts?.map(x=>x.text||'').join('');
   if(!text)throw new Error('Resposta vazia do Gemini.');
   return stripFence(text);
 }
-async function callOpenAI(userText,imageObj,systemText,key,model){
-  const content=[];if(userText)content.push({type:'input_text',text:userText});if(imageObj)content.push({type:'input_image',image_url:`data:${imageObj.mimeType};base64,${imageObj.base64}`});
+async function callOpenAI(userText,images,systemText,key,model){
+  const content=[];if(userText)content.push({type:'input_text',text:userText});images.forEach(img=>content.push({type:'input_image',image_url:`data:${img.mimeType};base64,${img.base64}`}));
   const input=[{role:'system',content:systemText},{role:'user',content}];
   const r=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},body:JSON.stringify({model,input})});
   if(!r.ok)throw new Error(`OpenAI ${r.status}: ${(await r.text()).slice(0,180)}`);
@@ -965,20 +1037,20 @@ async function callOpenAI(userText,imageObj,systemText,key,model){
   if(!text)throw new Error('Resposta vazia da OpenAI.');
   return stripFence(text);
 }
-async function callClaude(userText,imageObj,systemText,key,model){
-  const content=[];if(imageObj)content.push({type:'image',source:{type:'base64',media_type:imageObj.mimeType,data:imageObj.base64}});if(userText)content.push({type:'text',text:userText});
+async function callClaude(userText,images,systemText,key,model){
+  const content=[];images.forEach(img=>content.push({type:'image',source:{type:'base64',media_type:img.mimeType,data:img.base64}}));if(userText)content.push({type:'text',text:userText});
   const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model,max_tokens:4000,temperature:0.1,system:systemText,messages:[{role:'user',content}]})});
   if(!r.ok)throw new Error(`Claude ${r.status}: ${(await r.text()).slice(0,180)}`);
   const data=await r.json(),text=(data.content||[]).filter(x=>x.type==='text').map(x=>x.text||'').join('');
   if(!text)throw new Error('Resposta vazia do Claude.');
   return stripFence(text);
 }
-async function callProvider(userText,imageObj){
+async function callProvider(userText,images=[]){
   const provider=$('ai-provider').value;
-  if(provider==='gemini'){const key=$('gemini-api-key').value.trim();if(!key)throw new Error('Configure a chave do Gemini em "Configurar IA".');return callGemini(userText,imageObj,HOSPITAL_SYSTEM_PROMPT,key,$('gemini-model').value.trim()||'gemini-flash-latest');}
-  if(provider==='openai'){const key=$('openai-api-key').value.trim();if(!key)throw new Error('Configure a chave da OpenAI em "Configurar IA".');return callOpenAI(userText,imageObj,HOSPITAL_SYSTEM_PROMPT,key,$('openai-model').value.trim()||'gpt-5-mini');}
+  if(provider==='gemini'){const key=$('gemini-api-key').value.trim();if(!key)throw new Error('Configure a chave do Gemini em "Configurar IA".');return callGemini(userText,images,HOSPITAL_SYSTEM_PROMPT,key,$('gemini-model').value.trim()||'gemini-flash-latest');}
+  if(provider==='openai'){const key=$('openai-api-key').value.trim();if(!key)throw new Error('Configure a chave da OpenAI em "Configurar IA".');return callOpenAI(userText,images,HOSPITAL_SYSTEM_PROMPT,key,$('openai-model').value.trim()||'gpt-5-mini');}
   const key=$('claude-api-key').value.trim();if(!key)throw new Error('Configure a chave do Claude em "Configurar IA".');
-  return callClaude(userText,imageObj,HOSPITAL_SYSTEM_PROMPT,key,$('claude-model').value.trim()||'claude-sonnet-5');
+  return callClaude(userText,images,HOSPITAL_SYSTEM_PROMPT,key,$('claude-model').value.trim()||'claude-sonnet-5');
 }
 
 function buildUserMessage(){
@@ -993,9 +1065,10 @@ function buildUserMessage(){
   lines.push('');
   if(dateSV)lines.push(`DATA PARA REGISTRAR OS SINAIS VITAIS (BLOCO SV 24H): ${formatDateBR(dateSV)}`);
   if(dateNews2)lines.push(`DATA DE REFERÊNCIA PARA CALCULAR O NEWS2: ${formatDateBR(dateNews2)}`);
-  lines.push(pendingHospImage?'HÁ UMA FOTO/PRINT DOS SINAIS VITAIS ANEXADA A ESTA MENSAGEM. EXTRAIA DELA TAX, FC, PA, FR, SATO2 E GLICEMIA REFERENTES À DATA INDICADA ACIMA. NÃO INVENTE OU ARREDONDE VALORES ILEGÍVEIS; SE ALGUM DADO NÃO ESTIVER LEGÍVEL NA IMAGEM, TRATE COMO NÃO INFORMADO.':'NÃO HÁ IMAGEM DE SINAIS VITAIS ANEXADA NESTA MENSAGEM.');
+  lines.push(pendingHospImage?'HÁ UMA FOTO/PRINT DOS SINAIS VITAIS ANEXADA A ESTA MENSAGEM (PRIMEIRA IMAGEM). EXTRAIA DELA TAX, FC, PA, FR, SATO2 E GLICEMIA REFERENTES À DATA INDICADA ACIMA. NÃO INVENTE OU ARREDONDE VALORES ILEGÍVEIS; SE ALGUM DADO NÃO ESTIVER LEGÍVEL NA IMAGEM, TRATE COMO NÃO INFORMADO.':'NÃO HÁ IMAGEM DE SINAIS VITAIS ANEXADA NESTA MENSAGEM.');
+  lines.push(pendingExamImages.length?`HÁ ${pendingExamImages.length} IMAGEM(NS) DE EXAMES/LAUDOS ANEXADA(S) A ESTA MENSAGEM (${pendingHospImage?'APÓS A IMAGEM DOS SINAIS VITAIS':'NA ORDEM ENVIADA'}). LEIA OS VALORES/RESULTADOS DIRETAMENTE DELAS E INSIRA NOS BLOCOS DE EXAMES CORRESPONDENTES (LABORATORIAIS, IMAGEM, GASOMETRIA, ETC., CONFORME O CONTEÚDO), SEGUINDO AS REGRAS DE NUNCA APAGAR EXAMES JÁ REGISTRADOS E DE ACRESCENTAR OS NOVOS ABAIXO DOS ANTERIORES, DA DATA MAIS ANTIGA PARA A MAIS RECENTE. NÃO INVENTE VALORES ILEGÍVEIS.`:'NÃO HÁ IMAGENS DE EXAMES ANEXADAS NESTA MENSAGEM.');
   lines.push('');
-  lines.push(evolution?`EVOLUÇÃO DO DIA (RELATO DO MÉDICO — USE PARA O BLOCO EVOLUÇÃO E PARA ATUALIZAR DIAGNÓSTICOS/EXAMES SE MENCIONADOS):\n${evolution}`:'SEM TEXTO ADICIONAL DE EVOLUÇÃO HOJE.');
+  lines.push(evolution?`EVOLUÇÃO DO DIA (RELATO DO MÉDICO): ESTE TEXTO SUBSTITUI INTEIRAMENTE O BLOCO "EVOLUÇÃO" DA VERSÃO ANTERIOR. O BLOCO EVOLUÇÃO DEVE CONTER SOMENTE O RELATO DE HOJE, NUNCA REPETIR, RESUMIR OU MISTURAR A NARRATIVA DA EVOLUÇÃO DE DIAS ANTERIORES (OS DEMAIS BLOCOS — HPMA, DIAGNÓSTICOS, EXAMES, EXAME FÍSICO E PLANO — CONTINUAM LONGITUDINAIS NORMALMENTE, CONFORME AS REGRAS). USE TAMBÉM ESTE RELATO PARA ATUALIZAR DIAGNÓSTICOS/EXAMES SE FOR MENCIONADO:\n${evolution}`:'SEM TEXTO ADICIONAL DE EVOLUÇÃO HOJE. NESTE CASO, O BLOCO EVOLUÇÃO NÃO DEVE REPETIR A NARRATIVA DO DIA ANTERIOR; ESCREVA NDN OU UM RESUMO OBJETIVO CURTO BASEADO APENAS NOS DADOS FORNECIDOS ABAIXO (SV/EXAME FÍSICO/PLANO).');
   lines.push('');
   lines.push(examChanges?`ALTERAÇÕES NO EXAME FÍSICO HOJE (APLICAR SOMENTE ESTAS MUDANÇAS; MANTER TODO O RESTANTE DO EXAME FÍSICO DA EVOLUÇÃO ANTERIOR):\n${examChanges}`:'NENHUMA ALTERAÇÃO NOVA NO EXAME FÍSICO HOJE. MANTER O EXAME FÍSICO DA EVOLUÇÃO ANTERIOR INTEGRALMENTE.');
   lines.push('');
@@ -1017,7 +1090,8 @@ async function generateHospitalRecord(){
   const btn=$('hosp-generate-btn');
   btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner animate-spin"></i>Gerando...';
   try{
-    const reply=await callProvider(buildUserMessage(),pendingHospImage);
+    const images=[pendingHospImage,...pendingExamImages].filter(Boolean);
+    const reply=await callProvider(buildUserMessage(),images);
     $('hosp-output').value=reply;
     updateHospCount();syncDraftFromForm();
     showToast('Prontuário hospitalar gerado. Revise antes de copiar.','success');
@@ -1032,7 +1106,7 @@ async function recompactRecord(){
   btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner animate-spin"></i>Recompactando...';
   try{
     const msg=`O TEXTO ABAIXO ULTRAPASSOU 3.700 CARACTERES, O QUE É PROIBIDO PELAS REGRAS. REESCREVA-O EM MODO COMPACTO OBRIGATÓRIO, APLICANDO AS ABREVIAÇÕES E A ORDEM DE PRIORIDADE DA CHECAGEM FINAL, SEM PERDER HPMA, DIAGNÓSTICOS, EXAMES, ATB, DISPOSITIVOS OU ITENS DO PLANO. ENTREGUE SOMENTE O PRONTUÁRIO FINAL, DENTRO DO LIMITE DE 3.700 CARACTERES:\n\n${current}`;
-    const reply=await callProvider(msg,null);
+    const reply=await callProvider(msg,[]);
     $('hosp-output').value=reply;
     updateHospCount();syncDraftFromForm();
     showToast('Prontuário recompactado.','success');
@@ -1046,6 +1120,7 @@ async function copyText(text){
 }
 
 function removeHospImage(){pendingHospImage=null;$('hosp-vitals-image').value='';$('hosp-pending-image').classList.add('hidden');}
+function removeAllExamImages(){pendingExamImages=[];$('hosp-exam-images').value='';renderExamImages();}
 
 function renderHistoryList(){
   const list=$('hosp-history-list');
@@ -1093,20 +1168,13 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('hosp-clear-history-btn').onclick=()=>{if(!history.length)return;if(!confirm('Apagar todo o histórico local salvo neste navegador?'))return;history=[];saveLocal();renderHistoryList();};
   $('hosp-clear-btn').onclick=()=>{
     if(!confirm('Limpar os campos de evolução, exame físico e plano de hoje? O prontuário anterior e o resultado gerado permanecem.'))return;
-    $('hosp-evolution').value='';$('hosp-exam-changes').value='';$('hosp-plan-changes').value='';removeHospImage();syncDraftFromForm();
+    $('hosp-evolution').value='';$('hosp-exam-changes').value='';$('hosp-plan-changes').value='';removeHospImage();removeAllExamImages();syncDraftFromForm();
   };
-  $('hosp-vitals-image').onchange=async e=>{
-    const f=e.target.files?.[0];if(!f)return;
-    if(f.size>4_000_000){showToast('Use uma imagem de até 4 MB.','error');e.target.value='';return;}
-    try{
-      const dataUrl=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f);});
-      const base64=dataUrl.split(',')[1];
-      pendingHospImage={mimeType:f.type||'image/jpeg',base64};
-      $('hosp-pending-image-preview').src=dataUrl;
-      $('hosp-pending-image').classList.remove('hidden');
-    }catch(err){console.error(err);showToast('Falha ao ler a imagem.','error');}
-  };
+  $('hosp-vitals-image').onchange=e=>{const f=e.target.files?.[0];setVitalsImage(f);e.target.value='';};
   $('hosp-remove-image-btn').onclick=removeHospImage;
+  $('hosp-vitals-pastezone').addEventListener('paste',e=>handlePasteEvent(e,setVitalsImage));
+  $('hosp-exam-images').onchange=e=>{Array.from(e.target.files||[]).forEach(addExamImage);e.target.value='';};
+  $('hosp-exam-pastezone').addEventListener('paste',e=>handlePasteEvent(e,addExamImage));
 
   $('config-btn').onclick=()=>openModal('config-modal');
   $('close-config-btn').onclick=()=>closeModal('config-modal');
