@@ -92,7 +92,9 @@
 
     <div class="flex flex-wrap gap-2 pt-2">
       <button id="hosp-generate-btn" class="btn btn-primary py-3"><i class="fa-solid fa-hospital"></i>Gerar prontuário hospitalar</button>
+      <button id="hosp-new-evolution-btn" class="btn btn-soft" type="button"><i class="fa-solid fa-calendar-plus"></i>Nova evolução (novo dia)</button>
       <button id="hosp-clear-btn" class="btn btn-danger" type="button"><i class="fa-solid fa-eraser"></i>Limpar campos do dia</button>
+      <button id="hosp-delete-all-btn" class="btn btn-danger" type="button"><i class="fa-solid fa-trash"></i>Apagar tudo</button>
     </div>
   </div>
 
@@ -1169,6 +1171,23 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('hosp-clear-btn').onclick=()=>{
     if(!confirm('Limpar os campos de evolução, exame físico e plano de hoje? O prontuário anterior e o resultado gerado permanecem.'))return;
     $('hosp-evolution').value='';$('hosp-exam-changes').value='';$('hosp-plan-changes').value='';removeHospImage();removeAllExamImages();syncDraftFromForm();
+  };
+  $('hosp-new-evolution-btn').onclick=()=>{
+    const out=$('hosp-output').value.trim();
+    if(out)$('hosp-previous').value=out;
+    $('hosp-evolution').value='';$('hosp-exam-changes').value='';$('hosp-plan-changes').value='';$('hosp-output').value='';
+    $('hosp-date-sv').value=todayISO();$('hosp-date-news2').value=todayISO();
+    removeHospImage();removeAllExamImages();
+    syncDraftFromForm();updateHospCount();
+    showToast(out?'Resultado movido para "prontuário anterior". Pronto para a evolução de hoje.':'Campos prontos para uma nova evolução.','success');
+  };
+  $('hosp-delete-all-btn').onclick=()=>{
+    if(!confirm('Apagar tudo: prontuário anterior, evolução, exame físico, plano e resultado gerado? O histórico local salvo não é afetado. Esta ação não pode ser desfeita.'))return;
+    $('hosp-previous').value='';$('hosp-evolution').value='';$('hosp-exam-changes').value='';$('hosp-plan-changes').value='';$('hosp-output').value='';
+    $('hosp-date-sv').value=todayISO();$('hosp-date-news2').value=todayISO();
+    removeHospImage();removeAllExamImages();
+    syncDraftFromForm();updateHospCount();
+    showToast('Formulário apagado.','success');
   };
   $('hosp-vitals-image').onchange=e=>{const f=e.target.files?.[0];setVitalsImage(f);e.target.value='';};
   $('hosp-remove-image-btn').onclick=removeHospImage;
