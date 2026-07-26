@@ -115,7 +115,7 @@ body.light .text-amber-400{color:#b45309!important}
       <label class="label">Exames para inserir (opcional)</label>
       <div class="flex flex-wrap items-center gap-2 mb-2">
         <label class="btn btn-soft cursor-pointer"><i class="fa-solid fa-file-medical"></i>Anexar arquivo(s)<input id="hosp-exam-images" type="file" accept="image/*" multiple class="hidden"></label>
-        <span class="text-[10px] text-slate-500">Prints de laudos/resultados (até 6). A IA lê os valores e insere no bloco de exames, mantendo os já registrados.</span>
+        <span class="text-[10px] text-slate-500">Prints de laudos/resultados (até 20). A IA lê os valores e insere no bloco de exames, mantendo os já registrados.</span>
       </div>
       <div id="hosp-exam-pastezone" tabindex="0" class="border border-dashed border-slate-700 rounded-lg p-3 text-[11px] text-slate-500 text-center cursor-text focus:border-emerald-500 focus:text-emerald-300 focus:outline-none">
         <i class="fa-solid fa-clipboard mr-1"></i>Clique aqui e pressione Ctrl+V (ou Cmd+V) para colar o print do exame
@@ -1028,7 +1028,7 @@ async function addExamImage(file){
   if(!file)return;
   if(!file.type||!file.type.startsWith('image/')){showToast('Cole ou anexe um arquivo de imagem.','error');return;}
   if(file.size>4_000_000){showToast('Use uma imagem de até 4 MB.','error');return;}
-  if(pendingExamImages.length>=6){showToast('Máximo de 6 imagens de exames por geração.','error');return;}
+  if(pendingExamImages.length>=20){showToast('Máximo de 20 imagens de exames por geração.','error');return;}
   try{
     const img=await fileToImageObj(file);
     img.id=uid();
