@@ -1133,6 +1133,11 @@ function updateHospCount(){
   $('hosp-recompact-btn').classList.toggle('hidden',len<=3700);
 }
 
+async function compactText(current){
+  const msg=`O TEXTO ABAIXO ULTRAPASSOU 3.700 CARACTERES, O QUE É PROIBIDO PELAS REGRAS. REESCREVA-O POR COMPLETO EM MODO COMPACTO OBRIGATÓRIO, SEGUINDO A ORDEM DE PRIORIDADE DA CHECAGEM FINAL, SEM PERDER HPMA, DIAGNÓSTICOS, EXAMES, ATB, DISPOSITIVOS OU ITENS DO PLANO. APLIQUE AGRESSIVAMENTE AS ABREVIAÇÕES OBRIGATÓRIAS (SEÇÕES 2 E 3), RESPEITANDO SEMPRE ABREVIAÇÕES MÉDICAS CONSAGRADAS E SEM ALTERAR O SENTIDO CLÍNICO, INCLUINDO POR EXEMPLO: REDUZIR TODAS AS DATAS PARA O FORMATO D/M/AA (EX.: 12/04/1982 = 12/4/82); MURMÚRIO VESICULAR = MV; SEM VISCEROMEGALIAS = S/ VMG; SINAIS VITAIS = SV. ENTREGUE SOMENTE O PRONTUÁRIO FINAL, DENTRO DO LIMITE DE 3.700 CARACTERES, SEM NENHUM COMENTÁRIO ANTES OU DEPOIS:\n\n${current}`;
+  return callProvider(msg,[]);
+}
+
 async function generateHospitalRecord(){
   const evolution=$('hosp-evolution').value.trim();
   const prev=$('hosp-previous').value.trim();
@@ -1141,10 +1146,17 @@ async function generateHospitalRecord(){
   btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner animate-spin"></i>Gerando...';
   try{
     const images=[pendingHospImage,...pendingExamImages].filter(Boolean);
-    const reply=await callProvider(buildUserMessage(),images);
+    let reply=await callProvider(buildUserMessage(),images);
+    let attempts=0;
+    while(reply.length>3700&&attempts<2){
+      attempts++;
+      btn.innerHTML=`<i class="fa-solid fa-spinner animate-spin"></i>Compactando automaticamente (${attempts}/2)...`;
+      reply=await compactText(reply);
+    }
     $('hosp-output').value=reply;
     updateHospCount();syncDraftFromForm();
-    showToast('Prontuário hospitalar gerado. Revise antes de copiar.','success');
+    if(reply.length>3700)showToast('Gerado, mas ainda acima de 3.700 caracteres mesmo após compactar automaticamente. Clique em "Recompactar" ou edite manualmente.','error');
+    else showToast(attempts?'Prontuário gerado e compactado automaticamente para caber em 3.700 caracteres.':'Prontuário hospitalar gerado. Revise antes de copiar.','success');
   }catch(e){console.error(e);showToast(`Falha na IA: ${e.message}`,'error');}
   finally{btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-hospital"></i>Gerar prontuário hospitalar';}
 }
@@ -1155,11 +1167,10 @@ async function recompactRecord(){
   const btn=$('hosp-recompact-btn');
   btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner animate-spin"></i>Recompactando...';
   try{
-    const msg=`O TEXTO ABAIXO ULTRAPASSOU 3.700 CARACTERES, O QUE É PROIBIDO PELAS REGRAS. REESCREVA-O EM MODO COMPACTO OBRIGATÓRIO, APLICANDO AS ABREVIAÇÕES E A ORDEM DE PRIORIDADE DA CHECAGEM FINAL, SEM PERDER HPMA, DIAGNÓSTICOS, EXAMES, ATB, DISPOSITIVOS OU ITENS DO PLANO. ENTREGUE SOMENTE O PRONTUÁRIO FINAL, DENTRO DO LIMITE DE 3.700 CARACTERES:\n\n${current}`;
-    const reply=await callProvider(msg,[]);
+    const reply=await compactText(current);
     $('hosp-output').value=reply;
     updateHospCount();syncDraftFromForm();
-    showToast('Prontuário recompactado.','success');
+    showToast(reply.length>3700?'Ainda acima de 3.700 caracteres. Considere editar manualmente ou clicar em Recompactar de novo.':'Prontuário recompactado.',reply.length>3700?'error':'success');
   }catch(e){console.error(e);showToast(`Falha na IA: ${e.message}`,'error');}
   finally{btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-compress"></i>Recompactar (acima de 3.700)';}
 }
