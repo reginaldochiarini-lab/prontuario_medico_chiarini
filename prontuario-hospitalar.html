@@ -121,6 +121,8 @@ body.light .text-amber-400{color:#b45309!important}
         <i class="fa-solid fa-clipboard mr-1"></i>Clique aqui e pressione Ctrl+V (ou Cmd+V) para colar o print do exame
       </div>
       <div id="hosp-exam-images-list" class="flex flex-wrap gap-2 mt-2"></div>
+      <label class="label mt-3">Laudos de RX, TC, USG/ECO, ECG etc. (digite ou copie e cole o texto)</label>
+      <textarea id="hosp-exam-text" rows="5" class="field text-xs leading-relaxed resize-y" placeholder="Cole ou digite aqui o texto de laudos de imagem, ECG, ecocardiograma etc. Ex.: 25/7 RX TÓRAX: ... / 25/7 ECG: RITMO SINUSAL, SEM ALTERAÇÕES AGUDAS."></textarea>
     </div>
 
     <div><label class="label">Evolução do dia</label><textarea id="hosp-evolution" rows="6" class="field text-xs leading-relaxed resize-y" placeholder="Descreva a evolução clínica de hoje (pode colar ditado bruto)."></textarea></div>
@@ -999,7 +1001,7 @@ function formatDateBR(iso){if(!iso)return'';const[y,m,d]=iso.split('-');return `
 
 let pendingHospImage=null;
 let pendingExamImages=[];
-let draft={previous:'',dateSV:todayISO(),dateNews2:todayISO(),evolution:'',examChanges:'',planChanges:'',output:''};
+let draft={previous:'',dateSV:todayISO(),dateNews2:todayISO(),evolution:'',examChanges:'',examText:'',planChanges:'',output:''};
 let history=[];
 
 function fileToImageObj(file){
@@ -1062,7 +1064,7 @@ function loadLocal(){
   try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY));if(saved){draft={...draft,...(saved.draft||{})};history=Array.isArray(saved.history)?saved.history:[];}}catch(e){console.error(e);}
 }
 function saveLocal(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({draft,history}));}catch(e){console.error(e);}}
-function syncDraftFromForm(){draft={previous:$('hosp-previous').value,dateSV:$('hosp-date-sv').value,dateNews2:$('hosp-date-news2').value,evolution:$('hosp-evolution').value,examChanges:$('hosp-exam-changes').value,planChanges:$('hosp-plan-changes').value,output:$('hosp-output').value};saveLocal();}
+function syncDraftFromForm(){draft={previous:$('hosp-previous').value,dateSV:$('hosp-date-sv').value,dateNews2:$('hosp-date-news2').value,evolution:$('hosp-evolution').value,examChanges:$('hosp-exam-changes').value,examText:$('hosp-exam-text').value,planChanges:$('hosp-plan-changes').value,output:$('hosp-output').value};saveLocal();}
 
 async function callGemini(userText,images,systemText,key,model){
   const parts=[];if(userText)parts.push({text:userText});images.forEach(img=>parts.push({inlineData:{mimeType:img.mimeType,data:img.base64}}));
@@ -1104,6 +1106,7 @@ function buildUserMessage(){
   const dateNews2=$('hosp-date-news2').value||dateSV;
   const evolution=$('hosp-evolution').value.trim();
   const examChanges=$('hosp-exam-changes').value.trim();
+  const examText=$('hosp-exam-text').value.trim();
   const planChanges=$('hosp-plan-changes').value.trim();
   const lines=[];
   lines.push(prev?`PRONTUÁRIO/EVOLUÇÃO ANTERIOR (BASE LONGITUDINAL — MANTER INTEGRALMENTE TUDO O QUE NÃO FOR EXPLICITAMENTE ALTERADO ABAIXO):\n${prev}`:'NÃO HÁ PRONTUÁRIO ANTERIOR NESTA CONVERSA. TRATAR COMO ADMISSÃO E GERAR SOMENTE COM OS DADOS FORNECIDOS ABAIXO, MARCANDO CAMPOS AUSENTES CONFORME AS REGRAS DO PROMPT.');
@@ -1116,6 +1119,8 @@ function buildUserMessage(){
   lines.push(evolution?`EVOLUÇÃO DO DIA (RELATO DO MÉDICO): ESTE TEXTO SUBSTITUI INTEIRAMENTE O BLOCO "EVOLUÇÃO" DA VERSÃO ANTERIOR. O BLOCO EVOLUÇÃO DEVE CONTER SOMENTE O RELATO DE HOJE, NUNCA REPETIR, RESUMIR OU MISTURAR A NARRATIVA DA EVOLUÇÃO DE DIAS ANTERIORES (OS DEMAIS BLOCOS — HPMA, DIAGNÓSTICOS, EXAMES, EXAME FÍSICO E PLANO — CONTINUAM LONGITUDINAIS NORMALMENTE, CONFORME AS REGRAS). USE TAMBÉM ESTE RELATO PARA ATUALIZAR DIAGNÓSTICOS/EXAMES SE FOR MENCIONADO:\n${evolution}`:'SEM TEXTO ADICIONAL DE EVOLUÇÃO HOJE. NESTE CASO, O BLOCO EVOLUÇÃO NÃO DEVE REPETIR A NARRATIVA DO DIA ANTERIOR; ESCREVA NDN OU UM RESUMO OBJETIVO CURTO BASEADO APENAS NOS DADOS FORNECIDOS ABAIXO (SV/EXAME FÍSICO/PLANO).');
   lines.push('');
   lines.push(examChanges?`ALTERAÇÕES NO EXAME FÍSICO HOJE (APLICAR SOMENTE ESTAS MUDANÇAS; MANTER TODO O RESTANTE DO EXAME FÍSICO DA EVOLUÇÃO ANTERIOR):\n${examChanges}`:'NENHUMA ALTERAÇÃO NOVA NO EXAME FÍSICO HOJE. MANTER O EXAME FÍSICO DA EVOLUÇÃO ANTERIOR INTEGRALMENTE.');
+  lines.push('');
+  lines.push(examText?`TEXTO DE LAUDOS DIGITADO/COLADO HOJE (RX, TC, USG/ECO, ECG, ETC. — INSERIR NOS BLOCOS DE EXAMES CORRESPONDENTES, SEGUINDO AS REGRAS DE NUNCA APAGAR EXAMES JÁ REGISTRADOS E DE ACRESCENTAR OS NOVOS ABAIXO DOS ANTERIORES, DA DATA MAIS ANTIGA PARA A MAIS RECENTE; NÃO INVENTAR DADOS ALÉM DO QUE ESTÁ ESCRITO ABAIXO):\n${examText}`:'NENHUM LAUDO DE IMAGEM/ECG/ECO DIGITADO OU COLADO HOJE.');
   lines.push('');
   lines.push(planChanges?`ALTERAÇÕES NO PLANO TERAPÊUTICO HOJE (ITENS NOVOS, SUSPENSOS, MODIFICADOS OU RESULTADOS DE EXAMES SOLICITADOS ANTERIORMENTE):\n${planChanges}`:'NENHUMA ALTERAÇÃO EXPLÍCITA NO PLANO HOJE. REESCREVA O PLANO TERAPÊUTICO ANTERIOR POR COMPLETO, ITEM POR ITEM, AJUSTANDO CONFORME A EVOLUÇÃO DO DIA E OS EXAMES JÁ SOLICITADOS.');
   return lines.join('\n');
@@ -1192,12 +1197,13 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('hosp-date-news2').value=draft.dateNews2||todayISO();
   $('hosp-evolution').value=draft.evolution||'';
   $('hosp-exam-changes').value=draft.examChanges||'';
+  $('hosp-exam-text').value=draft.examText||'';
   $('hosp-plan-changes').value=draft.planChanges||'';
   $('hosp-output').value=draft.output||'';
   updateHospCount();
   renderHistoryList();
 
-  ['hosp-previous','hosp-date-sv','hosp-date-news2','hosp-evolution','hosp-exam-changes','hosp-plan-changes'].forEach(id=>$(id).addEventListener('input',syncDraftFromForm));
+  ['hosp-previous','hosp-date-sv','hosp-date-news2','hosp-evolution','hosp-exam-changes','hosp-exam-text','hosp-plan-changes'].forEach(id=>$(id).addEventListener('input',syncDraftFromForm));
   $('hosp-output').addEventListener('input',()=>{updateHospCount();syncDraftFromForm();});
 
   $('hosp-generate-btn').onclick=generateHospitalRecord;
@@ -1214,21 +1220,21 @@ document.addEventListener('DOMContentLoaded',()=>{
   };
   $('hosp-clear-history-btn').onclick=()=>{if(!history.length)return;if(!confirm('Apagar todo o histórico local salvo neste navegador?'))return;history=[];saveLocal();renderHistoryList();};
   $('hosp-clear-btn').onclick=()=>{
-    if(!confirm('Limpar os campos de evolução, exame físico e plano de hoje? O prontuário anterior e o resultado gerado permanecem.'))return;
-    $('hosp-evolution').value='';$('hosp-exam-changes').value='';$('hosp-plan-changes').value='';removeHospImage();removeAllExamImages();syncDraftFromForm();
+    if(!confirm('Limpar os campos de evolução, exame físico, exames e plano de hoje? O prontuário anterior e o resultado gerado permanecem.'))return;
+    $('hosp-evolution').value='';$('hosp-exam-changes').value='';$('hosp-exam-text').value='';$('hosp-plan-changes').value='';removeHospImage();removeAllExamImages();syncDraftFromForm();
   };
   $('hosp-new-evolution-btn').onclick=()=>{
     const out=$('hosp-output').value.trim();
     if(out)$('hosp-previous').value=out;
-    $('hosp-evolution').value='';$('hosp-exam-changes').value='';$('hosp-plan-changes').value='';$('hosp-output').value='';
+    $('hosp-evolution').value='';$('hosp-exam-changes').value='';$('hosp-exam-text').value='';$('hosp-plan-changes').value='';$('hosp-output').value='';
     $('hosp-date-sv').value=todayISO();$('hosp-date-news2').value=todayISO();
     removeHospImage();removeAllExamImages();
     syncDraftFromForm();updateHospCount();
     showToast(out?'Resultado movido para "prontuário anterior". Pronto para a evolução de hoje.':'Campos prontos para uma nova evolução.','success');
   };
   $('hosp-delete-all-btn').onclick=()=>{
-    if(!confirm('Apagar tudo: prontuário anterior, evolução, exame físico, plano e resultado gerado? O histórico local salvo não é afetado. Esta ação não pode ser desfeita.'))return;
-    $('hosp-previous').value='';$('hosp-evolution').value='';$('hosp-exam-changes').value='';$('hosp-plan-changes').value='';$('hosp-output').value='';
+    if(!confirm('Apagar tudo: prontuário anterior, evolução, exame físico, exames, plano e resultado gerado? O histórico local salvo não é afetado. Esta ação não pode ser desfeita.'))return;
+    $('hosp-previous').value='';$('hosp-evolution').value='';$('hosp-exam-changes').value='';$('hosp-exam-text').value='';$('hosp-plan-changes').value='';$('hosp-output').value='';
     $('hosp-date-sv').value=todayISO();$('hosp-date-news2').value=todayISO();
     removeHospImage();removeAllExamImages();
     syncDraftFromForm();updateHospCount();
