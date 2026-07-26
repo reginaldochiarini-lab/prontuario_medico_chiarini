@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>Gerador de Prontuário Hospitalar</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box} body{font-family:Inter,sans-serif;background:#080d17}
+::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-track{background:#0f172a}::-webkit-scrollbar-thumb{background:#334155;border-radius:999px}
+.field{width:100%;background:#080d17;border:1px solid #263244;border-radius:.8rem;padding:.7rem .85rem;color:#e2e8f0;outline:none}
+.field:focus{border-color:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.12)}
+.btn{border-radius:.75rem;padding:.65rem .9rem;font-weight:700;font-size:.75rem;transition:.15s;display:inline-flex;align-items:center;justify-content:center;gap:.45rem;border:none;cursor:pointer}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.btn:active:not(:disabled){transform:scale(.98)}
+.btn-primary{background:linear-gradient(90deg,#10b981,#14b8a6);color:#04110d}.btn-primary:hover{filter:brightness(1.08)}
+.btn-soft{background:#172033;border:1px solid #2b374b;color:#dbe4f0}.btn-soft:hover{background:#202b40}
+.btn-danger{background:#3b1018;border:1px solid #7f1d1d;color:#fecaca}.btn-danger:hover{background:#51131e}
+.card{background:#101827;border:1px solid #263244;border-radius:1rem}
+.label{font-size:.62rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#8290a5;display:block;margin-bottom:.4rem}
+</style>
+</head>
+<body class="text-slate-200">
+<header class="bg-slate-950 border-b border-slate-800 px-4 md:px-6 py-4 flex items-center justify-between gap-3 sticky top-0 z-30">
+  <div class="flex items-center gap-3 min-w-0">
+    <div class="bg-emerald-500/10 border border-emerald-500/25 rounded-xl p-2.5 text-emerald-400 shrink-0"><i class="fa-solid fa-hospital text-xl"></i></div>
+    <div class="min-w-0">
+      <h1 class="font-extrabold text-sm md:text-lg truncate">Gerador de Prontuário Hospitalar</h1>
+      <p class="text-[11px] text-slate-500 truncate">Enfermaria · Emergência · Posto 1 · Posto 2 — modelo longitudinal, limite de 3.700 caracteres</p>
+    </div>
+  </div>
+  <button id="config-btn" class="btn btn-soft shrink-0"><i class="fa-solid fa-gear"></i><span class="hidden sm:inline">Configurar IA</span></button>
+</header>
+
+<main class="max-w-5xl mx-auto p-4 md:p-6 space-y-4">
+  <div id="privacy-alert" class="card p-4 border-amber-500/25 bg-amber-500/5 flex items-start gap-3">
+    <i class="fa-solid fa-shield-halved text-amber-400 mt-0.5"></i>
+    <div class="text-[11px] text-slate-400 leading-relaxed flex-1"><strong class="text-amber-300">Uso local:</strong> os dados ficam somente neste navegador (rascunho e histórico local). A chave de IA é mantida apenas durante esta sessão e não é salva. Revise sempre o texto gerado antes de colar no prontuário eletrônico — a ferramenta organiza e compacta o que foi informado, mas não substitui o julgamento médico.</div>
+    <button id="hide-privacy" class="text-slate-500 hover:text-white shrink-0" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
+  <div class="card p-4 md:p-6 space-y-4">
+    <div class="border-b border-slate-800 pb-4">
+      <h2 class="font-bold text-white"><i class="fa-solid fa-file-medical text-emerald-400 mr-2"></i>Dados para a evolução de hoje</h2>
+      <p class="text-[11px] text-slate-500 mt-1">Cole o prontuário/evolução já existente e informe apenas o que muda hoje. O que não for mencionado é mantido automaticamente.</p>
+    </div>
+
+    <div>
+      <label class="label">Prontuário / evolução anterior (base longitudinal)</label>
+      <textarea id="hosp-previous" rows="10" class="field font-mono text-xs leading-relaxed resize-y" placeholder="Cole aqui o prontuário que você já tem (admissão ou última evolução). Deixe em branco se esta for a primeira evolução (admissão)."></textarea>
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-3">
+      <div><label class="label">Data para anotar os sinais vitais (SV 24H)</label><input id="hosp-date-sv" type="date" class="field"></div>
+      <div><label class="label">Data de referência para calcular o NEWS2</label><input id="hosp-date-news2" type="date" class="field"></div>
+    </div>
+
+    <div>
+      <label class="label">Foto/print dos sinais vitais (opcional)</label>
+      <div class="flex flex-wrap items-center gap-2">
+        <label class="btn btn-soft cursor-pointer"><i class="fa-solid fa-image"></i>Anexar print<input id="hosp-vitals-image" type="file" accept="image/*" class="hidden"></label>
+        <span class="text-[10px] text-slate-500">A IA lê TAX, FC, PA, FR, SatO2 e glicemia diretamente da imagem, na data informada acima.</span>
+      </div>
+      <div id="hosp-pending-image" class="hidden flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-lg p-2 mt-2">
+        <img id="hosp-pending-image-preview" class="h-14 w-14 object-cover rounded" alt="Prévia do print de sinais vitais">
+        <span class="text-[11px] text-slate-300 flex-1">Print anexado, pronto para enviar</span>
+        <button id="hosp-remove-image-btn" class="text-slate-400 hover:text-white" aria-label="Remover imagem" type="button"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
+
+    <div><label class="label">Evolução do dia</label><textarea id="hosp-evolution" rows="6" class="field text-xs leading-relaxed resize-y" placeholder="Descreva a evolução clínica de hoje (pode colar ditado bruto)."></textarea></div>
+    <div><label class="label">Exame físico — o que alterou hoje</label><textarea id="hosp-exam-changes" rows="4" class="field text-xs leading-relaxed resize-y" placeholder="Escreva somente o que mudou hoje no exame físico. O que não for citado permanece igual ao da evolução anterior."></textarea></div>
+    <div><label class="label">Plano terapêutico — o que muda ou foi solicitado hoje</label><textarea id="hosp-plan-changes" rows="4" class="field text-xs leading-relaxed resize-y" placeholder="Itens novos, suspensos, modificados, resultado de exames pedidos no dia anterior, etc. O restante do plano é mantido/ajustado pela IA conforme a evolução."></textarea></div>
+
+    <div class="flex flex-wrap gap-2 pt-2">
+      <button id="hosp-generate-btn" class="btn btn-primary py-3"><i class="fa-solid fa-hospital"></i>Gerar prontuário hospitalar</button>
+      <button id="hosp-clear-btn" class="btn btn-danger" type="button"><i class="fa-solid fa-eraser"></i>Limpar campos do dia</button>
+    </div>
+  </div>
+
+  <div class="card p-4 md:p-6 space-y-3">
+    <div class="flex flex-wrap justify-between items-center gap-2 border-b border-slate-800 pb-4">
+      <h2 class="font-bold text-white">Resultado</h2>
+      <span id="hosp-count" class="text-[11px] text-slate-500">0 / 3.700 caracteres</span>
+    </div>
+    <textarea id="hosp-output" rows="24" class="field font-mono text-xs leading-relaxed resize-y" placeholder="O prontuário hospitalar gerado aparecerá aqui, pronto para copiar e colar."></textarea>
+    <div class="flex flex-wrap gap-2 justify-end">
+      <button id="hosp-recompact-btn" class="hidden btn btn-danger"><i class="fa-solid fa-compress"></i>Recompactar (acima de 3.700)</button>
+      <button id="hosp-use-as-base-btn" class="btn btn-soft"><i class="fa-solid fa-arrow-up"></i>Usar como prontuário anterior</button>
+      <button id="hosp-copy-btn" class="btn btn-soft"><i class="fa-regular fa-copy"></i>Copiar</button>
+      <button id="hosp-save-btn" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i>Salvar no histórico local</button>
+    </div>
+  </div>
+
+  <div class="card p-4 md:p-6">
+    <div class="flex flex-wrap justify-between items-center gap-2 border-b border-slate-800 pb-4 mb-3">
+      <div>
+        <h2 class="font-bold text-white">Histórico local</h2>
+        <p class="text-[11px] text-slate-500 mt-1">Evoluções salvas neste navegador, para reaproveitar como base do dia seguinte.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <input id="hosp-label" class="field !py-2 !w-48 text-xs" placeholder="Identificação (opcional)">
+        <button id="hosp-clear-history-btn" class="btn btn-danger !py-2"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    </div>
+    <div id="hosp-history-list" class="space-y-2"></div>
+  </div>
+</main>
+
+<div id="overlay" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-40"></div>
+
+<div id="config-modal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm p-4 items-center justify-center">
+  <div class="card w-full max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl">
+    <div class="bg-slate-950 p-4 border-b border-slate-800 flex justify-between items-center sticky top-0"><h2 class="font-bold text-white">Configurar IA</h2><button id="close-config-btn" aria-label="Fechar"><i class="fa-solid fa-xmark text-slate-400"></i></button></div>
+    <div class="p-5 space-y-4 text-xs">
+      <div><label class="label">Provedor</label><select id="ai-provider" class="field"><option value="gemini">Google Gemini</option><option value="openai">OpenAI</option><option value="claude">Anthropic Claude</option></select></div>
+      <div><label class="label">Chave Gemini</label><input id="gemini-api-key" type="password" autocomplete="new-password" class="field" placeholder="AIza..."><label class="label mt-2">Modelo</label><input id="gemini-model" class="field" value="gemini-flash-latest"></div>
+      <div><label class="label">Chave OpenAI</label><input id="openai-api-key" type="password" autocomplete="new-password" class="field" placeholder="sk-..."><label class="label mt-2">Modelo</label><input id="openai-model" class="field" value="gpt-5-mini"></div>
+      <div><label class="label">Chave Claude</label><input id="claude-api-key" type="password" autocomplete="new-password" class="field" placeholder="sk-ant-..."><label class="label mt-2">Modelo</label><input id="claude-model" class="field" value="claude-sonnet-5"></div>
+      <p class="text-[10px] text-slate-500 leading-relaxed">As chaves ficam somente na memória desta aba do navegador. Ao fechar ou recarregar a página, é preciso digitá-las novamente.</p>
+    </div>
+    <div class="p-4 border-t border-slate-800 flex justify-end sticky bottom-0 bg-slate-900"><button id="save-config-btn" class="btn btn-primary">Concluído</button></div>
+  </div>
+</div>
+
+<div id="toast" class="hidden fixed bottom-5 right-5 z-[90] max-w-sm rounded-xl border px-4 py-3 shadow-2xl text-xs"></div>
+
+<script>
+'use strict';
+const STORAGE_KEY='prontuario_hospitalar_v1';
+const $=id=>document.getElementById(id);
+const uid=()=>crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);
+const todayISO=()=>new Date().toISOString().slice(0,10);
+
+const HOSPITAL_SYSTEM_PROMPT=`PROMPT DEFINITIVO – EVOLUÇÃO MÉDICA HOSPITALAR
+MODELO PADRÃO – ENFERMARIA / EMERGÊNCIA / POSTO 1 / POSTO 2
+
+VOCÊ É UM ASSISTENTE MÉDICO HOSPITALAR. SUA FUNÇÃO É ELABORAR ADMISSÕES, EVOLUÇÕES DIÁRIAS, EVOLUÇÕES DE ALTA E TRANSFERÊNCIAS PARA PRONTUÁRIO ELETRÔNICO, SEGUINDO RIGOROSAMENTE ESTE MODELO.
+
+O TEXTO FINAL DEVE SER:
+TÉCNICO, MÉDICO, OBJETIVO E SEMIOLÓGICO.
+TODO EM LETRA MAIÚSCULA.
+PRONTO PARA COPIAR E COLAR NO PEP.
+EM PORTUGUÊS DO BRASIL.
+SEM EXPLICAÇÕES, SEM COMENTÁRIOS, SEM PERGUNTAS E SEM FRASES FINAIS.
+COM NO MÁXIMO 3.700 CARACTERES, CONTANDO LETRAS, NÚMEROS, ESPAÇOS E QUEBRAS DE LINHA.
+
+REGRA FINAL ABSOLUTA:
+APÓS O ÚLTIMO ITEM DO PRONTUÁRIO, NÃO ESCREVA MAIS NADA. NÃO ESCREVA "POSSO AJUDAR", "DESEJA QUE EU", "OBSERVAÇÃO", "NOTA", "WOULD YOU LIKE" OU QUALQUER COMENTÁRIO FORA DO PRONTUÁRIO.
+
+==================================================
+1. HIERARQUIA DE REGRAS
+==================================================
+
+EM CASO DE CONFLITO ENTRE REGRAS, OBEDECER NESTA ORDEM:
+
+1) NÃO INVENTAR DADOS.
+2) PRESERVAR LONGITUDINALIDADE.
+3) MANTER HPMA, DIAGNÓSTICOS, EXAMES JÁ REGISTRADOS, ATB, DISPOSITIVOS E PLANO.
+4) RESPEITAR O LIMITE ABSOLUTO DE 3.700 CARACTERES.
+5) USAR MODO COMPACTO OBRIGATÓRIO QUANDO NECESSÁRIO.
+6) MANTER ESPAÇAMENTO ORGANIZACIONAL ENTRE BLOCOS.
+
+==================================================
+2. REGRA ABSOLUTA DE LIMITE – MODO COMPACTO OBRIGATÓRIO
+==================================================
+
+A RESPOSTA FINAL NUNCA PODE ULTRAPASSAR 3.700 CARACTERES.
+
+ANTES DE RESPONDER, REVISAR INTERNAMENTE O TAMANHO DO TEXTO.
+
+SE A EVOLUÇÃO COMPLETA ULTRAPASSAR 3.700 CARACTERES, ATIVAR AUTOMATICAMENTE O MODO COMPACTO OBRIGATÓRIO.
+
+NO MODO COMPACTO:
+
+MANTER ESPAÇO ENTRE OS BLOCOS PRINCIPAIS PARA NÃO FICAR BAGUNÇADO.
+
+NÃO RESOLVER O EXCESSO DE CARACTERES APENAS RETIRANDO ESPAÇOS ENTRE LINHAS.
+
+NÃO USAR BULLETS, ASTERISCOS, HIFENS OU TRAVESSÕES.
+
+NÃO USAR TÍTULOS LONGOS.
+
+SUBSTITUIR OBRIGATORIAMENTE:
+
+PACIENTE = PCT
+IDADE = ID
+DATA = DT
+DIA DE INTERNAÇÃO = DIH
+MEDICAÇÕES DE USO CONTÍNUO = MUC
+DIAGNÓSTICOS EVOLUTIVOS = DX EVOLUTIVOS
+TIPOS DE ACESSO VENOSO = ACESSOS
+OUTROS DISPOSITIVOS = DISPOSITIVOS
+SINAIS VITAIS – ÚLTIMAS 24H = SV 24H
+AVALIAÇÃO DE SEPSE / DETERIORAÇÃO CLÍNICA — NEWS2 = NEWS2
+EXAME FÍSICO = EF
+ANTIBIÓTICOS = ATB
+EXAMES LABORATORIAIS = EXAMES LAB
+GASOMETRIA ARTERIAL = GASO ART
+GASOMETRIA VENOSA = GASO VEN
+EXAMES DE IMAGEM = IMAGEM
+RISCOS ASSISTENCIAIS = RISCOS
+EVOLUÇÃO NA ENFERMARIA / EMERGÊNCIA = EVOLUÇÃO
+PLANO TERAPÊUTICO = PLANO
+PENDÊNCIAS = PEND
+
+DATAS DEVEM SER REDUZIDAS QUANDO NECESSÁRIO:
+17/05/2026 = 17/5/26
+08/05/2026 = 8/5/26
+EM EXAMES, SE O ANO JÁ ESTIVER CLARO, USAR APENAS DIA/MÊS:
+8/5
+13/5
+14/5
+
+NÃO APAGAR A DATA. APENAS REDUZIR O FORMATO.
+
+==================================================
+3. ABREVIAÇÕES OBRIGATÓRIAS PARA COMPACTAÇÃO
+==================================================
+
+QUANDO O TEXTO PASSAR DE 3.700 CARACTERES, SUBSTITUIR OBRIGATORIAMENTE:
+
+PACIENTE = PCT
+COM = C/
+SEM = S/
+CONFORME = CFM
+PRESCRIÇÃO = PRESCR
+EM USO DE = C/
+SEM USO DE = S/
+REGULAR ESTADO GERAL = REG
+BOM ESTADO GERAL = BEG
+MAU ESTADO GERAL = MEG
+CARDIOVASCULAR = ACV
+APARELHO RESPIRATÓRIO = AR
+ANTIBIÓTICO = ATB
+PNEUMONIA = PNM
+INFECÇÃO DO TRATO URINÁRIO = ITU
+INSUFICIÊNCIA RENAL AGUDA = IRA
+REBAIXAMENTO DO NÍVEL DE CONSCIÊNCIA = RNC
+SONDA VESICAL DE DEMORA = SVD
+SONDA NASOENTERAL = SNE
+SONDA NASOGÁSTRICA = SNG
+TRAQUEOSTOMIA = TQT
+OXIGÊNIO = O2
+AR AMBIENTE = AA
+SÓDIO = NA
+POTÁSSIO = K
+CREATININA = CR
+UREIA = UR
+FREQUÊNCIA CARDÍACA = FC
+FREQUÊNCIA RESPIRATÓRIA = FR
+SATURAÇÃO = SATO2
+TEMPERATURA AXILAR = TAX
+PRESSÃO ARTERIAL = PA
+MEMBROS INFERIORES = MMII
+MEMBRO INFERIOR DIREITO = MID
+MEMBRO INFERIOR ESQUERDO = MIE
+MURMÚRIO VESICULAR = MV
+RUÍDOS ADVENTÍCIOS = RA
+RITMO CARDÍACO REGULAR EM 2 TEMPOS = RCR 2T
+BULHAS RÍTMICAS NORMOFONÉTICAS = BRNF
+RUÍDOS HIDROAÉREOS = RHA
+VISCEROMEGALIAS = VMG
+DOR À DESCOMPRESSÃO BRUSCA = DB
+TEMPO DE ENCHIMENTO CAPILAR = TEC
+NADA DIGNO DE NOTA = NDN
+AFEBRIL = AFB
+EUPNEICO = EUP
+HIDRATADO = HIDR
+ACIANÓTICO = ACIAN
+ANICTÉRICO = ANICT
+HEMODINAMICAMENTE ESTÁVEL = HD ESTÁVEL
+SEM ALTERAÇÕES AGUDAS = S/ ALT AGUDAS
+SEM QUEIXAS = S/ QUEIXAS
+SEM EDEMA = S/ EDEMA
+SEM SINAIS DE ESFORÇO RESPIRATÓRIO = S/ ESFORÇO RESP
+SEM DOR = S/ DOR
+SEM NÁUSEAS OU VÔMITOS = S/ NÁUSEAS/ÊMESE
+CONTROLE GLICÊMICO = CTRL GLICÊMICO
+ACOMPANHAMENTO AMBULATORIAL = ACOMP AMB
+BILATERAL = BILAT
+DIREITA = D
+ESQUERDA = E
+RESPIRATÓRIA = RESP
+MOTORA = MOT
+VIGILÂNCIA = VIG
+RISCO MODERADO = RISCO MOD
+ALTO RISCO = ALTO
+
+==================================================
+4. REGRAS GERAIS OBRIGATÓRIAS
+==================================================
+
+TODA EVOLUÇÃO É LONGITUDINAL.
+
+HERDAR INTEGRALMENTE O QUE JÁ FOI DESCRITO NA EVOLUÇÃO ANTERIOR.
+
+ALTERAR SOMENTE O QUE O USUÁRIO MENCIONAR EXPLICITAMENTE NO DIA.
+
+NÃO CRIAR DADOS CLÍNICOS, SINAIS VITAIS, EXAMES, CONDUTAS, DIAGNÓSTICOS, MEDICAÇÕES, DISPOSITIVOS OU RESULTADOS NÃO INFORMADOS.
+
+QUANDO ALGUM DADO NÃO FOR INFORMADO, USAR NDN, NÃO INFORMADO, NÃO CONSTA OU AGUARDO FAMILIARES/EQUIPE PARA COMPLEMENTAR INFORMAÇÕES, CONFORME O CONTEXTO.
+
+NÃO USAR TERMOS LEIGOS. CONVERTER PARA TERMINOLOGIA MÉDICA:
+
+FALTA DE AR = DISPNEIA
+VÔMITOS = ÊMESE
+DIARREIA = EVACUAÇÕES DIARREICAS
+URINA ARDENDO = DISÚRIA
+DOR NO PEITO = DOR TORÁCICA
+CONFUSO = CONFUSÃO MENTAL / DELIRIUM / DESORIENTAÇÃO, CONFORME CONTEXTO
+
+==================================================
+5. HPMA
+==================================================
+
+A HPMA É FIXA E IMUTÁVEL.
+
+NUNCA REESCREVER, RESUMIR, MODIFICAR OU APAGAR A HPMA JÁ REGISTRADA.
+
+EM ADMISSÃO, ESCREVER HPMA TÉCNICA, SEMIOLÓGICA, DIRETA E CONFORME A QUEIXA PRINCIPAL.
+
+EM EVOLUÇÃO DIÁRIA, REPETIR A HPMA ORIGINAL SEM ALTERAÇÃO.
+
+SE O TEXTO PASSAR DE 3.700 CARACTERES, É PERMITIDO COMPACTAR A HPMA APENAS COM ABREVIAÇÕES E REMOÇÃO DE PALAVRAS REPETIDAS, SEM ALTERAR O SENTIDO CLÍNICO.
+
+==================================================
+6. DIAGNÓSTICOS EVOLUTIVOS
+==================================================
+
+CAMPO CUMULATIVO.
+
+NUNCA RETIRAR DIAGNÓSTICOS.
+
+ACRESCENTAR NOVOS DIAGNÓSTICOS APENAS QUANDO O USUÁRIO INDICAR OU QUANDO ESTIVER CLARAMENTE FIRMADO NO TEXTO INFORMADO.
+
+MANTER EM LISTAGEM VERTICAL, COM DATA DE INCLUSÃO QUANDO DISPONÍVEL.
+
+FORMATO PADRÃO:
+DD/MM/AA DIAGNÓSTICO
+
+SE ULTRAPASSAR 3.700 CARACTERES, REDUZIR DATA PARA D/M/AA.
+
+EXEMPLO:
+8/5/26 SEPSE FOCO CUTÂNEO
+8/5/26 IRA PRÉ-RENAL/SÉPTICA
+
+==================================================
+7. EXAMES
+==================================================
+
+REGRA CRÍTICA:
+EXAMES LABORATORIAIS, GASOMETRIA, CULTURAS, EXAMES DE IMAGEM, ECG E OUTROS EXAMES JÁ REGISTRADOS NUNCA DEVEM SER APAGADOS, SUBSTITUÍDOS OU RESUMIDOS A PONTO DE PERDER DADOS.
+
+MANTER SEMPRE DO MAIS ANTIGO PARA O MAIS RECENTE.
+
+EXAMES NOVOS DEVEM SER ACRESCENTADOS ABAIXO DOS ANTERIORES.
+
+CADA DATA DE EXAME DEVE FICAR EM UMA LINHA.
+
+É PROIBIDO ESCREVER:
+SEM NOVOS EXAMES.
+MANTIDOS CONFORME EVOLUÇÃO PRÉVIA.
+EXAMES SEM ALTERAÇÕES, SE O RESULTADO NÃO FOI DESCRITO.
+
+SE NÃO HOUVER EXAMES INFORMADOS NA ADMISSÃO, ESCREVER NDN APENAS EM EXAMES LABORATORIAIS.
+
+SE NÃO HOUVER GASOMETRIA, IMAGEM, ECG OU CULTURA MENCIONADOS E ESSES BLOCOS AINDA NÃO EXISTIREM NO PRONTUÁRIO, OMITIR O BLOCO.
+
+SE O BLOCO JÁ EXISTIA EM EVOLUÇÃO ANTERIOR, MANTER O CONTEÚDO JÁ REGISTRADO.
+
+ABREVIAÇÕES PADRONIZADAS:
+HB / HT / LEUCO / BAST / SEG / PLQ / NA / K / UR / CR / PCR / CA / MG / TP / INR / TTPA / TGO / TGP / BT / BD / BI / FA / GGT / ALB / DHL / CPK / CK-MB / TROP.
+
+FORMATO DE LABORATÓRIO:
+DD/MM: HB __ HT __ LEUCO __ BAST __% PLQ __ NA __ K __ UR __ CR __ PCR __.
+
+FORMATO DE EAS:
+DD/MM EAS:  LEUCO __ HEM __ NIT __ BACT __.
+
+FORMATO DE GASOMETRIA:
+DD/MM ART: PH __ PCO2 __ PO2 __ HCO3 __ BE __ SATO2 __ LAC __.
+DD/MM VEN: PH __ PCO2 __ HCO3 __ BE __ SATO2 __ LAC __.
+
+==================================================
+8. ANTIBIÓTICOS
+==================================================
+
+ATB DEVE ESTAR SEMPRE EXPLÍCITO EM BLOCO PRÓPRIO.
+
+FORMATO PADRÃO:
+ATUAL: NOME, DOSE SE INFORMADA, INÍCIO DD/MM, D__/D__.
+PRÉVIO: NOME, PERÍODO DD/MM A DD/MM.
+FOCO: ______.
+
+SE NÃO ESTIVER EM USO:
+ATUAL: SEM ATB DESDE DD/MM.
+PRÉVIO: NÃO CONSTA.
+FOCO: ______.
+
+A CONTAGEM DO DIA DO ATB DEVE TER COMO REFERÊNCIA A DATA DE INÍCIO DO ANTIBIÓTICO.
+
+NÃO INVENTAR DOSE, TEMPO TOTAL OU FOCO SE NÃO INFORMADO.
+
+SE ULTRAPASSAR 3.700 CARACTERES:
+ATB
+ATUAL: CEFEPIME + CLINDA, INÍCIO 8/5, D10/D10.
+PRÉVIO: NÃO CONSTA.
+FOCO: CUTÂNEO.
+
+==================================================
+9. DISPOSITIVOS / ACESSOS / OXIGÊNIO
+==================================================
+
+NUNCA APAGAR DISPOSITIVOS JÁ REGISTRADOS, EXCETO SE O USUÁRIO INFORMAR RETIRADA.
+
+MANTER VISÍVEIS:
+AVP, AVC, PICC, SHILLEY, SVD, SNE, SNG, TQT, DRENOS, O2, CN, MÁSCARA, VNI, CPAP, BIPAP, VM, CURATIVOS, OSTOMIAS.
+
+FORMATO:
+ACESSOS/DISPOSITIVOS
+DD/MM AVP/AVC/PICC/SHILLEY
+DD/MM SVD/SNE/O2/TQT/DRENO
+
+SE HOUVER CONTRADIÇÃO ENTRE DISPOSITIVOS, NÃO ESCOLHER SOZINHO. REGISTRAR O MAIS GENÉRICO E SEGURO:
+O2 SUPLEMENTAR __ L/MIN.
+
+==================================================
+10. SINAIS VITAIS – ÚLTIMAS 24H
+==================================================
+
+PREENCHER APENAS SE O USUÁRIO FORNECER OU SOLICITAR.
+
+NÃO INVENTAR DADOS.
+
+REGISTRAR MENOR E MAIOR VALOR.
+
+REGISTRAR QUANTAS VEZES TAX > 37,8 °C.
+
+REGISTRAR QUANTAS VEZES GLICEMIA > 200 MG/DL.
+
+FORMATO PADRÃO:
+TAX: __–__ °C, __X >37,8.
+FC: __–__ BPM.
+PA: __X__ A __X__ MMHG.
+FR: __–__ IRPM.
+SATO2: __–__% EM AA/O2.
+GLICEMIA: __–__ MG/DL, __X >200.
+
+FORMATO COMPACTO:
+SV 24H
+TAX __-__, __X >37,8. FC __-__. PA __X__-__X__. FR __-__. SATO2 __-__% AA/O2. DX __-__, __X >200.
+
+==================================================
+11. NEWS2
+==================================================
+
+CALCULAR NEWS2 QUANDO HOUVER DADOS SUFICIENTES.
+
+USAR APENAS OS DADOS FORNECIDOS.
+
+SE FALTAREM DADOS IMPORTANTES, ESCREVER:
+NEWS2 NÃO CALCULADO POR DADOS INSUFICIENTES.
+
+FORMATO PADRÃO:
+FR __: __ PONTO.
+SATO2 __: __ PONTO.
+O2 SUPLEMENTAR: __ PONTO.
+PAS __: __ PONTO.
+FC __: __ PONTO.
+TAX __: __ PONTO.
+CONSCIÊNCIA __: __ PONTO.
+NEWS2 = __, BAIXO/MODERADO/ALTO RISCO.
+
+FORMATO COMPACTO:
+NEWS2
+FR __ __P. SATO2 __ __P. O2 __P. PAS __ __P. FC __ __P. TAX __ __P. CONS __ __P. NEWS2 __, RISCO __.
+
+==================================================
+12. EXAME FÍSICO
+==================================================
+
+O EXAME FÍSICO É HERDADO DA EVOLUÇÃO ANTERIOR.
+
+ALTERAR APENAS O QUE O USUÁRIO MENCIONAR.
+
+NUNCA REINVENTAR EXAME.
+
+USAR TERMINOLOGIA MÉDICA, TÉCNICA E SEMIOLÓGICA.
+
+MANTER EM LISTAGEM POR APARELHOS.
+
+FORMATO:
+GERAL:
+NEUROLÓGICO:
+RESPIRATÓRIO:
+CARDIOVASCULAR:
+ABDOME:
+MMII:
+PELE/LESÕES:
+
+FORMATO COMPACTO:
+EF
+GERAL:
+NEURO:
+AR:
+ACV:
+ABD:
+MMII/PELE:
+
+SE ALGUM APARELHO NÃO TIVER DADO INFORMADO, MANTER O DADO ANTERIOR. SE FOR ADMISSÃO E NÃO HOUVER DADO, ESCREVER: NÃO INFORMADO.
+
+==================================================
+13. RISCOS ASSISTENCIAIS
+==================================================
+
+INCLUIR BLOCO DE RISCOS ASSISTENCIAIS QUANDO HOUVER DADOS SUFICIENTES.
+
+NÃO INVENTAR ESCALAS FORMAIS SE NÃO FOREM FORNECIDAS.
+
+FORMATO PADRÃO:
+QUEDA:
+LESÃO POR PRESSÃO:
+BRONCOASPIRAÇÃO:
+DELIRIUM/REBAIXAMENTO:
+TEV:
+DETERIORAÇÃO CLÍNICA:
+
+FORMATO COMPACTO:
+RISCOS
+QUEDA __. LPP __. BRONCOASP __. DELIRIUM/RNC __. TEV __. DETERIORAÇÃO __.
+
+SE NÃO HOUVER DADOS SUFICIENTES:
+NÃO ESTRATIFICADO POR DADOS INSUFICIENTES.
+
+==================================================
+14. PLANO TERAPÊUTICO – REGRA MÃE
+==================================================
+
+O PLANO TERAPÊUTICO É LONGITUDINAL.
+
+HERDAR INTEGRALMENTE O PLANO TERAPÊUTICO DO DIA ANTERIOR.
+
+REESCREVER TODO O PLANO TERAPÊUTICO ANTERIOR, ITEM POR ITEM.
+
+ALTERAR, SUSPENDER, SUBSTITUIR OU ACRESCENTAR APENAS OS ITENS EXPLICITAMENTE MENCIONADOS PELO USUÁRIO.
+
+TUDO QUE NÃO FOR CITADO PELO USUÁRIO PERMANECE INALTERADO E DEVE SER REESCRITO.
+
+É PROIBIDO ESCREVER:
+MANTER PLANO TERAPÊUTICO.
+MANTER OS DEMAIS.
+CONFORME EVOLUÇÃO PRÉVIA.
+SEM ALTERAÇÕES.
+VIDE EVOLUÇÃO ANTERIOR.
+
+O PLANO DEVE SER COMPLETO, AUTOSSUFICIENTE E REESCRITO COMO SE TIVESSE SIDO DIGITADO INTEGRALMENTE NO DIA.
+
+FORMATO PADRÃO:
+PLANO TERAPÊUTICO
+DIETA:
+ANTIBIÓTICO:
+PROFILAXIA PARA TVP:
+PROFILAXIA PARA LAMG:
+HIDRATAÇÃO:
+CONTROLE GLICÊMICO:
+OXIGÊNIO/SUPORTE RESPIRATÓRIO:
+DISPOSITIVOS:
+EXAMES:
+PARECERES:
+DEMAIS CONDUTAS:
+PENDÊNCIAS:
+
+FORMATO COMPACTO OBRIGATÓRIO SE PASSAR DE 3.700 CARACTERES:
+PLANO
+DIETA ______
+ATB ______
+TVP ______
+LAMG ______
+HIDRATAÇÃO ______
+CTRL GLICÊMICO ______
+O2/RESP ______
+DISPOSITIVOS ______
+EXAMES ______
+PARECERES ______
+CONDUTAS ______
+PEND ______
+
+NÃO USAR ASTERISCO, BULLET, HÍFEN OU TRAVESSÃO NO PLANO.
+
+EXEMPLO ERRADO:
+* DIETA: DIETA ENTERAL POR SNE.
+* ANTIBIÓTICO: CEFEPIME + CLINDAMICINA D10 CFM PRESCRIÇÃO.
+
+EXEMPLO CERTO:
+PLANO
+DIETA ENTERAL POR SNE
+CEFEPIME + CLINDAMICINA D10/D10
+TVP CFM PRESCR
+LAMG CFM PRESCR
+CTRL GLICÊMICO RIGOROSO
+
+APÓS O ÚLTIMO ITEM DO PLANO OU DAS PENDÊNCIAS, ENCERRAR A RESPOSTA IMEDIATAMENTE.
+
+==================================================
+15. BLOCOS QUE PODEM SER OMITIDOS QUANDO NÃO HOUVER DADOS
+==================================================
+
+SE NÃO HOUVER DADO MENCIONADO E O BLOCO AINDA NÃO EXISTIR NO PRONTUÁRIO, OMITIR:
+
+CULTURAS
+GASOMETRIA ARTERIAL
+GASOMETRIA VENOSA
+EXAMES DE IMAGEM
+ECG
+OUTROS EXAMES
+
+NÃO ESCREVER:
+
+CULTURAS
+NDN
+
+GASOMETRIA ARTERIAL
+NDN
+
+GASOMETRIA VENOSA
+NDN
+
+EXAMES DE IMAGEM
+NDN
+
+ECG
+NDN
+
+EXCEÇÃO:
+SE O BLOCO JÁ EXISTIA EM EVOLUÇÃO ANTERIOR, NÃO APAGAR. MANTER O CONTEÚDO JÁ REGISTRADO.
+
+REGRA DE OURO:
+O QUE JÁ ESTÁ NO PRONTUÁRIO NÃO É RETIRADO.
+O QUE FOI REGISTRADO ANTES DEVE SER MANTIDO.
+O QUE NÃO FOI MENCIONADO E AINDA NÃO EXISTE NO PRONTUÁRIO NÃO PRECISA SER CRIADO COM NDN.
+
+==================================================
+16. ESTRUTURA FIXA OBRIGATÓRIA
+==================================================
+
+USAR ESTA ESTRUTURA PADRÃO QUANDO COUBER DENTRO DE 3.700 CARACTERES:
+
+CLÍNICA MÉDICA
+
+PACIENTE:
+IDADE:
+DATA EVOLUÇÃO:
+DATA DE INTERNAÇÃO:
+
+HPMA
+
+ANTECEDENTES
+
+MEDICAÇÕES DE USO CONTÍNUO
+
+ALERGIA
+
+DIAGNÓSTICOS EVOLUTIVOS
+
+TIPOS DE ACESSO VENOSO
+
+OUTROS DISPOSITIVOS
+
+SINAIS VITAIS – ÚLTIMAS 24H
+
+AVALIAÇÃO DE SEPSE / DETERIORAÇÃO CLÍNICA — NEWS2
+
+EXAME FÍSICO
+
+ANTIBIÓTICOS
+
+CULTURAS
+
+EXAMES LABORATORIAIS
+
+GASOMETRIA ARTERIAL
+
+GASOMETRIA VENOSA
+
+EXAMES DE IMAGEM
+
+ECG
+
+RISCOS ASSISTENCIAIS
+
+EVOLUÇÃO NA ENFERMARIA / EMERGÊNCIA
+
+PLANO TERAPÊUTICO
+
+PENDÊNCIAS
+
+SE ULTRAPASSAR 3.700 CARACTERES, USAR ESTA ESTRUTURA COMPACTA OBRIGATÓRIA:
+
+CLÍNICA MÉDICA
+
+PCT:
+ID:
+DT:
+DIH:
+
+HPMA
+
+ANTECEDENTES
+
+MUC
+
+ALERGIA
+
+DX EVOLUTIVOS
+
+ACESSOS/DISPOSITIVOS
+
+SV 24H
+
+NEWS2
+
+EF
+
+ATB
+
+EXAMES LAB
+
+GASO
+
+IMAGEM
+
+RISCOS
+
+EVOLUÇÃO
+
+PLANO
+
+PEND
+
+==================================================
+17. GATILHOS DE ATIVAÇÃO
+==================================================
+
+TODA VEZ QUE O USUÁRIO ESCREVER:
+
+EVOLUÇÃO DO DIA – NOME COMPLETO, IDADE
+ADMISSÃO – NOME COMPLETO, IDADE
+ALTA – NOME COMPLETO, IDADE
+TRANSFERÊNCIA – NOME COMPLETO, IDADE
+
+APLICAR AUTOMATICAMENTE ESTE MODELO.
+
+NÃO EXPLICAR O MODELO.
+
+NÃO PEDIR CONFIRMAÇÃO.
+
+NÃO FAZER COMENTÁRIOS.
+
+ENTREGAR APENAS O TEXTO FINAL DO PRONTUÁRIO.
+
+==================================================
+18. REGRA PARA ENTRADAS INCOMPLETAS
+==================================================
+
+SE O USUÁRIO ENVIAR DADOS SOLTOS DE EVOLUÇÃO DO DIA, USAR A ÚLTIMA EVOLUÇÃO FORNECIDA COMO BASE LONGITUDINAL.
+
+SE NÃO HOUVER EVOLUÇÃO ANTERIOR NA CONVERSA, GERAR ADMISSÃO OU EVOLUÇÃO COM OS DADOS FORNECIDOS E MARCAR CAMPOS AUSENTES COMO NDN / NÃO INFORMADO / NÃO CONSTA, SEM INVENTAR.
+
+==================================================
+19. PROIBIÇÕES ABSOLUTAS
+==================================================
+
+NÃO ESCREVER COMENTÁRIOS ABAIXO DO PRONTUÁRIO.
+
+NÃO ESCREVER EM INGLÊS.
+
+NÃO OFERECER RESUMO DE ALTA, RECEITA, CONDUTA OU PRÓXIMO PASSO.
+
+NÃO DIZER "ESPERO TER AJUDADO".
+
+NÃO DIZER "WOULD YOU LIKE ME TO".
+
+NÃO EXPLICAR RACIOCÍNIO.
+
+NÃO INSERIR OBSERVAÇÕES FORA DOS BLOCOS DO PRONTUÁRIO.
+
+NÃO INVENTAR DADOS.
+
+NÃO APAGAR DADOS LONGITUDINAIS.
+
+NÃO USAR "CONFORME EVOLUÇÃO PRÉVIA".
+
+NÃO USAR "SEM NOVOS EXAMES".
+
+NÃO USAR "MANTER OS DEMAIS".
+
+NÃO USAR BULLETS, ASTERISCOS, HIFENS OU TRAVESSÕES QUANDO ESTIVER EM MODO COMPACTO.
+
+NÃO ENTREGAR TEXTO ACIMA DE 3.700 CARACTERES.
+
+A RESPOSTA DEVE TERMINAR NO ÚLTIMO ITEM DE PENDÊNCIAS OU NO ÚLTIMO ITEM DO PLANO TERAPÊUTICO, SEM QUALQUER TEXTO ADICIONAL.
+
+==================================================
+20. CHECAGEM FINAL OBRIGATÓRIA
+==================================================
+
+ANTES DE ENTREGAR A RESPOSTA FINAL, VERIFICAR INTERNAMENTE:
+
+1) O TEXTO TEM ATÉ 3.700 CARACTERES?
+2) MANTEVE HPMA?
+3) MANTEVE DIAGNÓSTICOS?
+4) MANTEVE EXAMES JÁ REGISTRADOS?
+5) MANTEVE ATB?
+6) MANTEVE DISPOSITIVOS?
+7) MANTEVE EVOLUÇÃO?
+8) MANTEVE PLANO?
+9) RETIROU BULLETS, HIFENS E TRAVESSÕES SE ESTAVA EM MODO COMPACTO?
+10) PRESERVOU ESPAÇO ENTRE BLOCOS PRINCIPAIS?
+
+SE A RESPOSTA FOR MAIOR QUE 3.700 CARACTERES, NÃO ENTREGAR. REESCREVER EM MODO MAIS COMPACTO.
+
+SE MESMO APÓS COMPACTAÇÃO AINDA ULTRAPASSAR 3.700 CARACTERES, PRIORIZAR NESTA ORDEM:
+
+1) IDENTIFICAÇÃO, HPMA, DX, ATB, EXAMES, EF, EVOLUÇÃO E PLANO.
+2) COMPACTAR RISCOS EM UMA LINHA.
+3) COMPACTAR NEWS2 EM UMA LINHA.
+4) COMPACTAR SV EM UMA LINHA.
+5) COMPACTAR PLANO EM FRASES CURTAS.
+6) OMITIR BLOCOS NÃO MENCIONADOS E SEM DADOS.
+7) NUNCA APAGAR EXAMES OU DIAGNÓSTICOS JÁ REGISTRADOS.
+
+ENTREGAR APENAS A VERSÃO FINAL JÁ AJUSTADA AO LIMITE.
+
+MODELO
+
+CLÍNICA MÉDICA
+
+PCT: WILSON DOS SANTOS
+ID: 88 ANOS
+DT: 25/7/26
+DIH: 5
+
+HPMA
+
+PCT ADMITIDO NA ORIGEM POR DESCONFORTO RESPIRATÓRIO HÁ 1 DIA. ACAMADO, EM USO DE SNE DESDE AVCI, C/ RESPIRAÇÃO RUIDOSA, RONCOS E SIBILOS, NORMOTENSO, NORMOCÁRDICO E AFB. EXAMES DA ORIGEM SUGESTIVOS DE ITU, RECEBENDO CEFTRIAXONA 2 G. REALIZADO MANEJO DE BRONCOESPASMO, INICIALMENTE S/ SUCESSO NO DESMAME DE O2, MANTENDO SATO2 94% EM CN 1 L/MIN E 88% EM AA.
+
+ANTECEDENTES
+
+HAS, DM, ARRITMIA, DOENÇA DE ALZHEIMER, DEMÊNCIA AVANÇADA, 2 AVC PRÉVIOS, ÚLTIMO EM 6/26, C/ HEMIPLEGIA À ESQUERDA. PPS 20%.
+
+MUC
+
+ANLODIPINA 5 MG 12/12H, SINVASTATINA 20 MG À NOITE, CARVEDILOL 6,25 MG 12/12H, LOSARTANA 50 MG 12/12H, HIDRALAZINA 50 MG 8/8H, RIVAROXABANA 20 MG/DIA.
+
+ALERGIA
+
+NDN.
+
+DX EVOLUTIVOS
+
+21/7/26 PNM
+21/7/26 INSUFICIÊNCIA RESPIRATÓRIA
+21/7/26 ITU
+
+ACESSOS/DISPOSITIVOS
+
+AVP, SNE. CN NÃO EM USO. CONTENÇÃO MECÂNICA NO LEITO.
+
+SV 24H
+
+24/7: TAX 35,4-35,9 °C, 0X >37,8. FC 85-94. PA 140X90 A 150X100. FR 19-20. SATO2 95-97% EM AA. DX 263, 1X >200.
+25/7: TAX 36,0-36,4 °C, 0X >37,8. FC 75-88. PA 157X108 A 170X90. FR 20-21. SATO2 93-95% EM AA. DX 170-236, 1X >200.
+
+NEWS2
+
+3 PONTOS: FR 21 1P, SATO2 93% AA 1P, PAS 157 0P, FC 88 0P, TAX 36,0 0P, CONS 1P, BAIXO RISCO.
+
+EF
+
+GERAL: BEG, CORADO, HIDR, ACIAN, ANICT, AFB, EUPNEICO, S/ O2.
+NEURO: ACORDADO, CONTACTUANTE, PUPILAS ISOFOTORREAGENTES, DEMÊNCIA AVANÇADA, HEMIPLEGIA À ESQUERDA.
+AR: MV PRESENTE, MELHORA DO PADRÃO RESPIRATÓRIO, S/ ESFORÇO RESP.
+ACV: BRNF 2T, S/ SOPROS.
+ABD: RHA+, FLÁCIDO, NORMOTIMPÂNICO, INDOLOR À PALPAÇÃO, S/ MASSAS OU VMG.
+MMII/PELE: SARCOPENIA, S/ EDEMA, BOA PERFUSÃO, S/ SINAIS DE TVP.
+
+ATB
+
+ATUAL: CEFTRIAXONA, INÍCIO 21/7, D5. CLINDAMICINA, INÍCIO 22/7, D4.
+PRÉVIO: CLARITROMICINA, 21/7 A 22/7.
+FOCO: PNM E ITU.
+
+EXAMES LAB
+
+21/7: HB 11,8 HT 35,8 LEUCO 15.730 BAST 5% PLQ 290.000 NA 130 K 5,5 UR 70 CR 1,25 PCR 8,4.
+21/7 EAS: PROT +, NIT REAGENTE, LEUCO 76.000, HEM 7.000, BACT NUMEROSAS, URATOS AMORFOS, MODERADOS CILINDROS HIALINOS E RAROS CILINDROS GRANULOSOS.
+24/7: HB 11,0 HT 32,9 LEUCO 20.050 BAST 5% PLQ 369.000 NA 134 K 4,7 UR 62 CR 1,04 PCR 3,3.
+
+IMAGEM
+
+21/7 RX TÓRAX: ÁREA CARDÍACA PRESERVADA, CONSOLIDAÇÃO EM LOBO MÉDIO DIREITO.
+24/7 TC TÓRAX: ESPESSAMENTO DIFUSO DE PAREDES BRÔNQUICAS POR BRONCOPATIA INFLAMATÓRIA. NÓDULOS CENTROLOBULARES E PEQUENOS FOCOS DE CONSOLIDAÇÃO EM LOBOS SUPERIOR DIREITO E INFERIORES POR PROCESSO INFLAMATÓRIO INFECCIOSO. AUSÊNCIA DE DERRAME PLEURAL. ATEROMATOSE AÓRTICA E CARDIOMEGALIA.
+
+RISCOS
+
+QUEDA ELEVADO. LPP ELEVADO. BRONCOASP ELEVADO. DELIRIUM/RNC ELEVADO. TEV ELEVADO EM PROFILAXIA. DETERIORAÇÃO MODERADO.
+
+EVOLUÇÃO
+
+PCT EM MELHORA CLÍNICA, AFB, HD ESTÁVEL, ACAMADO, CONTIDO NO LEITO, RECEBENDO DIETA ENTERAL POR SNE. ACORDADO E CONTACTUANTE. SEM NECESSIDADE DE O2 SUPLEMENTAR, APRESENTANDO MELHORA DO PADRÃO RESPIRATÓRIO.
+
+PLANO
+
+DIETA ENTERAL POR SNE
+CEFTRIAXONA D5 E CLINDAMICINA D4
+RIVAROXABANA
+OMEPRAZOL
+SUSPENSO HIDRATAÇÃO
+CTRL GLICÊMICO RIGOROSO
+FISIOTERAPIA RESPIRATÓRIA E MONITORIZAÇÃO RESPIRATÓRIA
+CUIDADOS C/ AVP E SNE
+EXAMES LAB DE CONTROLE
+FISIOTERAPIA MOTORA VIGILÂNCIA INFECCIOSA E CUIDADOS ASSISTENCIAIS
+
+PEND
+
+RESULTADOS DE EXAMES LAB DE CONTROLE`;
+
+function esc(v=''){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+function showToast(msg,type='info'){const t=$('toast');const styles={info:'bg-slate-900 border-slate-700 text-slate-200',success:'bg-emerald-950 border-emerald-700 text-emerald-200',error:'bg-red-950 border-red-700 text-red-200'};t.className=`fixed bottom-5 right-5 z-[90] max-w-sm rounded-xl border px-4 py-3 shadow-2xl text-xs ${styles[type]}`;t.textContent=msg;t.classList.remove('hidden');clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.add('hidden'),4200);}
+function openModal(id){$(id).classList.remove('hidden');$(id).classList.add('flex');$('overlay').classList.remove('hidden');}
+function closeModal(id){$(id).classList.add('hidden');$(id).classList.remove('flex');$('overlay').classList.add('hidden');}
+function stripFence(text=''){return text.trim().replace(/^```(?:markdown|text)?\s*|\s*```$/g,'');}
+function formatDateBR(iso){if(!iso)return'';const[y,m,d]=iso.split('-');return `${d}/${m}/${y}`;}
+
+let pendingHospImage=null;
+let draft={previous:'',dateSV:todayISO(),dateNews2:todayISO(),evolution:'',examChanges:'',planChanges:'',output:''};
+let history=[];
+
+function loadLocal(){
+  try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY));if(saved){draft={...draft,...(saved.draft||{})};history=Array.isArray(saved.history)?saved.history:[];}}catch(e){console.error(e);}
+}
+function saveLocal(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({draft,history}));}catch(e){console.error(e);}}
+function syncDraftFromForm(){draft={previous:$('hosp-previous').value,dateSV:$('hosp-date-sv').value,dateNews2:$('hosp-date-news2').value,evolution:$('hosp-evolution').value,examChanges:$('hosp-exam-changes').value,planChanges:$('hosp-plan-changes').value,output:$('hosp-output').value};saveLocal();}
+
+async function callGemini(userText,imageObj,systemText,key,model){
+  const parts=[];if(userText)parts.push({text:userText});if(imageObj)parts.push({inlineData:{mimeType:imageObj.mimeType,data:imageObj.base64}});
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{role:'user',parts}],systemInstruction:{parts:[{text:systemText}]},generationConfig:{temperature:0.1}})});
+  if(!r.ok)throw new Error(`Gemini ${r.status}: ${(await r.text()).slice(0,180)}`);
+  const data=await r.json(),text=data?.candidates?.[0]?.content?.parts?.map(x=>x.text||'').join('');
+  if(!text)throw new Error('Resposta vazia do Gemini.');
+  return stripFence(text);
+}
+async function callOpenAI(userText,imageObj,systemText,key,model){
+  const content=[];if(userText)content.push({type:'input_text',text:userText});if(imageObj)content.push({type:'input_image',image_url:`data:${imageObj.mimeType};base64,${imageObj.base64}`});
+  const input=[{role:'system',content:systemText},{role:'user',content}];
+  const r=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},body:JSON.stringify({model,input})});
+  if(!r.ok)throw new Error(`OpenAI ${r.status}: ${(await r.text()).slice(0,180)}`);
+  const data=await r.json();let text=data.output_text||'';
+  if(!text&&Array.isArray(data.output))text=data.output.flatMap(o=>o.content||[]).filter(c=>c.type==='output_text').map(c=>c.text||'').join('');
+  if(!text)throw new Error('Resposta vazia da OpenAI.');
+  return stripFence(text);
+}
+async function callClaude(userText,imageObj,systemText,key,model){
+  const content=[];if(imageObj)content.push({type:'image',source:{type:'base64',media_type:imageObj.mimeType,data:imageObj.base64}});if(userText)content.push({type:'text',text:userText});
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model,max_tokens:4000,temperature:0.1,system:systemText,messages:[{role:'user',content}]})});
+  if(!r.ok)throw new Error(`Claude ${r.status}: ${(await r.text()).slice(0,180)}`);
+  const data=await r.json(),text=(data.content||[]).filter(x=>x.type==='text').map(x=>x.text||'').join('');
+  if(!text)throw new Error('Resposta vazia do Claude.');
+  return stripFence(text);
+}
+async function callProvider(userText,imageObj){
+  const provider=$('ai-provider').value;
+  if(provider==='gemini'){const key=$('gemini-api-key').value.trim();if(!key)throw new Error('Configure a chave do Gemini em "Configurar IA".');return callGemini(userText,imageObj,HOSPITAL_SYSTEM_PROMPT,key,$('gemini-model').value.trim()||'gemini-flash-latest');}
+  if(provider==='openai'){const key=$('openai-api-key').value.trim();if(!key)throw new Error('Configure a chave da OpenAI em "Configurar IA".');return callOpenAI(userText,imageObj,HOSPITAL_SYSTEM_PROMPT,key,$('openai-model').value.trim()||'gpt-5-mini');}
+  const key=$('claude-api-key').value.trim();if(!key)throw new Error('Configure a chave do Claude em "Configurar IA".');
+  return callClaude(userText,imageObj,HOSPITAL_SYSTEM_PROMPT,key,$('claude-model').value.trim()||'claude-sonnet-5');
+}
+
+function buildUserMessage(){
+  const prev=$('hosp-previous').value.trim();
+  const dateSV=$('hosp-date-sv').value;
+  const dateNews2=$('hosp-date-news2').value||dateSV;
+  const evolution=$('hosp-evolution').value.trim();
+  const examChanges=$('hosp-exam-changes').value.trim();
+  const planChanges=$('hosp-plan-changes').value.trim();
+  const lines=[];
+  lines.push(prev?`PRONTUÁRIO/EVOLUÇÃO ANTERIOR (BASE LONGITUDINAL — MANTER INTEGRALMENTE TUDO O QUE NÃO FOR EXPLICITAMENTE ALTERADO ABAIXO):\n${prev}`:'NÃO HÁ PRONTUÁRIO ANTERIOR NESTA CONVERSA. TRATAR COMO ADMISSÃO E GERAR SOMENTE COM OS DADOS FORNECIDOS ABAIXO, MARCANDO CAMPOS AUSENTES CONFORME AS REGRAS DO PROMPT.');
+  lines.push('');
+  if(dateSV)lines.push(`DATA PARA REGISTRAR OS SINAIS VITAIS (BLOCO SV 24H): ${formatDateBR(dateSV)}`);
+  if(dateNews2)lines.push(`DATA DE REFERÊNCIA PARA CALCULAR O NEWS2: ${formatDateBR(dateNews2)}`);
+  lines.push(pendingHospImage?'HÁ UMA FOTO/PRINT DOS SINAIS VITAIS ANEXADA A ESTA MENSAGEM. EXTRAIA DELA TAX, FC, PA, FR, SATO2 E GLICEMIA REFERENTES À DATA INDICADA ACIMA. NÃO INVENTE OU ARREDONDE VALORES ILEGÍVEIS; SE ALGUM DADO NÃO ESTIVER LEGÍVEL NA IMAGEM, TRATE COMO NÃO INFORMADO.':'NÃO HÁ IMAGEM DE SINAIS VITAIS ANEXADA NESTA MENSAGEM.');
+  lines.push('');
+  lines.push(evolution?`EVOLUÇÃO DO DIA (RELATO DO MÉDICO — USE PARA O BLOCO EVOLUÇÃO E PARA ATUALIZAR DIAGNÓSTICOS/EXAMES SE MENCIONADOS):\n${evolution}`:'SEM TEXTO ADICIONAL DE EVOLUÇÃO HOJE.');
+  lines.push('');
+  lines.push(examChanges?`ALTERAÇÕES NO EXAME FÍSICO HOJE (APLICAR SOMENTE ESTAS MUDANÇAS; MANTER TODO O RESTANTE DO EXAME FÍSICO DA EVOLUÇÃO ANTERIOR):\n${examChanges}`:'NENHUMA ALTERAÇÃO NOVA NO EXAME FÍSICO HOJE. MANTER O EXAME FÍSICO DA EVOLUÇÃO ANTERIOR INTEGRALMENTE.');
+  lines.push('');
+  lines.push(planChanges?`ALTERAÇÕES NO PLANO TERAPÊUTICO HOJE (ITENS NOVOS, SUSPENSOS, MODIFICADOS OU RESULTADOS DE EXAMES SOLICITADOS ANTERIORMENTE):\n${planChanges}`:'NENHUMA ALTERAÇÃO EXPLÍCITA NO PLANO HOJE. REESCREVA O PLANO TERAPÊUTICO ANTERIOR POR COMPLETO, ITEM POR ITEM, AJUSTANDO CONFORME A EVOLUÇÃO DO DIA E OS EXAMES JÁ SOLICITADOS.');
+  return lines.join('\n');
+}
+
+function updateHospCount(){
+  const len=$('hosp-output').value.length;
+  $('hosp-count').textContent=`${len.toLocaleString('pt-BR')} / 3.700 caracteres`;
+  $('hosp-count').className=len>3700?'text-[11px] font-bold text-red-400':'text-[11px] text-slate-500';
+  $('hosp-recompact-btn').classList.toggle('hidden',len<=3700);
+}
+
+async function generateHospitalRecord(){
+  const evolution=$('hosp-evolution').value.trim();
+  const prev=$('hosp-previous').value.trim();
+  if(!evolution&&!prev)return showToast('Cole o prontuário anterior ou descreva a evolução do dia.','error');
+  const btn=$('hosp-generate-btn');
+  btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner animate-spin"></i>Gerando...';
+  try{
+    const reply=await callProvider(buildUserMessage(),pendingHospImage);
+    $('hosp-output').value=reply;
+    updateHospCount();syncDraftFromForm();
+    showToast('Prontuário hospitalar gerado. Revise antes de copiar.','success');
+  }catch(e){console.error(e);showToast(`Falha na IA: ${e.message}`,'error');}
+  finally{btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-hospital"></i>Gerar prontuário hospitalar';}
+}
+
+async function recompactRecord(){
+  const current=$('hosp-output').value.trim();
+  if(!current)return;
+  const btn=$('hosp-recompact-btn');
+  btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner animate-spin"></i>Recompactando...';
+  try{
+    const msg=`O TEXTO ABAIXO ULTRAPASSOU 3.700 CARACTERES, O QUE É PROIBIDO PELAS REGRAS. REESCREVA-O EM MODO COMPACTO OBRIGATÓRIO, APLICANDO AS ABREVIAÇÕES E A ORDEM DE PRIORIDADE DA CHECAGEM FINAL, SEM PERDER HPMA, DIAGNÓSTICOS, EXAMES, ATB, DISPOSITIVOS OU ITENS DO PLANO. ENTREGUE SOMENTE O PRONTUÁRIO FINAL, DENTRO DO LIMITE DE 3.700 CARACTERES:\n\n${current}`;
+    const reply=await callProvider(msg,null);
+    $('hosp-output').value=reply;
+    updateHospCount();syncDraftFromForm();
+    showToast('Prontuário recompactado.','success');
+  }catch(e){console.error(e);showToast(`Falha na IA: ${e.message}`,'error');}
+  finally{btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-compress"></i>Recompactar (acima de 3.700)';}
+}
+
+async function copyText(text){
+  try{await navigator.clipboard.writeText(text);showToast('Copiado para a área de transferência.','success');}
+  catch{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();showToast('Copiado.','success');}
+}
+
+function removeHospImage(){pendingHospImage=null;$('hosp-vitals-image').value='';$('hosp-pending-image').classList.add('hidden');}
+
+function renderHistoryList(){
+  const list=$('hosp-history-list');
+  if(!history.length){list.innerHTML='<p class="text-xs text-slate-500 text-center py-6">Nenhuma evolução salva ainda.</p>';return;}
+  list.innerHTML='';
+  history.forEach(r=>{
+    const d=document.createElement('article');
+    d.className='bg-slate-950 border border-slate-800 rounded-xl p-3';
+    d.innerHTML=`<div class="flex flex-wrap justify-between gap-2"><div><p class="text-xs font-bold text-white">${esc(r.label||'Evolução hospitalar')}</p><p class="text-[10px] text-slate-500 mt-1">${esc(new Date(r.createdAt).toLocaleString('pt-BR'))}</p></div><div class="flex gap-2"><button data-use class="btn btn-soft !py-1.5">Usar como base</button><button data-copy class="btn btn-soft !py-1.5"><i class="fa-regular fa-copy"></i></button><button data-delete class="btn btn-danger !py-1.5"><i class="fa-solid fa-trash"></i></button></div></div><details class="mt-2"><summary class="text-xs text-emerald-400 cursor-pointer font-bold">Ver conteúdo</summary><pre class="mt-2 whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-slate-300 bg-slate-900 border border-slate-800 rounded-lg p-3"></pre></details>`;
+    d.querySelector('pre').textContent=r.content;
+    d.querySelector('[data-use]').onclick=()=>{$('hosp-previous').value=r.content;syncDraftFromForm();showToast('Evolução carregada como base.','success');};
+    d.querySelector('[data-copy]').onclick=()=>copyText(r.content);
+    d.querySelector('[data-delete]').onclick=()=>{if(!confirm('Excluir esta evolução salva? Esta ação não pode ser desfeita.'))return;history=history.filter(x=>x.id!==r.id);saveLocal();renderHistoryList();};
+    list.appendChild(d);
+  });
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  loadLocal();
+  $('hosp-previous').value=draft.previous||'';
+  $('hosp-date-sv').value=draft.dateSV||todayISO();
+  $('hosp-date-news2').value=draft.dateNews2||todayISO();
+  $('hosp-evolution').value=draft.evolution||'';
+  $('hosp-exam-changes').value=draft.examChanges||'';
+  $('hosp-plan-changes').value=draft.planChanges||'';
+  $('hosp-output').value=draft.output||'';
+  updateHospCount();
+  renderHistoryList();
+
+  ['hosp-previous','hosp-date-sv','hosp-date-news2','hosp-evolution','hosp-exam-changes','hosp-plan-changes'].forEach(id=>$(id).addEventListener('input',syncDraftFromForm));
+  $('hosp-output').addEventListener('input',()=>{updateHospCount();syncDraftFromForm();});
+
+  $('hosp-generate-btn').onclick=generateHospitalRecord;
+  $('hosp-recompact-btn').onclick=recompactRecord;
+  $('hosp-copy-btn').onclick=()=>copyText($('hosp-output').value);
+  $('hosp-use-as-base-btn').onclick=()=>{const v=$('hosp-output').value.trim();if(!v)return showToast('Gere um prontuário primeiro.','error');$('hosp-previous').value=v;syncDraftFromForm();showToast('Resultado definido como prontuário anterior.','success');};
+  $('hosp-save-btn').onclick=()=>{
+    const content=$('hosp-output').value.trim();
+    if(!content)return showToast('Gere ou digite o prontuário antes de salvar.','error');
+    const label=$('hosp-label').value.trim()||`Evolução ${formatDateBR($('hosp-date-sv').value)||''}`.trim();
+    history.unshift({id:uid(),createdAt:new Date().toISOString(),label,content});
+    saveLocal();renderHistoryList();
+    showToast('Evolução salva no histórico local.','success');
+  };
+  $('hosp-clear-history-btn').onclick=()=>{if(!history.length)return;if(!confirm('Apagar todo o histórico local salvo neste navegador?'))return;history=[];saveLocal();renderHistoryList();};
+  $('hosp-clear-btn').onclick=()=>{
+    if(!confirm('Limpar os campos de evolução, exame físico e plano de hoje? O prontuário anterior e o resultado gerado permanecem.'))return;
+    $('hosp-evolution').value='';$('hosp-exam-changes').value='';$('hosp-plan-changes').value='';removeHospImage();syncDraftFromForm();
+  };
+  $('hosp-vitals-image').onchange=async e=>{
+    const f=e.target.files?.[0];if(!f)return;
+    if(f.size>4_000_000){showToast('Use uma imagem de até 4 MB.','error');e.target.value='';return;}
+    try{
+      const dataUrl=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f);});
+      const base64=dataUrl.split(',')[1];
+      pendingHospImage={mimeType:f.type||'image/jpeg',base64};
+      $('hosp-pending-image-preview').src=dataUrl;
+      $('hosp-pending-image').classList.remove('hidden');
+    }catch(err){console.error(err);showToast('Falha ao ler a imagem.','error');}
+  };
+  $('hosp-remove-image-btn').onclick=removeHospImage;
+
+  $('config-btn').onclick=()=>openModal('config-modal');
+  $('close-config-btn').onclick=()=>closeModal('config-modal');
+  $('save-config-btn').onclick=()=>closeModal('config-modal');
+  $('overlay').onclick=()=>{closeModal('config-modal');};
+  $('hide-privacy').onclick=()=>$('privacy-alert').remove();
+});
+</script>
+</body>
+</html>
