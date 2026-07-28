@@ -359,10 +359,11 @@ function queueSave(){clearTimeout(saveTimer);$('save-indicator').innerHTML='<i c
 function ageFromDob(dob){if(!dob)return 'idade não informada';const d=new Date(dob+'T12:00:00'),n=new Date();let a=n.getFullYear()-d.getFullYear();if(n<new Date(n.getFullYear(),d.getMonth(),d.getDate()))a--;return `${a} anos`;}
 function renderAll(){renderPatients();renderActive();renderHistory();renderToday();updateDocTemplate(false);renderConsents();renderPendencias();renderAttachments();}
 function renderPatients(){const q=$('patient-search').value.trim().toLowerCase();const list=state.patients.filter(p=>[p.name,p.cpf,p.phone].some(v=>(v||'').toLowerCase().includes(q)));$('patient-count').textContent=`${list.length}/${state.patients.length}`;$('patient-list').replaceChildren(...list.map(p=>{const b=document.createElement('button');b.className=`w-full text-left px-4 py-3 border-l-4 ${p.id===state.activePatientId?'border-emerald-500 bg-slate-800/60':'border-transparent hover:bg-slate-800/30'}`;b.innerHTML=`<div class="flex justify-between gap-2"><div class="min-w-0"><p class="text-xs font-bold text-slate-100 truncate">${esc(p.name)}</p><p class="text-[10px] text-slate-500 mt-1">${esc(ageFromDob(p.dob))} · ${esc(p.insurance||'Particular')}</p></div><i class="fa-solid fa-chevron-right text-[10px] ${p.id===state.activePatientId?'text-emerald-400':'text-slate-700'}"></i></div>`;b.onclick=()=>selectPatient(p.id);return b;}));if(!list.length)$('patient-list').innerHTML='<p class="p-5 text-xs text-slate-500 text-center">Nenhum paciente encontrado.</p>';}
-function renderActive(){const p=activePatient();if(!p){$('active-patient-card').innerHTML='<p class="text-xs text-slate-500">Cadastre ou selecione um paciente.</p>';$('record-patient-name').textContent='Nenhum paciente selecionado';$('pep-editor').value='';return;}$('active-patient-card').innerHTML=`<div class="flex justify-between gap-2"><div class="min-w-0"><span class="label">Em atendimento</span><p class="font-bold text-xs truncate">${esc(p.name)}</p><p class="text-[10px] text-slate-500 mt-1">${esc(p.phone||'Sem celular')}</p><p class="text-[10px] mt-2 ${p.allergies&&p.allergies.toLowerCase()!=='nega'?'text-red-300':'text-slate-500'}"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Alergias: ${esc(p.allergies||'Não informado')}</p></div><button id="edit-active" class="text-slate-500 hover:text-white h-fit" title="Editar cadastro"><i class="fa-solid fa-pen"></i></button></div>`;$('edit-active').onclick=()=>openPatientModal(p);$('record-patient-name').textContent=`${p.name} · ${ageFromDob(p.dob)}`;$('pep-editor').value=p.draft||'';updateCounts();}
-function selectPatient(id){saveDraft();state.activePatientId=id;saveState();renderAll();closePanels();showToast('Paciente selecionado.','success');}
+function renderActive(){const p=activePatient();if(!p){$('active-patient-card').innerHTML='<p class="text-xs text-slate-500">Cadastre ou selecione um paciente.</p>';$('record-patient-name').textContent='Nenhum paciente selecionado';$('pep-editor').value='';$('transcript').value='';micFinalText='';return;}$('active-patient-card').innerHTML=`<div class="flex justify-between gap-2"><div class="min-w-0"><span class="label">Em atendimento</span><p class="font-bold text-xs truncate">${esc(p.name)}</p><p class="text-[10px] text-slate-500 mt-1">${esc(p.phone||'Sem celular')}</p><p class="text-[10px] mt-2 ${p.allergies&&p.allergies.toLowerCase()!=='nega'?'text-red-300':'text-slate-500'}"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Alergias: ${esc(p.allergies||'Não informado')}</p></div><button id="edit-active" class="text-slate-500 hover:text-white h-fit" title="Editar cadastro"><i class="fa-solid fa-pen"></i></button></div>`;$('edit-active').onclick=()=>openPatientModal(p);$('record-patient-name').textContent=`${p.name} · ${ageFromDob(p.dob)}`;$('pep-editor').value=p.draft||'';if(!isRecording){$('transcript').value=p.rawTranscript||'';micFinalText=p.rawTranscript||'';}updateCounts();}
+function selectPatient(id){saveDraft();saveTranscript();state.activePatientId=id;saveState();renderAll();closePanels();showToast('Paciente selecionado.','success');}
 function saveDraft(){const p=activePatient();if(p){p.draft=$('pep-editor').value;queueSave();}}
-function flushDraft(){const p=activePatient();if(p){p.draft=$('pep-editor').value;}clearTimeout(saveTimer);saveState();}
+function saveTranscript(){const p=activePatient();if(p){p.rawTranscript=$('transcript').value;queueSave();}}
+function flushDraft(){const p=activePatient();if(p){p.draft=$('pep-editor').value;p.rawTranscript=$('transcript').value;}clearTimeout(saveTimer);saveState();}
 function openPatientModal(p=null){$('patient-form').reset();$('patient-id').value=p?.id||'';$('patient-modal-title').textContent=p?'Editar paciente':'Novo paciente';$('delete-patient-btn').classList.toggle('hidden',!p);if(p){$('patient-name').value=p.name||'';$('patient-dob').value=p.dob||'';$('patient-gender').value=p.gender||'Não informado';$('patient-cpf').value=p.cpf||'';$('patient-phone').value=p.phone||'';$('patient-insurance').value=p.insurance||'';$('patient-address').value=p.address||'';$('patient-rg').value=p.rg||'';$('patient-rg-org').value=p.rgOrg||'';$('patient-allergies').value=p.allergies||'';$('patient-notes').value=p.notes||'';}openModal('patient-modal');}
 function patientFromForm(){return{id:$('patient-id').value||uid(),name:$('patient-name').value.trim(),dob:$('patient-dob').value,gender:$('patient-gender').value,cpf:$('patient-cpf').value.trim(),phone:$('patient-phone').value.trim(),insurance:$('patient-insurance').value.trim()||'Particular',address:$('patient-address').value.trim(),rg:$('patient-rg').value.trim(),rgOrg:$('patient-rg-org').value.trim(),allergies:$('patient-allergies').value.trim()||'Não informado',notes:$('patient-notes').value.trim(),draft:'',history:[],attachments:[],consents:[],pendencias:[]};}
 function renderHistory(){const p=activePatient();const list=$('history-list');list.innerHTML='';if(!p){$('history-subtitle').textContent='';list.innerHTML='<p class="text-xs text-slate-500 text-center py-8">Selecione um paciente.</p>';return;}
@@ -683,15 +684,16 @@ function clearMicTimers(){clearTimeout(micRestartTimer);clearInterval(micWatchdo
 function startMicWatchdog(){
  clearInterval(micWatchdogTimer);
  micWatchdogTimer=setInterval(()=>{
+   saveTranscript();
    if(!isRecording||isMicPaused)return;
    const inactiveFor=Date.now()-lastMicActivity;
-   if(inactiveFor>18000){
+   if(inactiveFor>10000){
      console.warn('Reconhecimento sem atividade. Reiniciando de forma controlada.');
      setMicStatus('Reconectando o ditado automaticamente...');
      lastMicActivity=Date.now();
      restartRecognition(true);
    }
- },5000);
+ },3000);
 }
 function prepareRecognition(){
  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -709,7 +711,7 @@ function prepareRecognition(){
      else interim+=part+' ';
    }
    $('transcript').value=normalizeSpeechText(micFinalText+interim);
-   $('transcript').scrollTop=$('transcript').scrollHeight;updateCounts();
+   $('transcript').scrollTop=$('transcript').scrollHeight;updateCounts();saveTranscript();
  };
  recognition.onerror=e=>{
    console.warn('Erro reconhecimento',e.error);
@@ -745,7 +747,7 @@ function restartRecognition(force=false){
    if(!isRecording||isMicPaused)return;
    try{prepareRecognition();recognition.start();lastMicActivity=Date.now();setMicStatus(force?'Ditado reconectado. Continue falando.':'Gravando...');}
    catch(e){console.warn('Falha ao reiniciar reconhecimento',e);scheduleMicRestart();}
- },force?350:150);
+ },force?150:80);
 }
 function startRecognitionSafely(){
  clearMicTimers();
@@ -817,12 +819,12 @@ window.addEventListener('DOMContentLoaded',()=>{
  if(!speechSupported()){setMicStatus('Navegador incompatível. Use Chrome ou Edge.');$('mic-authorize-btn').disabled=true;}else if(!window.isSecureContext){setMicStatus('Abra pelo HTTPS do GitHub Pages para usar o microfone.');}
  loadState();renderAll();updateCounts();$('doc-no-date-toggle').checked=!!state.noDate;$('doc-manual-patient-toggle').checked=!!state.manualPatient?.enabled;$('doc-manual-name').value=state.manualPatient?.name||'';$('doc-manual-cpf').value=state.manualPatient?.cpf||'';$('doc-manual-patient-fields').classList.toggle('hidden',!state.manualPatient?.enabled);document.querySelectorAll('.doc-btn').forEach(b=>{const a=b.dataset.doc===state.activeDoc;b.classList.toggle('btn-primary',a);b.classList.toggle('btn-soft',!a);});
  $('new-patient-btn').onclick=()=>openPatientModal();$('patient-search').oninput=renderPatients;
- $('patient-form').onsubmit=e=>{e.preventDefault();const obj=patientFromForm();if(!obj.name)return;const idx=state.patients.findIndex(p=>p.id===obj.id);const isNew=idx<0;if(idx>=0){const prev=state.patients[idx];obj.draft=prev.draft;obj.history=prev.history||[];obj.attachments=prev.attachments||[];obj.consents=prev.consents||[];obj.pendencias=prev.pendencias||[];state.patients[idx]=obj;}else state.patients.unshift(obj);state.activePatientId=obj.id;saveState();closeModal('patient-modal');renderAll();showToast('Cadastro salvo.','success');logAudit('paciente',`${isNew?'Cadastro criado':'Cadastro editado'}: ${obj.name}`);};
+ $('patient-form').onsubmit=e=>{e.preventDefault();const obj=patientFromForm();if(!obj.name)return;const idx=state.patients.findIndex(p=>p.id===obj.id);const isNew=idx<0;if(idx>=0){const prev=state.patients[idx];obj.draft=prev.draft;obj.rawTranscript=prev.rawTranscript;obj.history=prev.history||[];obj.attachments=prev.attachments||[];obj.consents=prev.consents||[];obj.pendencias=prev.pendencias||[];state.patients[idx]=obj;}else state.patients.unshift(obj);state.activePatientId=obj.id;saveState();closeModal('patient-modal');renderAll();showToast('Cadastro salvo.','success');logAudit('paciente',`${isNew?'Cadastro criado':'Cadastro editado'}: ${obj.name}`);};
  $('delete-patient-btn').onclick=()=>{const id=$('patient-id').value;const name=state.patients.find(p=>p.id===id)?.name||'';confirmAction('Excluir paciente','Todo o histórico local deste paciente será apagado.',()=>{state.patients=state.patients.filter(p=>p.id!==id);state.today=state.today.filter(x=>x.patientId!==id);state.activePatientId=state.patients[0]?.id||null;saveState();closeModal('patient-modal');renderAll();logAudit('paciente',`Cadastro excluído: ${name}`);});};
  document.querySelectorAll('[data-close-modal]').forEach(b=>b.onclick=()=>closeModal(b.dataset.closeModal));
  $('confirm-cancel').onclick=()=>{confirmCallback=null;closeModal('confirm-modal');};$('confirm-ok').onclick=()=>{const cb=confirmCallback;confirmCallback=null;closeModal('confirm-modal');cb?.();};
  document.querySelectorAll('.tab-btn').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
- $('pep-editor').oninput=()=>{saveDraft();updateCounts();};$('transcript').oninput=updateCounts;
+ $('pep-editor').oninput=()=>{saveDraft();updateCounts();};$('transcript').oninput=()=>{saveTranscript();updateCounts();};
  $('pep-editor').addEventListener('copy',e=>{const ta=e.target;const selected=ta.value.substring(ta.selectionStart,ta.selectionEnd);if(!selected)return;e.preventDefault();e.clipboardData.setData('text/plain',stripMarkdownForCopy(selected));e.clipboardData.setData('text/html',markdownToHtmlForCopy(selected));});
  $('history-list').addEventListener('copy',e=>{if(!e.target.closest('pre'))return;const selected=window.getSelection().toString();if(!selected)return;e.preventDefault();e.clipboardData.setData('text/plain',stripMarkdownForCopy(selected));e.clipboardData.setData('text/html',markdownToHtmlForCopy(selected));});
  $('insert-template-btn').onclick=()=>{$('pep-editor').value=emptyTemplate;saveDraft();updateCounts();};
@@ -832,7 +834,7 @@ window.addEventListener('DOMContentLoaded',()=>{
  $('append-exam-normal').onclick=()=>{const txt=`\n\n## EXAME FÍSICO\nBEG, corado, hidratado, anictérico, acianótico e afebril.\nACV: bulhas rítmicas, normofonéticas, em 2 tempos, sem sopros.\nAR: murmúrio vesicular presente bilateralmente, sem ruídos adventícios.\nABD: plano, flácido, indolor à palpação, ruídos hidroaéreos presentes, sem sinais de irritação peritoneal.\nMMII: sem edema, panturrilhas livres.\nNEUROLÓGICO: consciente, orientado, sem déficits focais evidentes ao exame sumário.`;$('pep-editor').value+=txt;saveDraft();updateCounts();switchTab('record');};
  $('move-transcript').onclick=()=>{const t=$('transcript').value.trim();if(t){$('pep-editor').value+=($('pep-editor').value?'\n\n':'')+t;saveDraft();updateCounts();switchTab('record');}};
  $('copy-transcript-btn').onclick=()=>{const t=$('transcript').value.trim();if(!t)return showToast('A transcrição está vazia.','error');copyText(t);};
- $('clear-transcript-btn').onclick=()=>confirmAction('Limpar transcrição','Deseja apagar o texto ditado/colado atual?',()=>{$('transcript').value='';micFinalText='';updateCounts();});
+ $('clear-transcript-btn').onclick=()=>confirmAction('Limpar transcrição','Deseja apagar o texto ditado/colado atual?',()=>{$('transcript').value='';micFinalText='';saveTranscript();updateCounts();});
  document.querySelectorAll('.doc-btn').forEach(b=>b.onclick=()=>{state.activeDoc=b.dataset.doc;document.querySelectorAll('.doc-btn').forEach(x=>{x.classList.remove('btn-primary');x.classList.add('btn-soft')});b.classList.remove('btn-soft');b.classList.add('btn-primary');updateDocTemplate(true);});
  $('copy-doc-btn').onclick=()=>copyText($('doc-editor').value);$('print-doc-btn').onclick=printClinicalDocument;$('doc-editor').oninput=renderDocumentPreview;$('refresh-doc-btn').onclick=()=>updateDocTemplate(true);$('edit-letterhead-btn').onclick=()=>openModal('config-modal');
  $('doc-no-date-toggle').onchange=e=>{state.noDate=e.target.checked;saveState();renderDocumentPreview();};
