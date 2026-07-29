@@ -720,7 +720,8 @@ function prepareRecognition(){
      setMicStatus('Permissão bloqueada. Libere o microfone no cadeado.');showToast('O navegador bloqueou o microfone. Libere a permissão e recarregue a página.','error');return;
    }
    if(e.error==='audio-capture'){
-     isRecording=false;clearMicTimers();updateMicUI(false);setMicStatus('Nenhum microfone disponível.');showToast('Nenhum microfone foi encontrado pelo navegador.','error');return;
+     if(isRecording&&!isMicPaused&&micRestartAttempts<8){setMicStatus('Microfone temporariamente indisponível. Tentando reconectar...');scheduleMicRestart();return;}
+     isRecording=false;clearMicTimers();updateMicUI(false);setMicStatus('Nenhum microfone disponível.');showToast('Nenhum microfone foi encontrado pelo navegador. Verifique a conexão do microfone e clique em "Autorizar microfone".','error');return;
    }
    if(e.error==='no-speech'){setMicStatus('Aguardando fala...');return;}
    if(isRecording&&!isMicPaused)scheduleMicRestart();
@@ -830,7 +831,7 @@ window.addEventListener('DOMContentLoaded',()=>{
  $('insert-template-btn').onclick=()=>{$('pep-editor').value=emptyTemplate;saveDraft();updateCounts();};
  $('clear-record-btn').onclick=()=>confirmAction('Limpar prontuário','Deseja apagar o rascunho atual?',()=>{$('pep-editor').value='';saveDraft();updateCounts();});
  $('copy-record-btn').onclick=()=>copyText($('pep-editor').value);$('save-history-btn').onclick=saveHistory;
- $('structure-btn').onclick=structureWithAI;$('mic-authorize-btn').onclick=authorizeMic;$('mic-test-btn').onclick=testMic;$('mic-btn').onclick=()=>isRecording?stopMic():startMic();
+ $('structure-btn').onclick=structureWithAI;$('mic-authorize-btn').onclick=authorizeMic;$('mic-test-btn').onclick=testMic;$('mic-btn').onclick=()=>{if(isRecording)confirmAction('Parar gravação?','O ditado será interrompido. O texto já transcrito continua salvo e você pode retomar depois.',stopMic);else startMic();};
  $('append-exam-normal').onclick=()=>{const txt=`\n\n## EXAME FÍSICO\nBEG, corado, hidratado, anictérico, acianótico e afebril.\nACV: bulhas rítmicas, normofonéticas, em 2 tempos, sem sopros.\nAR: murmúrio vesicular presente bilateralmente, sem ruídos adventícios.\nABD: plano, flácido, indolor à palpação, ruídos hidroaéreos presentes, sem sinais de irritação peritoneal.\nMMII: sem edema, panturrilhas livres.\nNEUROLÓGICO: consciente, orientado, sem déficits focais evidentes ao exame sumário.`;$('pep-editor').value+=txt;saveDraft();updateCounts();switchTab('record');};
  $('move-transcript').onclick=()=>{const t=$('transcript').value.trim();if(t){$('pep-editor').value+=($('pep-editor').value?'\n\n':'')+t;saveDraft();updateCounts();switchTab('record');}};
  $('copy-transcript-btn').onclick=()=>{const t=$('transcript').value.trim();if(!t)return showToast('A transcrição está vazia.','error');copyText(t);};
