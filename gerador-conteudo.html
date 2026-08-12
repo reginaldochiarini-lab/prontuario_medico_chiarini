@@ -1114,6 +1114,32 @@ $('t-fullscreen').addEventListener('click', ()=>{
   else document.exitFullscreen && document.exitFullscreen();
 });
 $('t-mirror').addEventListener('change', ()=>{ $('t-overlay').style.transform=$('t-mirror').checked? 'scaleX(-1)':'none'; });
+let tpDragging=false, tpDragStartY=0, tpDragStartPos=0, tpDragMoved=false, tpWasPlayingBeforePress=false;
+const tpStageEl=$('t-stage');
+tpStageEl.style.touchAction='none';
+tpStageEl.style.cursor='grab';
+function tpResumeNow(){ tpPlaying=true; tpLastTs=null; $('t-play').innerHTML='<i class="fa-solid fa-pause"></i>Pausar'; }
+tpStageEl.addEventListener('pointerdown', e=>{
+  tpDragging=true; tpDragMoved=false; tpDragStartY=e.clientY; tpDragStartPos=tpPos;
+  tpWasPlayingBeforePress=tpPlaying;
+  tpStageEl.style.cursor='grabbing';
+  try{ tpStageEl.setPointerCapture(e.pointerId); }catch(err){}
+  if(tpPlaying){ tpPlaying=false; $('t-play').innerHTML='<i class="fa-solid fa-play"></i>Continuar'; }
+});
+tpStageEl.addEventListener('pointermove', e=>{
+  if(!tpDragging) return;
+  const deltaY=e.clientY-tpDragStartY;
+  if(Math.abs(deltaY)>3) tpDragMoved=true;
+  tpPos=tpDragStartPos+deltaY;
+  $('t-scroll').style.transform='translateY('+tpPos+'px)';
+});
+function tpEndDrag(e){
+  if(!tpDragging) return;
+  tpDragging=false; tpStageEl.style.cursor='grab';
+  if(!tpDragMoved && !tpWasPlayingBeforePress) tpResumeNow();
+}
+tpStageEl.addEventListener('pointerup', tpEndDrag);
+tpStageEl.addEventListener('pointercancel', tpEndDrag);
 $('t-size').addEventListener('input', applyFontSize);
 $('t-text').addEventListener('input', tpSetText);
 const TP_QUALITY_PRESETS={
