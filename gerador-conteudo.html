@@ -251,6 +251,8 @@ textarea.field{resize:vertical;min-height:90px}
         <option value="environment">Traseira</option>
       </select>
       <p class="text-[10px] text-slate-500 mt-1">Se o áudio não funcionar na frontal, tente a traseira — em alguns celulares elas têm circuitos diferentes.</p></div>
+      <div><label class="label">Sincronizar áudio (atraso em ms)</label><input id="t-avsync" type="range" min="0" max="500" step="10" value="150" class="w-full">
+      <p class="text-[10px] text-slate-500 mt-1">Se a fala parecer adiantada em relação ao vídeo, aumente o atraso até sincronizar. Ajusta em tempo real, mesmo com a câmera já ligada.</p></div>
       <label class="flex items-center gap-2 text-xs text-slate-400"><input id="t-camera" type="checkbox" checked>Ativar câmera</label>
       <p id="t-camera-status" class="hidden text-[10px] rounded-lg px-2 py-1.5"></p>
       <p id="t-audio-status" class="hidden text-[10px] rounded-lg px-2 py-1.5"></p>
@@ -1317,6 +1319,7 @@ async function tpStartCamera(){
       audioTrack=audioStream2.getAudioTracks()[0]||null;
     }catch(e2){ audioTrack=null; }
   }
+  if(audioTrack){ audioTrack=applyAudioDelay(audioTrack, $('t-avsync').value); }
   tpStream = audioTrack ? new MediaStream([...videoStream.getVideoTracks(), audioTrack]) : videoStream;
   $('t-video').srcObject=tpStream;
   if(!audioTrack){
@@ -1327,7 +1330,29 @@ async function tpStartCamera(){
   tpApplyMirror();
   tpUpdateRecordGate();
 }
-function tpStopCamera(){ if(tpStream){ tpStream.getTracks().forEach(t=>t.stop()); tpStream=null; $('t-video').srcObject=null; } updateAudioStatus(); tpUpdateRecordGate(); }
+let tpAVSyncCtx=null, tpRawAudioTrack=null;
+function applyAudioDelay(rawTrack, delayMs){
+  tpRawAudioTrack=rawTrack;
+  try{
+    const ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const source=ctx.createMediaStreamSource(new MediaStream([rawTrack]));
+    const delayNode=ctx.createDelay(1.0);
+    delayNode.delayTime.value=Math.max(0,Number(delayMs)||0)/1000;
+    const dest=ctx.createMediaStreamDestination();
+    source.connect(delayNode); delayNode.connect(dest);
+    tpAVSyncCtx={ctx,delayNode};
+    return dest.stream.getAudioTracks()[0]||rawTrack;
+  }catch(e){ return rawTrack; }
+}
+$('t-avsync').addEventListener('input', ()=>{
+  if(tpAVSyncCtx && tpAVSyncCtx.delayNode){ tpAVSyncCtx.delayNode.delayTime.value=Number($('t-avsync').value)/1000; }
+});
+function tpStopCamera(){
+  if(tpStream){ tpStream.getTracks().forEach(t=>t.stop()); tpStream=null; $('t-video').srcObject=null; }
+  if(tpRawAudioTrack){ tpRawAudioTrack.stop(); tpRawAudioTrack=null; }
+  if(tpAVSyncCtx){ tpAVSyncCtx.ctx.close().catch(()=>{}); tpAVSyncCtx=null; }
+  updateAudioStatus(); tpUpdateRecordGate();
+}
 $('t-camera').addEventListener('change', async e=>{
   if(e.target.checked){
     await tpStartCamera();
