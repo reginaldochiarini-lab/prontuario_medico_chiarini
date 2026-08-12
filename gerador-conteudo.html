@@ -32,6 +32,10 @@ textarea.field{resize:vertical;min-height:90px}
 #modal-body{background:#101827;border:1px solid #263244;border-radius:1rem;padding:1.25rem;max-width:560px;width:100%;max-height:88vh;overflow-y:auto}
 #toast-wrap{position:fixed;bottom:1rem;right:1rem;z-index:200;max-width:320px}
 #t-stage:fullscreen,#t-stage:-webkit-full-screen{height:100vh!important}
+#t-overlay{transition:top .25s ease,height .25s ease}
+#t-stage.tp-band-mode #t-overlay{top:9%;bottom:auto;height:34%}
+#t-video.tp-mirrored{transform:scaleX(-1)}
+#t-rec-controls.tp-controls-hidden{opacity:0;pointer-events:none}
 @media print{header,nav,button,#modal-overlay{display:none!important}body{background:#fff;color:#000}.card{border-color:#ccc}}
 </style>
 </head>
@@ -247,22 +251,27 @@ textarea.field{resize:vertical;min-height:90px}
         <option value="environment">Traseira</option>
       </select>
       <p class="text-[10px] text-slate-500 mt-1">Se o áudio não funcionar na frontal, tente a traseira — em alguns celulares elas têm circuitos diferentes.</p></div>
-      <label class="flex items-center gap-2 text-xs text-slate-400"><input id="t-camera" type="checkbox">Ativar câmera</label>
+      <label class="flex items-center gap-2 text-xs text-slate-400"><input id="t-camera" type="checkbox" checked>Ativar câmera</label>
+      <p id="t-camera-status" class="hidden text-[10px] rounded-lg px-2 py-1.5"></p>
       <p id="t-audio-status" class="hidden text-[10px] rounded-lg px-2 py-1.5"></p>
       <div id="t-audio-meter-wrap" class="hidden space-y-1">
         <p class="text-[10px] text-slate-500">Fale algo — a barra abaixo deve se mexer se o microfone estiver captando som de verdade:</p>
         <div class="h-3 w-full bg-slate-800 rounded-full overflow-hidden"><div id="t-audio-meter-bar" class="h-full bg-emerald-400" style="width:0%;transition:width .05s linear"></div></div>
       </div>
       <div class="flex gap-2 flex-wrap">
-        <button id="t-play" class="btn btn-primary flex-1"><i class="fa-solid fa-play"></i>Iniciar</button>
+        <button id="t-play" class="btn btn-soft flex-1"><i class="fa-solid fa-play"></i>Ensaiar</button>
         <button id="t-reset" class="btn btn-soft"><i class="fa-solid fa-rotate-left"></i></button>
         <button id="t-fullscreen" class="btn btn-soft"><i class="fa-solid fa-expand"></i></button>
       </div>
-      <button id="t-record" class="btn btn-danger w-full" disabled><i class="fa-solid fa-circle"></i>Gravar vídeo</button>
-      <p class="text-[10px] text-slate-500">Ative a câmera para poder gravar. A gravação inclui o áudio do microfone, se permitido.</p>
+      <button id="t-record" class="btn btn-danger w-full" disabled><i class="fa-solid fa-circle"></i>Gravar</button>
+      <p class="text-[10px] text-slate-500">Toque na tela do teleprompter durante a gravação para pausar/continuar; arraste para reposicionar o texto.</p>
       <div id="t-record-result" class="hidden space-y-2">
         <video id="t-record-preview" class="w-full rounded-lg" controls></video>
-        <button id="t-download-video" class="btn btn-primary w-full"><i class="fa-solid fa-download"></i>Baixar vídeo (.webm)</button>
+        <div class="grid grid-cols-2 gap-2">
+          <button id="t-download-video" class="btn btn-primary col-span-2"><i class="fa-solid fa-download"></i>Baixar vídeo (.webm)</button>
+          <button id="t-record-again" class="btn btn-soft"><i class="fa-solid fa-rotate-right"></i>Gravar novamente</button>
+          <button id="t-record-delete" class="btn btn-danger"><i class="fa-solid fa-trash"></i>Excluir</button>
+        </div>
       </div>
     </div>
     <div id="t-stage" class="card relative overflow-hidden bg-black" style="height:70vh">
@@ -272,6 +281,13 @@ textarea.field{resize:vertical;min-height:90px}
         <div id="t-scroll" class="absolute left-0 right-0 px-8 text-center text-white font-extrabold whitespace-pre-wrap" style="top:100%"></div>
       </div>
       <div id="t-countdown" class="hidden absolute inset-0 flex items-center justify-center text-white text-8xl font-black bg-black/60"></div>
+      <div id="t-rec-indicator" class="hidden absolute top-3 left-3 flex items-center gap-1.5 bg-black/60 text-white text-xs font-bold px-2.5 py-1 rounded-full">
+        <span class="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span><span id="t-rec-timer">00:00</span>
+      </div>
+      <div id="t-rec-controls" class="hidden absolute left-0 right-0 bottom-0 flex items-center justify-center gap-3 p-4" style="background:linear-gradient(to top, rgba(0,0,0,.65), transparent);transition:opacity .3s">
+        <button id="t-rec-pause" class="btn btn-soft"><i class="fa-solid fa-pause"></i>Pausar</button>
+        <button id="t-rec-stop" class="btn btn-danger"><i class="fa-solid fa-stop"></i>Encerrar</button>
+      </div>
     </div>
   </div>
 </section>
@@ -354,7 +370,12 @@ function switchTab(name){
   if(name==='biblioteca') renderLibrary();
   if(name==='planejador') renderPlanGrid();
   if(name==='artes') renderArt();
-  if(name==='teleprompter') refreshTeleprompterLibrarySelect();
+  if(name==='teleprompter'){
+    refreshTeleprompterLibrarySelect();
+    if($('t-camera').checked && !tpStream){
+      tpStartCamera().then(()=>{ if(tpStream) $('t-video').classList.remove('hidden'); });
+    }
+  }
   history.replaceState(null,'','#'+name);
 }
 document.querySelectorAll('#tabs-nav .tab-btn').forEach(b=> b.addEventListener('click', ()=> switchTab(b.dataset.tab)));
@@ -1093,21 +1114,42 @@ function tpStep(ts){
   requestAnimationFrame(tpStep);
 }
 requestAnimationFrame(tpStep);
-function tpCountdownThenPlay(){
-  let n=3; const el=$('t-countdown'); el.classList.remove('hidden');
-  const iv=setInterval(()=>{
-    el.textContent = n>0? String(n) : 'Vai!';
-    n--;
-    if(n<-1){ clearInterval(iv); el.classList.add('hidden'); tpPlaying=true; tpLastTs=null; $('t-play').innerHTML='<i class="fa-solid fa-pause"></i>Pausar'; }
-  },700);
+function tpRunCountdown(label){
+  return new Promise(resolve=>{
+    let n=3; const el=$('t-countdown'); el.classList.remove('hidden');
+    const iv=setInterval(()=>{
+      el.textContent = n>0? String(n) : label;
+      n--;
+      if(n<-1){ clearInterval(iv); el.classList.add('hidden'); resolve(); }
+    },700);
+  });
+}
+function tpSyncPlayLabels(){
+  if(tpPlaying){
+    $('t-play').innerHTML='<i class="fa-solid fa-pause"></i>Pausar';
+    $('t-rec-pause').innerHTML='<i class="fa-solid fa-pause"></i>Pausar';
+  } else {
+    $('t-play').innerHTML='<i class="fa-solid fa-play"></i>Continuar';
+    $('t-rec-pause').innerHTML='<i class="fa-solid fa-play"></i>Continuar';
+  }
+}
+async function tpCountdownThenPlay(){
+  await tpRunCountdown('Vai!');
+  tpPlaying=true; tpLastTs=null; tpSyncPlayLabels();
 }
 $('t-play').addEventListener('click', ()=>{
   if(!tpPlaying){ tpCountdownThenPlay(); }
-  else { tpPlaying=false; $('t-play').innerHTML='<i class="fa-solid fa-play"></i>Continuar'; }
+  else { tpPlaying=false; tpSyncPlayLabels(); }
 });
 $('t-reset').addEventListener('click', ()=>{
-  tpPlaying=false; tpPos=0; $('t-scroll').style.transform='translateY(0px)'; $('t-play').innerHTML='<i class="fa-solid fa-play"></i>Iniciar';
+  tpPlaying=false; tpPos=0; $('t-scroll').style.transform='translateY(0px)'; $('t-play').innerHTML='<i class="fa-solid fa-play"></i>Ensaiar';
 });
+function tpApplyFullscreenState(){
+  const isFs = document.fullscreenElement===$('t-stage') || document.webkitFullscreenElement===$('t-stage');
+  $('t-stage').classList.toggle('tp-band-mode', isFs);
+}
+document.addEventListener('fullscreenchange', tpApplyFullscreenState);
+document.addEventListener('webkitfullscreenchange', tpApplyFullscreenState);
 $('t-fullscreen').addEventListener('click', ()=>{
   const el=$('t-stage');
   if(!document.fullscreenElement) el.requestFullscreen && el.requestFullscreen();
@@ -1115,16 +1157,24 @@ $('t-fullscreen').addEventListener('click', ()=>{
 });
 $('t-mirror').addEventListener('change', ()=>{ $('t-overlay').style.transform=$('t-mirror').checked? 'scaleX(-1)':'none'; });
 let tpDragging=false, tpDragStartY=0, tpDragStartPos=0, tpDragMoved=false, tpWasPlayingBeforePress=false;
+let tpRecControlsHideTimer=null;
+function tpShowRecControls(){
+  if(!(mediaRecorder && mediaRecorder.state==='recording')) return;
+  $('t-rec-controls').classList.remove('hidden','tp-controls-hidden');
+  clearTimeout(tpRecControlsHideTimer);
+  tpRecControlsHideTimer=setTimeout(()=>{ $('t-rec-controls').classList.add('tp-controls-hidden'); },3000);
+}
 const tpStageEl=$('t-stage');
 tpStageEl.style.touchAction='none';
 tpStageEl.style.cursor='grab';
-function tpResumeNow(){ tpPlaying=true; tpLastTs=null; $('t-play').innerHTML='<i class="fa-solid fa-pause"></i>Pausar'; }
 tpStageEl.addEventListener('pointerdown', e=>{
+  if(e.target.closest('#t-rec-controls, #t-rec-indicator')) return;
   tpDragging=true; tpDragMoved=false; tpDragStartY=e.clientY; tpDragStartPos=tpPos;
   tpWasPlayingBeforePress=tpPlaying;
   tpStageEl.style.cursor='grabbing';
   try{ tpStageEl.setPointerCapture(e.pointerId); }catch(err){}
-  if(tpPlaying){ tpPlaying=false; $('t-play').innerHTML='<i class="fa-solid fa-play"></i>Continuar'; }
+  tpShowRecControls();
+  if(tpPlaying){ tpPlaying=false; tpSyncPlayLabels(); }
 });
 tpStageEl.addEventListener('pointermove', e=>{
   if(!tpDragging) return;
@@ -1136,7 +1186,7 @@ tpStageEl.addEventListener('pointermove', e=>{
 function tpEndDrag(e){
   if(!tpDragging) return;
   tpDragging=false; tpStageEl.style.cursor='grab';
-  if(!tpDragMoved && !tpWasPlayingBeforePress) tpResumeNow();
+  if(!tpDragMoved && !tpWasPlayingBeforePress){ tpPlaying=true; tpLastTs=null; tpSyncPlayLabels(); }
 }
 tpStageEl.addEventListener('pointerup', tpEndDrag);
 tpStageEl.addEventListener('pointercancel', tpEndDrag);
@@ -1224,6 +1274,23 @@ function updateAudioStatus(){
     } else { el.textContent='🔇 Sem áudio — o microfone foi bloqueado ou não está disponível. O vídeo será gravado mudo.'; el.className='text-[10px] rounded-lg px-2 py-1.5 bg-amber-500/10 text-amber-300 border border-amber-500/25'; }
   }
 }
+function tpApplyMirror(){
+  const facing=($('t-facing') && $('t-facing').value) || 'user';
+  $('t-video').classList.toggle('tp-mirrored', facing==='user');
+}
+function tpUpdateCameraStatus(ready){
+  const el=$('t-camera-status');
+  if(!tpStream){ el.classList.add('hidden'); return; }
+  el.classList.remove('hidden');
+  if(ready){ el.textContent='🎥 Câmera funcionando.'; el.className='text-[10px] rounded-lg px-2 py-1.5 bg-emerald-500/10 text-emerald-300 border border-emerald-500/25'; }
+  else{ el.textContent='⚠️ Câmera indisponível — desative e ative de novo.'; el.className='text-[10px] rounded-lg px-2 py-1.5 bg-red-500/10 text-red-300 border border-red-500/25'; }
+}
+function tpUpdateRecordGate(){
+  const track=tpStream && tpStream.getVideoTracks()[0];
+  const ready=!!(track && track.readyState==='live');
+  if(!(mediaRecorder && mediaRecorder.state==='recording')) $('t-record').disabled=!ready;
+  tpUpdateCameraStatus(ready);
+}
 async function tpStartCamera(){
   tpMicPermissionState = await checkMicPermissionState();
   let videoStream=null;
@@ -1233,6 +1300,7 @@ async function tpStartCamera(){
     showToast('Não foi possível acessar a câmera: '+e.message,'error');
     $('t-camera').checked=false;
     updateAudioStatus();
+    tpUpdateRecordGate();
     return;
   }
   // Pede o áudio numa chamada separada: em alguns celulares Android, pedir câmera+microfone
@@ -1256,18 +1324,18 @@ async function tpStartCamera(){
     else showToast('Câmera ativada sem áudio (microfone indisponível ou bloqueado).','info');
   }
   updateAudioStatus();
+  tpApplyMirror();
+  tpUpdateRecordGate();
 }
-function tpStopCamera(){ if(tpStream){ tpStream.getTracks().forEach(t=>t.stop()); tpStream=null; $('t-video').srcObject=null; } updateAudioStatus(); }
+function tpStopCamera(){ if(tpStream){ tpStream.getTracks().forEach(t=>t.stop()); tpStream=null; $('t-video').srcObject=null; } updateAudioStatus(); tpUpdateRecordGate(); }
 $('t-camera').addEventListener('change', async e=>{
   if(e.target.checked){
     await tpStartCamera();
-    $('t-video').classList.remove('hidden');
-    $('t-record').disabled=!tpStream;
+    if(tpStream) $('t-video').classList.remove('hidden');
   } else {
-    if(mediaRecorder && mediaRecorder.state==='recording') mediaRecorder.stop();
+    if(mediaRecorder && mediaRecorder.state==='recording') tpStopRecordingFlow();
     tpStopCamera();
     $('t-video').classList.add('hidden');
-    $('t-record').disabled=true;
   }
 });
 
@@ -1279,38 +1347,98 @@ function pickRecorderOptions(){
   for(const c of candidates){ if(window.MediaRecorder && MediaRecorder.isTypeSupported(c)) return Object.assign({mimeType:c}, base); }
   return base;
 }
-function tpToggleRecord(){
-  if(!tpStream) return showToast('Ative a câmera primeiro.','error');
-  if(!window.MediaRecorder) return showToast('Este navegador não suporta gravação de vídeo.','error');
-  if(!mediaRecorder || mediaRecorder.state==='inactive'){
-    recordedChunks=[];
-    const options=pickRecorderOptions();
-    try{ mediaRecorder = new MediaRecorder(tpStream, options); }
-    catch(e){
-      try{ mediaRecorder = new MediaRecorder(tpStream); }
-      catch(e2){ return showToast('Não foi possível iniciar a gravação: '+e2.message,'error'); }
-    }
-    mediaRecorder.ondataavailable = e=>{ if(e.data && e.data.size>0) recordedChunks.push(e.data); };
-    mediaRecorder.onstop = ()=>{
-      const blob=new Blob(recordedChunks, {type: (mediaRecorder && mediaRecorder.mimeType) || 'video/webm'});
-      if(recordedBlobUrl) URL.revokeObjectURL(recordedBlobUrl);
-      recordedBlobUrl=URL.createObjectURL(blob);
-      $('t-record-preview').src=recordedBlobUrl;
-      $('t-record-result').classList.remove('hidden');
-      showToast('Gravação finalizada. Baixe o vídeo abaixo.','success');
-    };
-    mediaRecorder.start(1000);
-    $('t-record').innerHTML='<i class="fa-solid fa-stop"></i>Parar gravação';
-    showToast('Gravando...','success');
-  } else {
-    mediaRecorder.stop();
-    $('t-record').innerHTML='<i class="fa-solid fa-circle"></i>Gravar vídeo';
+function tpRecordStart(){
+  recordedChunks=[];
+  const options=pickRecorderOptions();
+  try{ mediaRecorder = new MediaRecorder(tpStream, options); }
+  catch(e){
+    try{ mediaRecorder = new MediaRecorder(tpStream); }
+    catch(e2){ showToast('Não foi possível iniciar a gravação: '+e2.message,'error'); return false; }
   }
+  mediaRecorder.ondataavailable = e=>{ if(e.data && e.data.size>0) recordedChunks.push(e.data); };
+  mediaRecorder.onstop = ()=>{
+    const blob=new Blob(recordedChunks, {type: (mediaRecorder && mediaRecorder.mimeType) || 'video/webm'});
+    if(recordedBlobUrl) URL.revokeObjectURL(recordedBlobUrl);
+    recordedBlobUrl=URL.createObjectURL(blob);
+    $('t-record-preview').src=recordedBlobUrl;
+    $('t-record-result').classList.remove('hidden');
+    showToast('Gravação finalizada.','success');
+  };
+  mediaRecorder.start(1000);
+  return true;
 }
-$('t-record').addEventListener('click', tpToggleRecord);
+function tpFormatTimer(ms){ const s=Math.floor(ms/1000); return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
+let tpRecStartTs=0, tpRecTimerInterval=null;
+async function tpEnterFullscreenBestEffort(){
+  const el=$('t-stage');
+  if(document.fullscreenElement || document.webkitFullscreenElement) return;
+  try{ if(el.requestFullscreen) await el.requestFullscreen(); else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen(); }
+  catch(e){ /* segue sem tela cheia — a gravação continua funcionando normalmente */ }
+}
+async function tpExitFullscreenBestEffort(){
+  try{ if((document.fullscreenElement || document.webkitFullscreenElement) && document.exitFullscreen) await document.exitFullscreen(); }
+  catch(e){}
+}
+async function tpStartRecordingFlow(){
+  if(mediaRecorder && mediaRecorder.state==='recording') return;
+  const track=tpStream && tpStream.getVideoTracks()[0];
+  if(!track || track.readyState!=='live') return showToast('A câmera precisa estar funcionando antes de gravar.','error');
+  if(!window.MediaRecorder) return showToast('Este navegador não suporta gravação de vídeo.','error');
+  $('t-record-result').classList.add('hidden');
+  await tpEnterFullscreenBestEffort();
+  $('t-stage').classList.add('tp-band-mode');
+  tpPlaying=false; tpPos=0; $('t-scroll').style.transform='translateY(0px)';
+  $('t-record').disabled=true;
+  await tpRunCountdown('Gravando!');
+  if(!tpRecordStart()){ $('t-stage').classList.remove('tp-band-mode'); $('t-record').disabled=false; return; }
+  tpPlaying=true; tpLastTs=null;
+  $('t-record').disabled=false;
+  $('t-record').innerHTML='<i class="fa-solid fa-stop"></i>Encerrar';
+  $('t-rec-indicator').classList.remove('hidden');
+  $('t-rec-pause').innerHTML='<i class="fa-solid fa-pause"></i>Pausar';
+  tpRecStartTs=Date.now(); $('t-rec-timer').textContent='00:00';
+  clearInterval(tpRecTimerInterval);
+  tpRecTimerInterval=setInterval(()=>{ $('t-rec-timer').textContent=tpFormatTimer(Date.now()-tpRecStartTs); },250);
+  tpShowRecControls();
+}
+async function tpStopRecordingFlow(){
+  if(mediaRecorder && mediaRecorder.state==='recording') mediaRecorder.stop();
+  tpPlaying=false;
+  clearInterval(tpRecTimerInterval);
+  clearTimeout(tpRecControlsHideTimer);
+  $('t-rec-indicator').classList.add('hidden');
+  $('t-rec-controls').classList.add('hidden'); $('t-rec-controls').classList.remove('tp-controls-hidden');
+  $('t-stage').classList.remove('tp-band-mode');
+  $('t-record').innerHTML='<i class="fa-solid fa-circle"></i>Gravar';
+  await tpExitFullscreenBestEffort();
+}
+$('t-record').addEventListener('click', ()=>{
+  if(mediaRecorder && mediaRecorder.state==='recording') tpStopRecordingFlow();
+  else tpStartRecordingFlow();
+});
+$('t-rec-pause').addEventListener('click', ()=>{
+  tpPlaying=!tpPlaying;
+  if(tpPlaying) tpLastTs=null;
+  tpSyncPlayLabels();
+  tpShowRecControls();
+});
+$('t-rec-stop').addEventListener('click', tpStopRecordingFlow);
 $('t-download-video').addEventListener('click', ()=>{
   if(!recordedBlobUrl) return;
   const a=document.createElement('a'); a.href=recordedBlobUrl; a.download='teleprompter-'+Date.now()+'.webm'; a.click();
+});
+$('t-record-again').addEventListener('click', ()=>{
+  if(recordedBlobUrl){ URL.revokeObjectURL(recordedBlobUrl); recordedBlobUrl=null; }
+  recordedChunks=[];
+  $('t-record-result').classList.add('hidden');
+  tpStartRecordingFlow();
+});
+$('t-record-delete').addEventListener('click', ()=>{
+  if(recordedBlobUrl){ URL.revokeObjectURL(recordedBlobUrl); recordedBlobUrl=null; }
+  recordedChunks=[];
+  $('t-record-result').classList.add('hidden');
+  $('t-record-preview').removeAttribute('src');
+  showToast('Gravação excluída.','info');
 });
 function refreshTeleprompterLibrarySelect(){
   $('t-library').innerHTML = state.library.length
