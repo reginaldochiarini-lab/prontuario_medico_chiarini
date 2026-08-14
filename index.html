@@ -238,6 +238,7 @@
     <div class="flex-1 overflow-y-auto p-4 space-y-4">
       <div class="card p-4 space-y-3">
         <div class="flex justify-between items-center"><span class="label !mb-0">Transcrição bruta</span><button id="mic-btn" class="h-10 w-10 rounded-full bg-slate-700 text-slate-400 cursor-not-allowed" aria-label="Iniciar ditado" disabled><i id="mic-icon" class="fa-solid fa-microphone"></i></button></div>
+        <div id="mic-alert" class="hidden text-[11px] font-bold rounded-lg px-3 py-2 bg-red-950 border border-red-700 text-red-200"><i class="fa-solid fa-triangle-exclamation mr-1"></i><span id="mic-alert-text"></span></div>
         <div class="grid grid-cols-2 gap-2">
           <button id="mic-authorize-btn" class="btn btn-soft text-[11px]"><i class="fa-solid fa-shield-halved"></i>Autorizar microfone</button>
           <button id="mic-test-btn" class="btn btn-soft text-[11px]" disabled><i class="fa-solid fa-wave-square"></i>Testar microfone</button>
@@ -638,6 +639,17 @@ function renderChat(){const p=activePatient();const list=$('chat-messages');if(!
 async function sendChatMessage(){const p=activePatient();if(!p)return showToast('Selecione um paciente para discutir o caso.','error');const input=$('chat-input');const text=input.value.trim();if(!text&&!pendingChatImage)return;if(caseChat.patientId!==p.id)caseChat={patientId:p.id,messages:[]};const msg={role:'user',content:text};if(pendingChatImage)msg.image=pendingChatImage;caseChat.messages.push(msg);input.value='';pendingChatImage=null;$('chat-image-file').value='';$('chat-pending-image').classList.add('hidden');renderChat();const btn=$('chat-send-btn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner animate-spin"></i>';const provider=$('ai-provider').value||state.aiProvider||'gemini';try{const systemText=CASE_CHAT_SYSTEM+'\n\n'+buildCaseContext(p);let reply;if(provider==='gemini'){const key=$('gemini-api-key').value.trim();if(!key)throw new Error('Configure a chave do Gemini em Configurações.');reply=await callGeminiChat(caseChat.messages,systemText,key,$('gemini-model').value.trim()||'gemini-flash-latest');}else if(provider==='openai'){const key=$('openai-api-key').value.trim();if(!key)throw new Error('Configure a chave da OpenAI em Configurações.');reply=await callOpenAIChat(caseChat.messages,systemText,key,$('openai-model').value.trim()||'gpt-5-mini');}else{const key=$('claude-api-key').value.trim();if(!key)throw new Error('Configure a chave do Claude em Configurações.');reply=await callClaudeChat(caseChat.messages,systemText,key,$('claude-model').value.trim()||'claude-sonnet-4-5');}caseChat.messages.push({role:'assistant',content:reply});renderChat();}catch(e){console.error(e);showToast(`Falha na IA: ${e.message}`,'error');}finally{btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-paper-plane"></i>';}}
 function speechSupported(){return 'webkitSpeechRecognition' in window||'SpeechRecognition' in window;}
 function setMicStatus(text){$('mic-status').textContent=text;}
+function showMicAlert(text){$('mic-alert-text').textContent=text;$('mic-alert').classList.remove('hidden');}
+function hideMicAlert(){$('mic-alert').classList.add('hidden');}
+async function checkMicPermissionState(){
+ try{
+   if(navigator.permissions&&navigator.permissions.query){
+     const status=await navigator.permissions.query({name:'microphone'});
+     return status.state;
+   }
+ }catch(e){}
+ return 'unknown';
+}
 function normalizeSpeechText(text){return (text||'').replace(/\s+/g,' ').trim();}
 function updateMicUI(active){
  const btn=$('mic-btn'),icon=$('mic-icon');
@@ -653,6 +665,7 @@ async function authorizeMic(){
    const label=track?.label||'dispositivo padrão';
    permissionStream.getTracks().forEach(t=>t.stop());
    isMicAuthorized=true;
+   hideMicAlert();
    prepareRecognition();
    $('mic-authorize-btn').disabled=true;
    $('mic-test-btn').disabled=false;
@@ -699,7 +712,7 @@ function prepareRecognition(){
  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
  recognition=new SR();
  recognition.lang='pt-BR';recognition.continuous=true;recognition.interimResults=true;recognition.maxAlternatives=1;
- recognition.onstart=()=>{lastMicStart=Date.now();lastMicActivity=Date.now();micRestartAttempts=0;if(isRecording&&!isMicPaused)setMicStatus('Gravando. O ditado será reconectado automaticamente se pausar.');};
+ recognition.onstart=()=>{lastMicStart=Date.now();lastMicActivity=Date.now();micRestartAttempts=0;hideMicAlert();if(isRecording&&!isMicPaused)setMicStatus('Gravando. O ditado será reconectado automaticamente se pausar.');};
  recognition.onspeechstart=()=>{lastMicActivity=Date.now();};
  recognition.onsoundstart=()=>{lastMicActivity=Date.now();};
  recognition.onresult=e=>{
@@ -713,15 +726,27 @@ function prepareRecognition(){
    $('transcript').value=normalizeSpeechText(micFinalText+interim);
    $('transcript').scrollTop=$('transcript').scrollHeight;updateCounts();saveTranscript();
  };
- recognition.onerror=e=>{
+ recognition.onerror=async e=>{
    console.warn('Erro reconhecimento',e.error);
    if(e.error==='not-allowed'||e.error==='service-not-allowed'){
+     if(isRecording&&!isMicPaused&&micRestartAttempts<8){
+       const permState=await checkMicPermissionState();
+       if(permState!=='denied'){
+         setMicStatus('Falha temporária no reconhecimento de voz. Reconectando...');
+         scheduleMicRestart();
+         return;
+       }
+     }
      isRecording=false;isMicAuthorized=false;clearMicTimers();updateMicUI(false);$('mic-authorize-btn').disabled=false;$('mic-btn').disabled=true;
-     setMicStatus('Permissão bloqueada. Libere o microfone no cadeado.');showToast('O navegador bloqueou o microfone. Libere a permissão e recarregue a página.','error');return;
+     setMicStatus('Permissão bloqueada. Libere o microfone no cadeado.');
+     showMicAlert('A gravação foi INTERROMPIDA: o navegador bloqueou o microfone. Clique no cadeado ao lado do endereço, permita o microfone, depois clique em "Autorizar microfone" e grave novamente. O texto já ditado está salvo.');
+     return;
    }
    if(e.error==='audio-capture'){
      if(isRecording&&!isMicPaused&&micRestartAttempts<8){setMicStatus('Microfone temporariamente indisponível. Tentando reconectar...');scheduleMicRestart();return;}
-     isRecording=false;clearMicTimers();updateMicUI(false);setMicStatus('Nenhum microfone disponível.');showToast('Nenhum microfone foi encontrado pelo navegador. Verifique a conexão do microfone e clique em "Autorizar microfone".','error');return;
+     isRecording=false;clearMicTimers();updateMicUI(false);setMicStatus('Nenhum microfone disponível.');
+     showMicAlert('A gravação foi INTERROMPIDA: nenhum microfone foi encontrado. Verifique a conexão do microfone, clique em "Autorizar microfone" e grave novamente. O texto já ditado está salvo.');
+     return;
    }
    if(e.error==='no-speech'){setMicStatus('Aguardando fala...');return;}
    if(isRecording&&!isMicPaused)scheduleMicRestart();
@@ -757,10 +782,11 @@ function startRecognitionSafely(){
 }
 function startMic(){
  if(!isMicAuthorized){showToast('Clique primeiro em “Autorizar microfone”.','error');return;}
+ hideMicAlert();
  isRecording=true;isMicPaused=false;micRestartAttempts=0;micFinalText=$('transcript').value.trim();startRecognitionSafely();updateMicUI(true);
 }
 function stopMic(){
- isRecording=false;isMicPaused=false;clearMicTimers();
+ isRecording=false;isMicPaused=false;clearMicTimers();hideMicAlert();
  if(recognition){recognition.onend=null;recognition.onerror=null;try{recognition.abort();}catch{}recognition=null;}
  micFinalText=$('transcript').value.trim();updateMicUI(false);setMicStatus('Gravação encerrada. Texto preservado.');
 }
