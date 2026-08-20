@@ -340,7 +340,7 @@ const DEFAULT_LETTERHEAD={title:'Dr. REGINALDO CHIARINI - CRM 122.194',specialty
 const emptyTemplate=`## QUEIXA PRINCIPAL (QP)\n\n## HISTÓRIA DA DOENÇA ATUAL (HDA)\n\n## HISTÓRIA DE QUEIXAS SECUNDÁRIAS\n\n## HISTÓRIA MEDICAMENTOSA ATUAL\n\n## ALERGIAS MEDICAMENTOSAS\n\n## HISTÓRIA PESSOAL\n- Vacinas: \n- Crescimento: \n- Desenvolvimento: \n- Socialização: \n- Rendimento escolar: \n\n## HISTÓRIA PATOLÓGICA PREGRESSA (HPP)\n- Patologias: \n- Internações clínicas: \n- Cirurgias: \n\n## HISTÓRIA FAMILIAR\n- Pai: \n- Mãe: \n- Irmãos: \n- História de câncer na família: \n- História de doença psiquiátrica na família: \n\n## HÁBITOS DE VIDA E CONDIÇÃO SOCIOECONÔMICA\n- Tabagismo: \n- Etilismo: \n- Alimentação: \n- Atividade física: \n- Profissão: \n- Exposição a fumaça: \n\n## IDAS (INTERROGAÇÃO DE DIVERSOS APARELHOS)\n- Aparelho gastrointestinal: \n- Aparelho urinário: \n- Aparelho pulmonar: \n- Aparelho cardiovascular: \n- Aparelho neurológico (inclui esquecimentos): \n\n## SINTOMAS DEPRESSIVOS E/OU ANSIOSOS\n\n## DISTÚRBIO DE MARCHA E/OU QUEDAS\n\n## EXAME FÍSICO\n\n## EXAMES COMPLEMENTARES\n\n## DIAGNÓSTICOS\n\n## PLANO TERAPÊUTICO\n\n## ORIENTAÇÕES`;
 let state={patients:[],activePatientId:null,today:[],activeDoc:'receita',letterhead:{...DEFAULT_LETTERHEAD},aiProvider:'gemini',noDate:false,manualPatient:{enabled:false,name:'',cpf:''},auditLog:[],preConsultaFormUrl:''};
 const CONSENT_TYPES=[{id:'lgpd',label:'Consentimento LGPD para tratamento de dados'},{id:'telemedicina',label:'Consentimento para teleconsulta'},{id:'procedimento',label:'Consentimento para procedimento/tratamento'}];
-let recognition=null,isMicAuthorized=false,isRecording=false,isMicPaused=false,micRestartTimer=null,micWatchdogTimer=null,lastMicStart=0,lastMicActivity=0,micRestartAttempts=0,micFinalText="",confirmCallback=null,saveTimer=null;
+let recognition=null,isMicAuthorized=false,isRecording=false,isMicPaused=false,micRestartTimer=null,micWatchdogTimer=null,lastMicStart=0,lastMicActivity=0,micRestartAttempts=0,micFinalText="",confirmCallback=null,saveTimer=null,micRecognitionActive=false,micRecognitionGeneration=0;
 let caseChat={patientId:null,messages:[]};
 let pendingChatImage=null;
 const CASE_CHAT_SYSTEM='Você é um colega médico, discutindo um caso clínico com o médico responsável pelo paciente. Pode comentar hipóteses diagnósticas, sugerir condutas, questionar achados e ajudar a raciocinar sobre o caso, sempre deixando claro que a decisão final é do médico responsável. Baseie-se nos dados abaixo (cadastro e histórico de evoluções do paciente) e no que for dito na conversa; não invente dados clínicos que não constem no histórico ou na conversa. Seja direto, técnico e objetivo, em português do Brasil.';
@@ -699,9 +699,13 @@ function startMicWatchdog(){
  micWatchdogTimer=setInterval(()=>{
    saveTranscript();
    if(!isRecording||isMicPaused)return;
+   if(!micRecognitionActive){
+     restartRecognition(true);
+     return;
+   }
    const inactiveFor=Date.now()-lastMicActivity;
-   if(inactiveFor>10000){
-     console.warn('Reconhecimento sem atividade. Reiniciando de forma controlada.');
+   if(inactiveFor>75000){
+     console.warn('Reconhecimento sem resposta por muito tempo. Reiniciando de forma forçada.');
      setMicStatus('Reconectando o ditado automaticamente...');
      lastMicActivity=Date.now();
      restartRecognition(true);
@@ -711,11 +715,13 @@ function startMicWatchdog(){
 function prepareRecognition(){
  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
  recognition=new SR();
+ const myGeneration=++micRecognitionGeneration;
  recognition.lang='pt-BR';recognition.continuous=true;recognition.interimResults=true;recognition.maxAlternatives=1;
- recognition.onstart=()=>{lastMicStart=Date.now();lastMicActivity=Date.now();micRestartAttempts=0;hideMicAlert();if(isRecording&&!isMicPaused)setMicStatus('Gravando. O ditado será reconectado automaticamente se pausar.');};
- recognition.onspeechstart=()=>{lastMicActivity=Date.now();};
- recognition.onsoundstart=()=>{lastMicActivity=Date.now();};
+ recognition.onstart=()=>{if(myGeneration!==micRecognitionGeneration)return;lastMicStart=Date.now();lastMicActivity=Date.now();micRestartAttempts=0;micRecognitionActive=true;hideMicAlert();if(isRecording&&!isMicPaused)setMicStatus('Gravando. O ditado será reconectado automaticamente se pausar.');};
+ recognition.onspeechstart=()=>{if(myGeneration!==micRecognitionGeneration)return;lastMicActivity=Date.now();};
+ recognition.onsoundstart=()=>{if(myGeneration!==micRecognitionGeneration)return;lastMicActivity=Date.now();};
  recognition.onresult=e=>{
+   if(myGeneration!==micRecognitionGeneration)return;
    lastMicActivity=Date.now();
    let interim='';
    for(let i=e.resultIndex;i<e.results.length;i++){
@@ -727,23 +733,28 @@ function prepareRecognition(){
    $('transcript').scrollTop=$('transcript').scrollHeight;updateCounts();saveTranscript();
  };
  recognition.onerror=async e=>{
+   if(myGeneration!==micRecognitionGeneration)return;
    console.warn('Erro reconhecimento',e.error);
    if(e.error==='not-allowed'||e.error==='service-not-allowed'){
      if(isRecording&&!isMicPaused&&micRestartAttempts<8){
        const permState=await checkMicPermissionState();
+       if(myGeneration!==micRecognitionGeneration)return;
        if(permState!=='denied'){
+         micRecognitionActive=false;
          setMicStatus('Falha temporária no reconhecimento de voz. Reconectando...');
          scheduleMicRestart();
          return;
        }
      }
+     micRecognitionActive=false;
      isRecording=false;isMicAuthorized=false;clearMicTimers();updateMicUI(false);$('mic-authorize-btn').disabled=false;$('mic-btn').disabled=true;
      setMicStatus('Permissão bloqueada. Libere o microfone no cadeado.');
      showMicAlert('A gravação foi INTERROMPIDA: o navegador bloqueou o microfone. Clique no cadeado ao lado do endereço, permita o microfone, depois clique em "Autorizar microfone" e grave novamente. O texto já ditado está salvo.');
      return;
    }
    if(e.error==='audio-capture'){
-     if(isRecording&&!isMicPaused&&micRestartAttempts<8){setMicStatus('Microfone temporariamente indisponível. Tentando reconectar...');scheduleMicRestart();return;}
+     if(isRecording&&!isMicPaused&&micRestartAttempts<8){micRecognitionActive=false;setMicStatus('Microfone temporariamente indisponível. Tentando reconectar...');scheduleMicRestart();return;}
+     micRecognitionActive=false;
      isRecording=false;clearMicTimers();updateMicUI(false);setMicStatus('Nenhum microfone disponível.');
      showMicAlert('A gravação foi INTERROMPIDA: nenhum microfone foi encontrado. Verifique a conexão do microfone, clique em "Autorizar microfone" e grave novamente. O texto já ditado está salvo.');
      return;
@@ -751,7 +762,11 @@ function prepareRecognition(){
    if(e.error==='no-speech'){setMicStatus('Aguardando fala...');return;}
    if(isRecording&&!isMicPaused)scheduleMicRestart();
  };
- recognition.onend=()=>{if(isRecording&&!isMicPaused)scheduleMicRestart();};
+ recognition.onend=()=>{
+   if(myGeneration!==micRecognitionGeneration)return;
+   micRecognitionActive=false;
+   if(isRecording&&!isMicPaused)scheduleMicRestart();
+ };
 }
 function scheduleMicRestart(){
  if(!isRecording||isMicPaused)return;
@@ -764,6 +779,7 @@ function restartRecognition(force=false){
  if(!isRecording||isMicPaused)return;
  clearTimeout(micRestartTimer);
  micFinalText=normalizeSpeechText($('transcript').value);
+ micRecognitionActive=false;
  if(recognition){
    recognition.onend=null;recognition.onerror=null;
    try{recognition.abort();}catch{}
@@ -787,6 +803,7 @@ function startMic(){
 }
 function stopMic(){
  isRecording=false;isMicPaused=false;clearMicTimers();hideMicAlert();
+ micRecognitionActive=false;micRecognitionGeneration++;
  if(recognition){recognition.onend=null;recognition.onerror=null;try{recognition.abort();}catch{}recognition=null;}
  micFinalText=$('transcript').value.trim();updateMicUI(false);setMicStatus('Gravação encerrada. Texto preservado.');
 }
