@@ -83,6 +83,7 @@
       <button data-tab="busca" class="tab-btn tab-inactive py-4 border-b-2 text-xs whitespace-nowrap"><i class="fa-solid fa-magnifying-glass mr-2"></i>Busca</button>
       <button data-tab="auditoria" class="tab-btn tab-inactive py-4 border-b-2 text-xs whitespace-nowrap"><i class="fa-solid fa-list-check mr-2"></i>Auditoria</button>
       <button data-tab="chat" class="tab-btn tab-inactive py-4 border-b-2 text-xs whitespace-nowrap"><i class="fa-solid fa-comments mr-2"></i>Discussão do caso</button>
+      <button data-tab="protocolos" class="tab-btn tab-inactive py-4 border-b-2 text-xs whitespace-nowrap"><i class="fa-solid fa-folder-open mr-2"></i>Protocolos</button>
     </div>
 
     <div class="flex-1 overflow-y-auto p-4 md:p-6">
@@ -228,6 +229,20 @@
             <textarea id="chat-input" rows="2" class="field text-xs resize-none" placeholder="Pergunte algo sobre o caso (Enter para enviar, Shift+Enter para nova linha)..."></textarea>
             <button id="chat-send-btn" class="btn btn-primary self-end"><i class="fa-solid fa-paper-plane"></i></button>
           </div>
+        </div>
+      </section>
+
+      <section id="tab-protocolos" class="tab-view hidden max-w-6xl mx-auto space-y-4">
+        <div class="card p-4 md:p-6">
+          <div class="flex flex-wrap justify-between gap-3 border-b border-slate-800 pb-4 mb-4">
+            <div><h2 class="font-bold text-white"><i class="fa-solid fa-folder-open text-emerald-400 mr-2"></i>Protocolos e documentos</h2><p class="text-[11px] text-slate-500 mt-1">Biblioteca pessoal de protocolos, diretrizes e outros arquivos de referência — independente de paciente. Guardada separadamente dos prontuários, num espaço bem maior do navegador.</p></div>
+            <label class="btn btn-primary cursor-pointer"><i class="fa-solid fa-upload"></i>Enviar arquivo<input id="protocol-file" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple class="hidden"></label>
+          </div>
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <input id="protocol-search" class="field text-xs max-w-xs" placeholder="Buscar por nome...">
+            <p id="protocol-storage-info" class="text-[10px] text-slate-500"></p>
+          </div>
+          <div id="protocols-list" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
         </div>
       </section>
     </div>
@@ -386,10 +401,89 @@ function extractTitle(content){const m=content.match(/## QUEIXA PRINCIPAL \(QP\)
 function renderConsents(){const el=$('consents-list');if(!el)return;const p=activePatient();if(!p){$('consents-subtitle').textContent='Selecione um paciente.';el.innerHTML='';return;}p.consents=p.consents||[];$('consents-subtitle').textContent=p.name;el.innerHTML=CONSENT_TYPES.map(ct=>{const rec=p.consents.find(c=>c.type===ct.id);const signed=!!rec?.signedAt;return `<div class="flex flex-wrap items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-xl p-3"><div class="text-xs text-slate-200">${esc(ct.label)}${signed?`<div class="text-[10px] text-emerald-400 mt-1">Assinado em ${esc(new Date(rec.signedAt).toLocaleDateString('pt-BR'))}</div>`:'<div class="text-[10px] text-slate-500 mt-1">Não assinado</div>'}</div><button data-consent="${ct.id}" class="btn ${signed?'btn-soft':'btn-primary'} !py-1.5">${signed?'Desmarcar':'Marcar como assinado'}</button></div>`;}).join('');el.querySelectorAll('[data-consent]').forEach(b=>b.onclick=()=>{const type=b.dataset.consent;const idx=p.consents.findIndex(c=>c.type===type);const ct=CONSENT_TYPES.find(c=>c.id===type);if(idx>=0)p.consents.splice(idx,1);else p.consents.push({type,signedAt:new Date().toISOString()});saveState();renderConsents();renderHistory();logAudit('consentimento',`${p.name}: ${ct.label} ${idx>=0?'desmarcado':'assinado'}`);});}
 function renderPendencias(){const el=$('pendencias-list');if(!el)return;const p=activePatient();if(!p){$('pendencias-subtitle').textContent='Selecione um paciente.';el.innerHTML='';return;}p.pendencias=p.pendencias||[];$('pendencias-subtitle').textContent=`${p.name} · ${p.pendencias.filter(x=>!x.done).length} pendente(s)`;if(!p.pendencias.length){el.innerHTML='<p class="text-xs text-slate-500 text-center py-8">Nenhuma pendência.</p>';return;}el.innerHTML='';p.pendencias.slice().sort((a,b)=>(a.done===b.done?0:a.done?1:-1)||(a.dueDate||'').localeCompare(b.dueDate||'')).forEach(t=>{const d=document.createElement('div');d.className=`flex items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-xl p-3 ${t.done?'opacity-50':''}`;d.innerHTML=`<div class="text-xs text-slate-200 flex-1"><span class="${t.done?'line-through':''}">${esc(t.text)}</span>${t.dueDate?`<div class="text-[10px] text-slate-500 mt-1">Prazo: ${esc(new Date(t.dueDate+'T12:00:00').toLocaleDateString('pt-BR'))}</div>`:''}</div><div class="flex gap-2"><button data-done class="btn btn-soft !py-1.5">${t.done?'Reabrir':'Concluir'}</button><button data-remove class="btn btn-danger !py-1.5"><i class="fa-solid fa-trash"></i></button></div>`;d.querySelector('[data-done]').onclick=()=>{t.done=!t.done;saveState();renderPendencias();renderHistory();};d.querySelector('[data-remove]').onclick=()=>confirmAction('Excluir pendência','Esta ação não poderá ser desfeita.',()=>{p.pendencias=p.pendencias.filter(x=>x.id!==t.id);saveState();renderPendencias();renderHistory();});el.appendChild(d);});}
 function renderAttachments(){const el=$('attachments-list');if(!el)return;const p=activePatient();$('attachment-file').disabled=!p;if(!p){$('attachments-subtitle').textContent='Selecione um paciente.';el.innerHTML='';return;}p.attachments=p.attachments||[];$('attachments-subtitle').textContent=`${p.name} · ${p.attachments.length} anexo(s)`;if(!p.attachments.length){el.innerHTML='<p class="text-xs text-slate-500 text-center py-8 sm:col-span-2 lg:col-span-3">Nenhum anexo enviado.</p>';return;}el.innerHTML='';p.attachments.forEach(a=>{const card=document.createElement('div');card.className='bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2';const isImg=a.type&&a.type.startsWith('image/');card.innerHTML=`${isImg?`<img src="${a.dataUrl}" class="rounded-lg w-full h-32 object-cover">`:`<div class="h-32 flex items-center justify-center bg-slate-900 rounded-lg"><i class="fa-solid fa-file-lines text-3xl text-slate-600"></i></div>`}<p class="text-[11px] text-slate-300 truncate" title="${esc(a.name)}">${esc(a.name)}</p><p class="text-[10px] text-slate-500">${esc(new Date(a.createdAt).toLocaleString('pt-BR'))}</p><div class="flex gap-2"><a href="${a.dataUrl}" download="${esc(a.name)}" class="btn btn-soft !py-1.5 flex-1 justify-center"><i class="fa-solid fa-download"></i></a><button data-remove class="btn btn-danger !py-1.5"><i class="fa-solid fa-trash"></i></button></div>`;card.querySelector('[data-remove]').onclick=()=>confirmAction('Excluir anexo','Esta ação não poderá ser desfeita.',()=>{p.attachments=p.attachments.filter(x=>x.id!==a.id);saveState();renderAttachments();renderHistory();});el.appendChild(card);});}
+/* ---------- Protocolos (biblioteca de arquivos via IndexedDB, independente do localStorage) ---------- */
+const PROTOCOLS_DB_NAME='medscribe_protocols_db',PROTOCOLS_STORE='files';
+let protocolsDbPromise=null,protocolsCache=[];
+function openProtocolsDB(){
+ if(protocolsDbPromise)return protocolsDbPromise;
+ protocolsDbPromise=new Promise((resolve,reject)=>{
+   if(!window.indexedDB){reject(new Error('IndexedDB indisponível'));return;}
+   const req=indexedDB.open(PROTOCOLS_DB_NAME,1);
+   req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(PROTOCOLS_STORE))db.createObjectStore(PROTOCOLS_STORE,{keyPath:'id'});};
+   req.onsuccess=()=>resolve(req.result);
+   req.onerror=()=>reject(req.error);
+ });
+ return protocolsDbPromise;
+}
+async function protocolAdd(file){
+ const db=await openProtocolsDB();
+ const record={id:uid(),name:file.name,type:file.type||'application/octet-stream',size:file.size,createdAt:new Date().toISOString(),blob:file};
+ return new Promise((resolve,reject)=>{
+   const tx=db.transaction(PROTOCOLS_STORE,'readwrite');
+   tx.objectStore(PROTOCOLS_STORE).add(record);
+   tx.oncomplete=()=>resolve(record);
+   tx.onerror=()=>reject(tx.error);
+ });
+}
+async function protocolGetAll(){
+ const db=await openProtocolsDB();
+ return new Promise((resolve,reject)=>{
+   const req=db.transaction(PROTOCOLS_STORE,'readonly').objectStore(PROTOCOLS_STORE).getAll();
+   req.onsuccess=()=>resolve((req.result||[]).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)));
+   req.onerror=()=>reject(req.error);
+ });
+}
+async function protocolDelete(id){
+ const db=await openProtocolsDB();
+ return new Promise((resolve,reject)=>{
+   const tx=db.transaction(PROTOCOLS_STORE,'readwrite');
+   tx.objectStore(PROTOCOLS_STORE).delete(id);
+   tx.oncomplete=()=>resolve();
+   tx.onerror=()=>reject(tx.error);
+ });
+}
+function formatFileSize(bytes){if(bytes<1024)return bytes+' B';if(bytes<1024*1024)return (bytes/1024).toFixed(0)+' KB';return (bytes/(1024*1024)).toFixed(1)+' MB';}
+function protocolIcon(type){if(type.includes('pdf'))return 'fa-file-pdf';if(type.startsWith('image/'))return 'fa-file-image';if(type.includes('word')||type.includes('document'))return 'fa-file-word';return 'fa-file-lines';}
+async function renderProtocols(){
+ const el=$('protocols-list');if(!el)return;
+ try{protocolsCache=await protocolGetAll();}
+ catch(e){console.error(e);el.innerHTML='<p class="text-xs text-red-400 text-center py-8 sm:col-span-2 lg:col-span-3">Não foi possível abrir o armazenamento de protocolos neste navegador.</p>';return;}
+ renderProtocolsList();
+ updateProtocolStorageInfo();
+}
+function renderProtocolsList(){
+ const el=$('protocols-list');if(!el)return;
+ const term=($('protocol-search').value||'').trim().toLowerCase();
+ const list=term?protocolsCache.filter(p=>p.name.toLowerCase().includes(term)):protocolsCache;
+ if(!list.length){el.innerHTML=`<p class="text-xs text-slate-500 text-center py-8 sm:col-span-2 lg:col-span-3">${term?'Nenhum arquivo encontrado.':'Nenhum protocolo enviado ainda.'}</p>`;return;}
+ el.innerHTML='';
+ list.forEach(p=>{
+   const card=document.createElement('div');
+   card.className='bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2';
+   const isImg=p.type.startsWith('image/');
+   card.innerHTML=`${isImg?'<div class="h-32 rounded-lg overflow-hidden bg-slate-900"><img data-preview class="w-full h-full object-cover"></div>':`<div class="h-32 flex items-center justify-center bg-slate-900 rounded-lg"><i class="fa-solid ${protocolIcon(p.type)} text-3xl text-slate-600"></i></div>`}<p class="text-[11px] text-slate-300 truncate" title="${esc(p.name)}">${esc(p.name)}</p><p class="text-[10px] text-slate-500">${formatFileSize(p.size)} · ${esc(new Date(p.createdAt).toLocaleString('pt-BR'))}</p><div class="flex gap-2"><button data-open class="btn btn-soft !py-1.5 flex-1 justify-center"><i class="fa-solid fa-up-right-from-square"></i>Abrir</button><button data-remove class="btn btn-danger !py-1.5"><i class="fa-solid fa-trash"></i></button></div>`;
+   if(isImg){const img=card.querySelector('[data-preview]');img.src=URL.createObjectURL(p.blob);}
+   card.querySelector('[data-open]').onclick=()=>{const url=URL.createObjectURL(p.blob);window.open(url,'_blank','noopener');setTimeout(()=>URL.revokeObjectURL(url),60000);};
+   card.querySelector('[data-remove]').onclick=()=>confirmAction('Excluir protocolo','Esta ação não poderá ser desfeita.',async()=>{await protocolDelete(p.id);showToast('Protocolo excluído.','success');renderProtocols();});
+   el.appendChild(card);
+ });
+}
+async function updateProtocolStorageInfo(){
+ const el=$('protocol-storage-info');if(!el)return;
+ const totalBytes=protocolsCache.reduce((s,p)=>s+(p.size||0),0);
+ let text=`${protocolsCache.length} arquivo(s) · ${formatFileSize(totalBytes)} usados`;
+ try{
+   if(navigator.storage&&navigator.storage.estimate){
+     const{usage,quota}=await navigator.storage.estimate();
+     if(quota)text+=` · ${formatFileSize(usage||0)} de ${formatFileSize(quota)} do navegador`;
+   }
+ }catch(e){}
+ el.textContent=text;
+}
 function renderAudit(){const el=$('audit-list');if(!el)return;const log=state.auditLog||[];if(!log.length){el.innerHTML='<p class="text-xs text-slate-500 text-center py-8">Nenhuma ação registrada ainda.</p>';return;}el.innerHTML=log.map(e=>`<div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex justify-between gap-3"><div class="text-xs text-slate-200">${esc(e.details)}</div><div class="text-[10px] text-slate-500 whitespace-nowrap">${esc(new Date(e.ts).toLocaleString('pt-BR'))}</div></div>`).join('');}
 function searchProntuario(term){const el=$('prontuario-search-results');if(!el)return;term=(term||'').trim().toLowerCase();if(!term){el.innerHTML='<p class="text-xs text-slate-500 text-center py-8">Digite um termo para buscar.</p>';return;}const results=[];state.patients.forEach(p=>{(p.history||[]).forEach(h=>{const hay=(h.content||'').toLowerCase();const idx=hay.indexOf(term);if(idx>=0){const start=Math.max(0,idx-40);const end=Math.min(h.content.length,idx+term.length+60);const snippet=(start>0?'…':'')+h.content.slice(start,end)+(end<h.content.length?'…':'');results.push({p,h,snippet});}});});if(!results.length){el.innerHTML='<p class="text-xs text-slate-500 text-center py-8">Nenhum resultado encontrado.</p>';return;}el.innerHTML='';results.slice(0,50).forEach(r=>{const d=document.createElement('article');d.className='bg-slate-950 border border-slate-800 rounded-xl p-4';d.innerHTML=`<div class="flex flex-wrap justify-between gap-2"><div><p class="text-xs font-bold text-white">${esc(r.p.name)}</p><p class="text-[10px] text-slate-500 mt-1">${esc(r.h.title||'Evolução clínica')} · ${esc(new Date(r.h.createdAt).toLocaleString('pt-BR'))}</p></div><button data-open class="btn btn-soft !py-1.5">Abrir</button></div><p class="text-[11px] text-slate-400 mt-2 leading-relaxed">${esc(r.snippet)}</p>`;d.querySelector('[data-open]').onclick=()=>{selectPatient(r.p.id);r.p.draft=r.h.content;$('pep-editor').value=r.h.content;saveState();switchTab('record');};el.appendChild(d);});}
 function saveHistory(){const p=activePatient(),content=$('pep-editor').value.trim();if(!p)return showToast('Selecione um paciente.','error');if(!content)return showToast('O prontuário está vazio.','error');p.history=p.history||[];p.history.unshift({id:uid(),createdAt:new Date().toISOString(),title:extractTitle(content),content});p.draft=content;saveState();renderHistory();switchTab('history');showToast('Evolução salva no histórico.','success');logAudit('evolucao',`Evolução salva para ${p.name}`);}
-function switchTab(tab){document.querySelectorAll('.tab-view').forEach(v=>v.classList.add('hidden'));$(`tab-${tab}`).classList.remove('hidden');document.querySelectorAll('.tab-btn').forEach(b=>{const a=b.dataset.tab===tab;b.classList.toggle('tab-active',a);b.classList.toggle('tab-inactive',!a);});if(tab==='history')renderHistory();if(tab==='documents')updateDocTemplate(false);if(tab==='today')renderToday();if(tab==='cuidados'){renderConsents();renderPendencias();renderAttachments();}if(tab==='busca')searchProntuario($('prontuario-search').value);if(tab==='auditoria')renderAudit();if(tab==='chat')renderChat();}
+function switchTab(tab){document.querySelectorAll('.tab-view').forEach(v=>v.classList.add('hidden'));$(`tab-${tab}`).classList.remove('hidden');document.querySelectorAll('.tab-btn').forEach(b=>{const a=b.dataset.tab===tab;b.classList.toggle('tab-active',a);b.classList.toggle('tab-inactive',!a);});if(tab==='history')renderHistory();if(tab==='documents')updateDocTemplate(false);if(tab==='today')renderToday();if(tab==='cuidados'){renderConsents();renderPendencias();renderAttachments();}if(tab==='busca')searchProntuario($('prontuario-search').value);if(tab==='auditoria')renderAudit();if(tab==='chat')renderChat();if(tab==='protocolos')renderProtocols();}
 function updateCounts(){$('record-count').textContent=`${$('pep-editor').value.length.toLocaleString('pt-BR')} caracteres`;$('transcript-count').textContent=`${$('transcript').value.length.toLocaleString('pt-BR')} caracteres`;}
 function stripMarkdownForCopy(text){return (text||'').replace(/^\s*---+\s*$/gm,'').replace(/^#{1,6}\s+/gm,'').replace(/^\s*[*-]\s+/gm,'').replace(/\*\*(.+?)\*\*/g,'$1').replace(/\n{3,}/g,'\n\n').trim();}
 function markdownToHtmlForCopy(text){let t=(text||'').replace(/^\s*---+\s*$/gm,'').replace(/^#{1,6}\s+/gm,'').replace(/^\s*[*-]\s+/gm,'').replace(/\n{3,}/g,'\n\n').trim();t=esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');return t;}
@@ -889,6 +983,8 @@ window.addEventListener('DOMContentLoaded',()=>{
  $('add-pendencia-btn').onclick=()=>{if(!activePatient())return showToast('Selecione um paciente.','error');$('pendencia-form').reset();openModal('pendencia-modal');};
  $('pendencia-form').onsubmit=e=>{e.preventDefault();const p=activePatient();if(!p)return;const text=$('pendencia-text').value.trim();if(!text)return;p.pendencias=p.pendencias||[];p.pendencias.unshift({id:uid(),text,dueDate:$('pendencia-due').value||'',done:false,createdAt:new Date().toISOString()});saveState();closeModal('pendencia-modal');renderPendencias();renderHistory();showToast('Pendência adicionada.','success');logAudit('pendencia',`Pendência criada para ${p.name}: ${text}`);};
  $('attachment-file').onchange=async e=>{const p=activePatient();if(!p)return;const files=Array.from(e.target.files||[]);for(const f of files){if(f.size>4_000_000){showToast(`"${f.name}" é muito grande (máx. 4 MB).`,'error');continue;}try{const dataUrl=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f);});p.attachments=p.attachments||[];p.attachments.unshift({id:uid(),name:f.name,type:f.type,dataUrl,createdAt:new Date().toISOString()});}catch(err){console.error(err);showToast('Falha ao ler arquivo.','error');}}saveState();renderAttachments();renderHistory();showToast('Anexo(s) enviado(s).','success');logAudit('anexo',`Anexo(s) adicionado(s) para ${p.name}`);e.target.value='';};
+ $('protocol-file').onchange=async e=>{const files=Array.from(e.target.files||[]);let ok=0;for(const f of files){if(f.size>200_000_000){showToast(`"${f.name}" é muito grande (máx. 200 MB).`,'error');continue;}try{await protocolAdd(f);ok++;}catch(err){console.error(err);showToast(`Falha ao salvar "${f.name}".`,'error');}}if(ok){renderProtocols();showToast(`${ok} arquivo(s) enviado(s).`,'success');logAudit('protocolo',`${ok} protocolo(s)/arquivo(s) adicionado(s) à biblioteca`);}e.target.value='';};
+ $('protocol-search').oninput=renderProtocolsList;
  $('clear-audit-btn').onclick=()=>confirmAction('Limpar log de auditoria','Esta ação não poderá ser desfeita.',()=>{state.auditLog=[];saveState();renderAudit();});
  $('chat-send-btn').onclick=sendChatMessage;
  $('chat-image-file').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;if(f.size>4_000_000){showToast('Use uma imagem de até 4 MB.','error');e.target.value='';return;}try{const dataUrl=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f);});const base64=dataUrl.split(',')[1];pendingChatImage={mimeType:f.type||'image/jpeg',base64,dataUrl};$('chat-pending-image-preview').src=dataUrl;$('chat-pending-image').classList.remove('hidden');}catch(err){console.error(err);showToast('Falha ao ler a imagem.','error');}};
