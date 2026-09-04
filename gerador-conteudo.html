@@ -1321,7 +1321,11 @@ async function tpStartCamera(){
   }
   if(audioTrack){ audioTrack=applyAudioDelay(audioTrack, $('t-avsync').value); }
   tpStream = audioTrack ? new MediaStream([...videoStream.getVideoTracks(), audioTrack]) : videoStream;
-  $('t-video').srcObject=tpStream;
+  const videoEl=$('t-video');
+  videoEl.classList.remove('hidden');
+  videoEl.srcObject=tpStream;
+  const playPromise=videoEl.play();
+  if(playPromise && playPromise.catch) playPromise.catch(()=>{});
   if(!audioTrack){
     if(tpMicPermissionState==='denied') showToast('Microfone bloqueado para este site — veja como liberar no aviso abaixo do botão de câmera.','error');
     else showToast('Câmera ativada sem áudio (microfone indisponível ou bloqueado).','info');
