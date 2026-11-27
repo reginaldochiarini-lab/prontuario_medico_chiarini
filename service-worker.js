@@ -1,5 +1,5 @@
 const CACHE_NAME = 'medscribe-pep-v1';
-const CORE_ASSETS = ['./index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+const CORE_ASSETS = ['./index.html', './longevicare.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
