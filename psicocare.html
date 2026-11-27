@@ -1,0 +1,2720 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PsicoCare Alta Performance — Psiquiatria Alopática & Integrativa</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Fonte Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#312e81',
+            },
+            integrative: {
+              50: '#ecfdf5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    /* Custom scrollbar suave */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.35);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(148, 163, 184, 0.6);
+    }
+    /* Estilo de impressão limpo para a Central de Exportação */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #print-area, #print-area * {
+        visibility: visible;
+      }
+      #print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: #ffffff !important;
+        color: #0f172a !important;
+        padding: 20px;
+      }
+    }
+    .pulse-red {
+      animation: pulseRed 2s infinite;
+    }
+    @keyframes pulseRed {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.45); }
+      50% { box-shadow: 0 0 0 8px rgba(225, 29, 72, 0); }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 antialiased transition-colors duration-200">
+
+  <!-- Container Principal -->
+  <div class="flex min-h-screen w-full overflow-x-hidden">
+
+    <!-- Overlay Mobile Sidebar -->
+    <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 hidden lg:hidden"></div>
+
+    <!-- SIDEBAR FIXA (Desktop) / RETRÁTIL (Mobile) -->
+    <aside id="sidebar" class="fixed lg:sticky top-0 left-0 z-50 h-screen w-72 shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transform -translate-x-full lg:translate-x-0 transition-transform duration-200 ease-in-out">
+      
+      <!-- Logo & Header da Sidebar -->
+      <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-emerald-500 flex items-center justify-center text-white font-bold shadow-md shadow-indigo-500/20">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-sm font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">PsicoCare <span class="text-indigo-600 dark:text-indigo-400">AP</span></h1>
+            <p class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">Alopática & Integrativa</p>
+          </div>
+        </div>
+        <button onclick="toggleSidebar()" class="lg:hidden p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Gerenciador de Pacientes (LGPD 100% Local) -->
+      <div class="p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Pacientes (Local LGPD)</span>
+          <button onclick="openNewPatientModal()" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition flex items-center gap-1">
+            <span>+</span> Novo
+          </button>
+        </div>
+        <div class="relative mb-2">
+          <input id="patient-search" type="text" oninput="renderPatientList()" placeholder="Buscar paciente..." class="w-full text-xs pl-8 pr-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+        <div id="patient-list" class="max-h-36 overflow-y-auto space-y-1 pr-0.5">
+          <!-- Renderizado via JS -->
+        </div>
+      </div>
+
+      <!-- Menu de Navegação dos Módulos -->
+      <nav class="flex-1 overflow-y-auto p-3 space-y-1">
+        <p class="px-2.5 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Módulos Clínicos</p>
+        <button onclick="switchTab('dashboard')" data-tab="dashboard" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition">
+          <span class="flex items-center gap-2.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 12a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1v-7z"/></svg>
+            Dashboard & Radar
+          </span>
+          <span id="sidebar-alert-badge" class="hidden text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-600 text-white">0</span>
+        </button>
+
+        <button onclick="switchTab('anamnesis')" data-tab="anamnesis" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+          Anamnese & Escalas
+        </button>
+
+        <button onclick="switchTab('labs')" data-tab="labs" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+          Exames em Camadas
+        </button>
+
+        <button onclick="switchTab('therapy')" data-tab="therapy" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3l-3 3"/></svg>
+          Decisão Terapêutica
+        </button>
+
+        <button onclick="switchTab('longitudinal')" data-tab="longitudinal" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+          Evolução Longitudinal
+        </button>
+
+        <button onclick="switchTab('export')" data-tab="export" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+          Central de Exportação
+        </button>
+      </nav>
+
+      <!-- Rodapé da Sidebar: Backup JSON & Tema -->
+      <div class="p-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
+        <div class="grid grid-cols-2 gap-1.5">
+          <button onclick="exportBackupJSON()" class="text-[11px] font-medium px-2 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition flex items-center justify-center gap-1" title="Exportar Backup JSON">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Backup
+          </button>
+          <label class="cursor-pointer text-[11px] font-medium px-2 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition flex items-center justify-center gap-1" title="Importar Backup JSON">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            Restaurar
+            <input type="file" accept=".json" onchange="importBackupJSON(event)" class="hidden" />
+          </label>
+        </div>
+        <button onclick="toggleTheme()" class="w-full text-xs font-medium px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition flex items-center justify-between">
+          <span id="theme-label" class="flex items-center gap-2">Modo Claro</span>
+          <span id="theme-icon">☀️</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <div class="flex-1 flex flex-col min-w-0">
+      
+      <!-- Topbar Responsiva -->
+      <header class="sticky top-0 z-30 bg-white/85 dark:bg-slate-900/85 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 lg:px-6 py-3 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 id="topbar-patient-name" class="text-base lg:text-lg font-bold truncate">Paciente</h2>
+              <span id="topbar-patient-meta" class="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium"></span>
+            </div>
+            <p id="topbar-patient-dx" class="text-xs text-slate-500 dark:text-slate-400 truncate"></p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <div id="topbar-status-pill" onclick="switchTab('dashboard')" class="cursor-pointer hidden sm:flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition">
+            <!-- Status dinâmico de alertas -->
+          </div>
+          <button onclick="switchTab('export')" class="text-xs font-semibold px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span class="hidden sm:inline">Exportar</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Área Dinâmica das Abas -->
+      <main id="main-content" class="flex-1 p-4 lg:p-6 max-w-7xl w-full mx-auto space-y-6">
+        <!-- Renderizado dinamicamente conforme a aba ativa -->
+      </main>
+    </div>
+  </div>
+
+  <!-- Área Oculta para Impressão / PDF -->
+  <div id="print-area" class="hidden"></div>
+
+  <!-- MODAL: Novo Paciente -->
+  <div id="modal-new-patient" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold">Novo Paciente</h3>
+        <button onclick="closeNewPatientModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">✕</button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-400">Nome Completo *</label>
+          <input id="np-name" type="text" placeholder="Ex: Carlos Eduardo Souza" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-400">Idade</label>
+            <input id="np-age" type="number" value="35" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-400">Sexo</label>
+            <select id="np-sex" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none">
+              <option value="F">Feminino</option>
+              <option value="M">Masculino</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-400">Peso (kg)</label>
+            <input id="np-weight" type="number" step="0.1" value="70" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-400">Altura (cm)</label>
+            <input id="np-height" type="number" value="170" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-400">Hipóteses Diagnósticas</label>
+          <input id="np-dx" type="text" placeholder="Ex: TAG, Episódio Depressivo Moderado" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none" />
+        </div>
+      </div>
+      <div class="mt-6 flex justify-end gap-2">
+        <button onclick="closeNewPatientModal()" class="px-4 py-2 rounded-xl text-sm font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700">Cancelar</button>
+        <button onclick="createNewPatient()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">Criar Paciente</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Confirmação Genérica (substitui confirm()) -->
+  <div id="modal-confirm" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+      <h3 id="confirm-title" class="text-base font-bold mb-2">Confirmar Ação</h3>
+      <p id="confirm-message" class="text-sm text-slate-600 dark:text-slate-400 mb-5"></p>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeConfirmModal()" class="px-4 py-2 rounded-xl text-sm font-medium bg-slate-100 dark:bg-slate-800">Cancelar</button>
+        <button id="confirm-ok-btn" class="px-4 py-2 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- SCRIPT PRINCIPAL -->
+  <script>
+    /*************************************************************************
+     * 1. BASES DE CONHECIMENTO CLÍNICO (FARMACOLOGIA, EXAMES, ESCALAS, INTEGRATIVA)
+     *************************************************************************/
+
+    const STORAGE_KEY = 'psicocare_ap_patients_v1';
+
+    // Biblioteca de Psicofármacos Alopáticos
+    const PSYCHOPHARM_LIBRARY = [
+      // ISRS
+      { name: 'Escitalopram', cls: 'ISRS', doses: '10mg a 20mg', posology: '1 cp pela manhã', tags: ['serotonin', 'qtc'] },
+      { name: 'Sertralina', cls: 'ISRS', doses: '50mg a 200mg', posology: '1 cp pela manhã após café', tags: ['serotonin'] },
+      { name: 'Fluoxetina', cls: 'ISRS', doses: '20mg a 60mg', posology: '1 cp pela manhã', tags: ['serotonin', 'cyp2d6'] },
+      { name: 'Paroxetina', cls: 'ISRS', doses: '20mg a 40mg', posology: '1 cp pela manhã ou noite', tags: ['serotonin', 'cyp2d6'] },
+      { name: 'Citalopram', cls: 'ISRS', doses: '20mg a 40mg', posology: '1 cp pela manhã', tags: ['serotonin', 'qtc'] },
+      { name: 'Fluvoxamina', cls: 'ISRS', doses: '50mg a 300mg', posology: '1 cp à noite', tags: ['serotonin', 'cyp1a2'] },
+      // IRSN
+      { name: 'Desvenlafaxina', cls: 'IRSN', doses: '50mg a 100mg', posology: '1 cp pela manhã', tags: ['serotonin'] },
+      { name: 'Venlafaxina XR', cls: 'IRSN', doses: '75mg a 225mg', posology: '1 cp pela manhã com alimento', tags: ['serotonin'] },
+      { name: 'Duloxetina', cls: 'IRSN', doses: '30mg a 120mg', posology: '1 cp pela manhã', tags: ['serotonin'] },
+      // Atípicos & Outros Antidepressivos
+      { name: 'Bupropiona XL', cls: 'Atípico (NDRI)', doses: '150mg a 300mg', posology: '1 cp pela manhã', tags: ['cyp2d6'] },
+      { name: 'Trazodona', cls: 'Atípico (SARI)', doses: '50mg a 150mg', posology: '1 cp 1h antes de dormir', tags: ['serotonin'] },
+      { name: 'Mirtazapina', cls: 'Atípico (NaSSA)', doses: '15mg a 45mg', posology: '1 cp ao deitar', tags: ['serotonin', 'metabolic'] },
+      { name: 'Vortioxetina', cls: 'Multimodal', doses: '10mg a 20mg', posology: '1 cp pela manhã', tags: ['serotonin'] },
+      { name: 'Amitriptilina', cls: 'Tricíclico', doses: '25mg a 150mg', posology: '1 cp à noite', tags: ['serotonin', 'qtc'] },
+      // Estabilizadores de Humor
+      { name: 'Carbonato de Lítio', cls: 'Estabilizador', doses: '300mg a 1200mg', posology: 'Conforme litemia (noite)', tags: ['serotonin', 'qtc', 'mood_stab'] },
+      { name: 'Ácido Valproico / Divalproato', cls: 'Estabilizador', doses: '500mg a 1500mg', posology: '1 cp 12/12h ou à noite', tags: ['metabolic', 'mood_stab'] },
+      { name: 'Lamotrigina', cls: 'Estabilizador', doses: '25mg a 200mg', posology: 'Titulação lenta (risco rash)', tags: ['mood_stab'] },
+      { name: 'Carbamazepina', cls: 'Estabilizador', doses: '200mg a 1200mg', posology: '1 cp 12/12h', tags: ['cyp_inducer', 'mood_stab'] },
+      // Antipsicóticos Atípicos & Típicos
+      { name: 'Quetiapina', cls: 'Antipsicótico Atípico', doses: '25mg a 600mg', posology: '1 cp à noite', tags: ['metabolic', 'qtc', 'mood_stab'] },
+      { name: 'Olanzapina', cls: 'Antipsicótico Atípico', doses: '2.5mg a 20mg', posology: '1 cp à noite', tags: ['metabolic', 'mood_stab'] },
+      { name: 'Risperidona', cls: 'Antipsicótico Atípico', doses: '0.5mg a 6mg', posology: '1 cp à noite', tags: ['metabolic', 'mood_stab'] },
+      { name: 'Aripiprazol', cls: 'Antipsicótico Atípico', doses: '2.5mg a 15mg', posology: '1 cp pela manhã', tags: ['mood_stab'] },
+      { name: 'Clozapina', cls: 'Antipsicótico Atípico', doses: '25mg a 400mg', posology: 'Monitorar hemograma', tags: ['metabolic', 'qtc', 'mood_stab'] },
+      { name: 'Ziprasidona', cls: 'Antipsicótico Atípico', doses: '40mg a 160mg', posology: 'Com refeição >= 500 kcal', tags: ['qtc'] },
+      { name: 'Haloperidol', cls: 'Antipsicótico Típico', doses: '1mg a 10mg', posology: 'Conforme prescrição', tags: ['qtc'] },
+      // Psicoestimulantes
+      { name: 'Lisdexanfetamina', cls: 'Psicoestimulante', doses: '30mg a 70mg', posology: '1 cp pela manhã', tags: [] },
+      { name: 'Metilfenidato LA / OROS', cls: 'Psicoestimulante', doses: '10mg a 54mg', posology: '1 cp pela manhã', tags: [] },
+      { name: 'Atomoxetina', cls: 'Não-Estimulante TDAH', doses: '40mg a 80mg', posology: '1 cp pela manhã', tags: [] },
+      // Benzodiazepínicos / Hipnóticos Z
+      { name: 'Clonazepam', cls: 'Benzodiazepínico', doses: '0.25mg a 2mg', posology: 'Uso criterioso / desmame', tags: ['bzd'] },
+      { name: 'Alprazolam', cls: 'Benzodiazepínico', doses: '0.25mg a 2mg', posology: 'Uso criterioso / desmame', tags: ['bzd'] },
+      { name: 'Diazepam', cls: 'Benzodiazepínico', doses: '5mg a 10mg', posology: 'Meia-vida longa (transição)', tags: ['bzd'] },
+      { name: 'Zolpidem', cls: 'Hipnótico Z', doses: '5mg a 10mg', posology: 'Ao deitar (curto prazo)', tags: ['bzd'] },
+      { name: 'Eszopiclona', cls: 'Hipnótico Z', doses: '1mg a 3mg', posology: 'Ao deitar', tags: ['bzd'] },
+      // Outros que geram interação
+      { name: 'Tramadol', cls: 'Analgésico Opioide', doses: '50mg a 100mg', posology: 'Atenção: risco serotoninérgico', tags: ['serotonin'] },
+      { name: 'Sumatriptana (Triptano)', cls: 'Antienxaquecoso', doses: '50mg', posology: 'Em crises de enxaqueca', tags: ['serotonin'] },
+    ];
+
+    // Protocolos de Psiquiatria Integrativa (8 Protocolos)
+    const INTEGRATIVE_PROTOCOLS = [
+      {
+        id: 'prot_bzd',
+        title: 'Desmame de BZD / Hipnóticos Z (Suporte GABAérgico)',
+        badge: 'Sono & GABA',
+        turno: 'Noite (1h antes de dormir)',
+        posology: 'Tomar 1 dose (cápsulas ou sachê) 60 minutos antes de deitar.',
+        actives: [
+          { name: 'Taurina', dose: '500mg' },
+          { name: 'L-Teanina', dose: '200mg' },
+          { name: 'Erythrina mulungu (Extrato Seco)', dose: '200mg' },
+          { name: 'Magnésio Inositol', dose: '300mg' },
+          { name: 'Melatonina', dose: '2mg' }
+        ]
+      },
+      {
+        id: 'prot_libido',
+        title: 'Resgate de Libido & Embotamento por ISRS',
+        badge: 'Dopamina & Libido',
+        turno: 'Manhã (com café da manhã)',
+        posology: 'Tomar 1 dose pela manhã após o café da manhã.',
+        actives: [
+          { name: 'Maca Peruana (Extrato Padronizado)', dose: '500mg' },
+          { name: 'Long Jack (Eurycoma longifolia)', dose: '300mg' },
+          { name: 'L-Tirosina', dose: '300mg' },
+          { name: 'Mucuna pruriens (15% L-Dopa)', dose: '200mg' }
+        ]
+      },
+      {
+        id: 'prot_neuroinf',
+        title: 'Neuroinflamação & Depressão Resistente',
+        badge: 'Anti-inflamatório',
+        turno: 'Almoço e Jantar',
+        posology: 'Tomar 1 dose junto ao almoço (associar Ômega 3 alto EPA).',
+        actives: [
+          { name: 'PEA (Palmitoiletanolamida)', dose: '300mg' },
+          { name: 'Curcumina (95% curcuminoides) + Piperina 10mg', dose: '500mg' },
+          { name: 'Ômega 3 (Alto EPA - TG)', dose: '1000mg EPA' },
+          { name: 'Ácido Alfa-Lipóico (R-ALA)', dose: '300mg' }
+        ]
+      },
+      {
+        id: 'prot_tdah',
+        title: 'TDAH & Foco (Poupar Psicoestimulantes)',
+        badge: 'Cognição & Foco',
+        turno: 'Manhã',
+        posology: 'Tomar 1 dose pela manhã em jejum ou com café da manhã leve.',
+        actives: [
+          { name: 'L-Tirosina', dose: '250mg' },
+          { name: 'Rhodiola Rosea (3% rosavinas)', dose: '200mg' },
+          { name: 'Bacopa Monnieri (50% bacosídeos)', dose: '250mg' },
+          { name: 'Zinco Quelato (Bisglicinato)', dose: '15mg' }
+        ]
+      },
+      {
+        id: 'prot_cortisol',
+        title: 'Modulação de Cortisol & Burnout',
+        badge: 'Eixo HPA',
+        turno: 'Tarde / Início da Noite',
+        posology: 'Tomar 1 dose às 17h ou no início da noite.',
+        actives: [
+          { name: 'Ashwagandha KSM-66', dose: '300mg' },
+          { name: 'Relora (Magnolia + Phellodendron)', dose: '250mg' },
+          { name: 'Passiflora incarnata (Extrato Seco)', dose: '200mg' }
+        ]
+      },
+      {
+        id: 'prot_toc',
+        title: 'TOC & Compulsões (Modulação Glutamatérgica)',
+        badge: 'Glutamato',
+        turno: 'Manhã e Noite',
+        posology: 'Tomar 1 dose 12/12h (NAC até 2400mg/dia; titular Inositol gradualmente).',
+        actives: [
+          { name: 'N-Acetilcisteína (NAC)', dose: '600mg (progredir p/ 1200mg 2x/dia)' },
+          { name: 'Mio-Inositol Pó (Sachê)', dose: '2g (titular gradualmente)' }
+        ]
+      },
+      {
+        id: 'prot_psico',
+        title: 'Psicobióticos (Eixo Intestino-Cérebro)',
+        badge: 'Microbiota',
+        turno: 'Noite (ao deitar)',
+        posology: 'Tomar 1 cápsula gastro-resistente ao deitar com água.',
+        actives: [
+          { name: 'Lactobacillus helveticus R0052', dose: '3 Bilhões UFC' },
+          { name: 'Bifidobacterium longum R0175', dose: '3 Bilhões UFC' },
+          { name: 'Lactobacillus rhamnosus GG', dose: '2 Bilhões UFC' },
+          { name: 'FOS (Fruto-oligossacarídeos)', dose: '150mg' }
+        ]
+      },
+      {
+        id: 'prot_cbd',
+        title: 'Canabidiol (CBD) Adjuvante (Titulação Gradual)',
+        badge: 'Endocanabinoide • CYP450',
+        turno: 'Noite / 12-12h',
+        posology: 'Iniciar 2 gotas à noite por 5 dias; aumentar 1 gota a cada 5 dias conforme resposta clínica. (Checar CYP3A4/2C19).',
+        actives: [
+          { name: 'Óleo de Canabidiol (CBD Full/Broad Spectrum)', dose: '50mg/mL — Frasco 30mL' }
+        ]
+      }
+    ];
+
+    // Exames em 4 Camadas
+    const EXAM_LAYERS = [
+      {
+        id: 'layer1',
+        title: 'Camada 1 — Base Orgânica & Neuroquímica',
+        subtitle: 'Cofatores de síntese de neurotransmissores e função tireoidiana',
+        color: 'indigo',
+        exams: [
+          'Hemograma Completo', 'Ferritina', 'Ferro Sérico', 'Vitamina B12', 'Ácido Fólico',
+          'Homocisteína', 'Vitamina D (25-OH)', 'Magnésio Sérico e Eritrocitário', 'Zinco Sérico',
+          'TSH', 'T4 Livre', 'Anti-TPO'
+        ]
+      },
+      {
+        id: 'layer2',
+        title: 'Camada 2 — Psiquiatria Metabólica & Inflamação',
+        subtitle: 'Resistência insulínica, risco cardiometabólico e neuroinflamação',
+        color: 'emerald',
+        exams: [
+          'Glicemia de Jejum', 'Insulina de Jejum (para HOMA-IR)', 'Hemoglobina Glicada (HbA1c)',
+          'Perfil Lipídico Completo (CT, HDL, LDL, Triglicerídeos)', 'PCR Ultrassensível (PCR-us)',
+          'TGO (AST)', 'TGP (ALT)', 'GGT', 'Ácido Úrico'
+        ]
+      },
+      {
+        id: 'layer3',
+        title: 'Camada 3 — Eixo Hormonal & Estresse',
+        subtitle: 'Avaliação do eixo HPA, hormônios sexuais e hiperprolactinemia',
+        color: 'amber',
+        exams: [
+          'Cortisol Matinal (8h)', 'DHEA-S', 'Testosterona Total e Livre',
+          'SHBG', 'Estradiol', 'Prolactina'
+        ]
+      },
+      {
+        id: 'layer4',
+        title: 'Camada 4 — Monitorização Específica & Segurança',
+        subtitle: 'Níveis séricos de estabilizadores, segurança cardíaca e renal',
+        color: 'rose',
+        exams: [
+          'Litemia (Lítio Sérico - vale 12h)', 'Ácido Valproico Sérico', 'Carbamazepina Sérica',
+          'Eletrocardiograma (ECG 12 derivações com cálculo de QTc)',
+          'Função Renal (Ureia, Creatinina, TFG)', 'Eletrólitos (Sódio, Potássio, Cálcio)'
+        ]
+      }
+    ];
+
+    // Perguntas das Escalas Psicométricas
+    const PHQ9_QUESTIONS = [
+      'Pouco interesse ou pouco prazer em fazer as coisas',
+      'Se sentir para baixo, deprimido(a) ou sem perspectiva',
+      'Dificuldade para pegar no sono ou permanecer dormindo, ou dormir demais',
+      'Se sentir cansado(a) ou com pouca energia',
+      'Falta de apetite ou comendo demais',
+      'Se sentir mal consigo mesmo(a) ou achar que é um fracasso',
+      'Dificuldade para se concentrar nas coisas (ler, ver TV)',
+      'Lentidão para se movimentar/falar ou agitação incomum',
+      'Pensamentos de que seria melhor estar morto(a) ou de se ferir (ALERTA)'
+    ];
+
+    const GAD7_QUESTIONS = [
+      'Sentir-se nervoso(a), ansioso(a) ou muito tenso(a)',
+      'Não ser capaz de impedir ou de controlar as preocupações',
+      'Preocupar-se muito com diversas coisas',
+      'Dificuldade para relaxar',
+      'Ficar tão agitado(a) que se torna difícil permanecer sentado(a)',
+      'Ficar facilmente aborrecido(a) ou irritado(a)',
+      'Sentir medo como se algo horrível fosse acontecer'
+    ];
+
+    const ISI_QUESTIONS = [
+      'Dificuldade em pegar no sono',
+      'Dificuldade em manter o sono',
+      'Problema de despertar muito cedo',
+      'Grau de insatisfação com o padrão atual de sono',
+      'Interferência do problema de sono no funcionamento diário',
+      'Quanto os outros percebem seu problema de sono / prejuízo na qualidade de vida',
+      'Grau de preocupação ou angústia com o problema de sono atual'
+    ];
+
+    const MDQ_QUESTIONS = [
+      'Já teve períodos em que se sentiu tão eufórico(a) ou acelerado(a) que outros acharam fora do normal?',
+      'Já ficou tão irritável que gritou com pessoas ou iniciou brigas/discussões sem motivo proporcional?',
+      'Já precisou dormir muito menos que o habitual e mesmo assim sentiu-se cheio(a) de energia?',
+      'Já falou muito mais rápido que o normal ou sentiu pensamentos correndo acelerados na mente?',
+      'Já fez coisas impulsivas, excessivas ou de risco (gastos, projetos, sexo) fora do seu padrão?'
+    ];
+
+    const ASRS_QUESTIONS = [
+      'Com que frequência tem dificuldade para terminar os últimos detalhes de um projeto?',
+      'Com que frequência tem dificuldade para colocar as coisas em ordem em tarefas organizacionais?',
+      'Com que frequência tem problemas para lembrar de compromissos ou obrigações?',
+      'Quando precisa fazer algo que exige muita concentração, com que frequência evita ou adia começar?',
+      'Com que frequência fica se mexendo ou remexendo mãos/pés quando precisa ficar sentado muito tempo?',
+      'Com que frequência se sente excessivamente ativo(a) e compelido(a) a fazer coisas, como se movido por um motor?'
+    ];
+
+    // Orientações Padrão para o Paciente (Bloco 3)
+    const ORIENTATION_PRESETS = [
+      {
+        id: 'ori_sleep',
+        title: 'Higiene do Sono & Ritmo Circadiano',
+        text: '• HIGIENE DO SONO E RITMO CIRCADIANO: Expor-se à luz solar natural por 15-20 minutos logo ao acordar. Evitar cafeína após as 14h e telas brilhantes (celular/TV) 60 minutos antes de dormir. Manter horários regulares para deitar e acordar, inclusive aos finais de semana.'
+      },
+      {
+        id: 'ori_isrs',
+        title: 'Adaptação Inicial aos Antidepressivos (ISRS/IRSN)',
+        text: '• ADAPTAÇÃO INICIAL À MEDICAÇÃO: Nos primeiros 7 a 14 dias de introdução ou aumento de dose, podem ocorrer efeitos transitórios leves (náusea leve, cefaleia, boca seca ou discreta piora transitória da ansiedade). O benefício clínico pleno se consolida entre 3 e 6 semanas de uso contínuo.'
+      },
+      {
+        id: 'ori_diet',
+        title: 'Dieta Pró-Cognitiva & Anti-inflamatória',
+        text: '• ALIMENTAÇÃO PRÓ-COGNITIVA E EIXO INTESTINO-CÉREBRO: Priorizar alimentos in natura, proteínas de boa qualidade, peixes ricos em ômega-3, azeite extravirgem, frutas vermelhas, vegetais verde-escuros e fibras prebióticas. Reduzir ultraprocessados, açúcar refinado e álcool (que fragmenta o sono REM e agrava ansiedade/depressão).'
+      },
+      {
+        id: 'ori_no_stop',
+        title: 'Alerta Rigoroso: Não Suspender Abruptamente',
+        text: '• NÃO SUSPENDER MEDICAÇÕES POR CONTA PRÓPRIA: Nunca interrompa abruptamente psicofármacos (antidepressivos, estabilizadores ou benzodiazepínicos), mesmo após melhora dos sintomas, pelo risco de síndrome de descontinuação, insônia rebote e recaída. Todo ajuste ou desmame deve ser guiado em consulta.'
+      },
+      {
+        id: 'ori_redflags',
+        title: 'Sinais de Alerta para Retorno / Contato Imediato',
+        text: '• SINAIS DE ALERTA: Entrar em contato imediatamente ou procurar pronto-atendimento caso surjam pensamentos de autoagressão/suicídio, euforia desproporcional com redução drástica da necessidade de sono, agitação intensa, sintomas psicóticos ou alergia cutânea (rash) após início de medicação.'
+      },
+      {
+        id: 'ori_exercise',
+        title: 'Exercício Físico & Neuroplasticidade (BDNF)',
+        text: '• ATIVIDADE FÍSICA REGULAR: Realizar ao menos 150 minutos semanais de atividade aeróbica moderada combinada com treino resistido (musculação). O exercício eleva o BDNF, melhora a sensibilidade à insulina e potencializa a resposta antidepressiva.'
+      }
+    ];
+
+    /*************************************************************************
+     * 2. DADOS FICTÍCIOS DE DEMONSTRAÇÃO (2 PACIENTES PRÉ-CARREGADOS)
+     *************************************************************************/
+    const DEMO_PATIENTS = [
+      {
+        id: 'pat_demo_1',
+        name: 'Mariana Costa Silva',
+        age: 38,
+        sex: 'F',
+        weight: 64,
+        height: 165,
+        diagnoses: 'TAG (F41.1), Transtorno de Insônia Crônica (F51.0), Dependência de BZD em desmame',
+        currentMeds: ['Clonazepam', 'Zolpidem'],
+        redFlags: { suicidalIdeation: false, psychosis: false, mania: false, agitation: false },
+        anamnesis: {
+          qpHda: 'Paciente relata ansiedade antecipatória persistente há 4 anos, piora vespertina com tensão muscular cervical e dificuldade importante para iniciar o sono. Faz uso contínuo de Clonazepam 2mg à noite há 3 anos (iniciado em pronto-socorro) + Zolpidem 10mg 3-4x/semana quando demora a dormir. Deseja iniciar desmame seguro e tratar a causa base.',
+          prevMeds: 'Nunca fez tratamento estruturado com ISRS. Uso apenas sintomático de BZD/Zolpidem com perda progressiva de eficácia (tolerância) e queixa de névoa mental matinal.',
+          sleepCircadian: 'Deita às 23h30, latência de sono de 60-90 min sem Zolpidem. Uso de celular na cama até adormecer. Toma 4 xícaras de café até as 17h.',
+          gutBrain: 'Constipação crônica (evacua a cada 3 dias), distensão abdominal pós-prandial. Dieta rica em carboidratos refinados à noite por ansiedade.',
+          stressHabits: 'Gerente de projetos (jornada 10h/dia, sinais de esgotamento). Sedentária há 1 ano. Álcool: 2 taças de vinho nos finais de semana. Nega tabagismo.'
+        },
+        scales: {
+          phq9: [1, 1, 3, 2, 1, 1, 2, 0, 0], // Total 11 (Moderada)
+          gad7: [3, 3, 2, 3, 1, 2, 2],       // Total 16 (Grave)
+          isi:  [4, 3, 2, 4, 3, 3, 3],       // Total 22 (Grave)
+          mdq:  [false, false, false, false, false],
+          asrs: [2, 1, 2, 2, 1, 1]
+        },
+        labs: {
+          selectedExams: [
+            'Hemograma Completo', 'Ferritina', 'Vitamina B12', 'Vitamina D (25-OH)',
+            'Magnésio Sérico e Eritrocitário', 'TSH', 'T4 Livre', 'Cortisol Matinal (8h)'
+          ],
+          values: {
+            ferritin: '28',
+            b12: '420',
+            vitD: '24',
+            homocysteine: '11.4',
+            tsh: '2.9',
+            glucose: '91',
+            insulin: '8.5',
+            hba1c: '5.3',
+            tg: '115',
+            pcr: '1.2',
+            qt: '390',
+            hr: '72'
+          }
+        },
+        therapy: {
+          allopathic: [
+            { id: 'alo_1', name: 'Sertralina', cls: 'ISRS', dose: '50mg (iniciar 25mg por 7 dias)', posology: '1 cp pela manhã após café', action: 'Introduzir' },
+            { id: 'alo_2', name: 'Clonazepam', cls: 'Benzodiazepínico', dose: '2mg → redução gradual 10-25%', posology: 'Seguir cronograma de desmame abaixo', action: 'Desmame' }
+          ],
+          tapering: {
+            currentDrug: 'Clonazepam',
+            currentDose: 2,
+            unit: 'mg',
+            strategy: 'bzd_taper',
+            newDrug: '',
+            newTargetDose: 0,
+            rate: 12.5,
+            intervalDays: 14,
+            scheduleText: 'CRONOGRAMA DE DESMAME GUIADO — Clonazepam (Dose inicial: 2mg)\n• Semanas 1–2: 1.75mg à noite (redução de 12.5%)\n• Semanas 3–4: 1.50mg à noite\n• Semanas 5–6: 1.25mg à noite\n• Semanas 7–8: 1.00mg à noite\n• Semanas 9–10: 0.75mg à noite\n• Semanas 11–12: 0.50mg à noite\n• Semanas 13–14: 0.25mg à noite → suspender na semana 15 se assintomática.\n*Se houver insônia rebote ou ansiedade intensa, estabilizar a dose atual por +7 dias antes do próximo degrau.'
+          },
+          integrative: [
+            {
+              id: 'int_1',
+              title: 'Desmame de BZD / Hipnóticos Z (Suporte GABAérgico)',
+              turno: 'Noite (1h antes de dormir)',
+              posology: 'Tomar 1 dose 60 minutos antes de deitar.',
+              actives: [
+                { name: 'Taurina', dose: '500mg' },
+                { name: 'L-Teanina', dose: '200mg' },
+                { name: 'Erythrina mulungu (Extrato Seco)', dose: '200mg' },
+                { name: 'Magnésio Inositol', dose: '300mg' },
+                { name: 'Melatonina', dose: '2mg' }
+              ]
+            }
+          ]
+        },
+        orientations: ['ori_sleep', 'ori_isrs', 'ori_no_stop', 'ori_redflags'],
+        history: [
+          { date: '2026-08-15', phq9: 14, gad7: 19, isi: 25, weight: 65.5, bmi: 24.1, summary: 'Avaliação inicial. Uso de Clonazepam 2mg + Zolpidem. Solicitados exames Camada 1.' },
+          { date: '2026-09-20', phq9: 12, gad7: 17, isi: 23, weight: 64.8, bmi: 23.8, summary: 'Iniciada higiene do sono e reposição de Vitamina D + Ferro. Preparo para desmame.' },
+          { date: '2026-11-20', phq9: 11, gad7: 16, isi: 22, weight: 64.0, bmi: 23.5, summary: 'Introdução de Sertralina + protocolo GABAérgico integrativo e início do desmame gradual de Clonazepam.' }
+        ]
+      },
+      {
+        id: 'pat_demo_2',
+        name: 'Roberto Almeida Mendes',
+        age: 45,
+        sex: 'M',
+        weight: 98,
+        height: 176,
+        diagnoses: 'Depressão Resistente (F33.2), Síndrome Metabólica secundária, Embotamento afetivo por ISRS',
+        currentMeds: ['Escitalopram', 'Quetiapina', 'Trazodona'],
+        redFlags: { suicidalIdeation: false, psychosis: false, mania: false, agitation: false },
+        anamnesis: {
+          qpHda: 'Paciente com histórico de episódios depressivos recorrentes há 6 anos. Em uso atual de Escitalopram 20mg/dia + Quetiapina 100mg à noite (adicionada há 8 meses para insônia/potencialização) + Trazodona 50mg. Refere apatia, embotamento afetivo, queda acentuada da libido e ganho de 12kg desde início da Quetiapina.',
+          prevMeds: 'Fluoxetina 40mg (resposta parcial, ganho de peso); Venlafaxina 150mg (sudorese intensa e elevação da PA). Atual esquema traz sedação matinal e compulsão noturna por doces.',
+          sleepCircadian: 'Dorme 8-9h sob efeito da Quetiapina, porém sono não reparador, roncos frequentes (investigar apneia) e sonolência diurna.',
+          gutBrain: 'Disbiose importante, refluxo gastroesofágico, dieta hipercalórica noturna (fissura por carboidratos após Quetiapina).',
+          stressHabits: 'Empresário, estresse crônico elevado. Parou musculação há 6 meses por fadiga. Nega álcool e tabagismo.'
+        },
+        scales: {
+          phq9: [3, 2, 2, 3, 2, 2, 2, 1, 0], // Total 17 (Moderadamente Grave)
+          gad7: [2, 2, 2, 2, 1, 2, 1],       // Total 12 (Moderada)
+          isi:  [1, 2, 1, 3, 3, 2, 2],       // Total 14 (Sublimiar)
+          mdq:  [false, true, false, false, false],
+          asrs: [2, 2, 2, 3, 1, 1]
+        },
+        labs: {
+          selectedExams: [
+            'Ferritina', 'Vitamina B12', 'Vitamina D (25-OH)', 'Glicemia de Jejum',
+            'Insulina de Jejum (para HOMA-IR)', 'Hemoglobina Glicada (HbA1c)',
+            'Perfil Lipídico Completo (CT, HDL, LDL, Triglicerídeos)', 'PCR Ultrassensível (PCR-us)',
+            'TGO (AST)', 'TGP (ALT)', 'GGT', 'Testosterona Total e Livre', 'Prolactina',
+            'Eletrocardiograma (ECG 12 derivações com cálculo de QTc)'
+          ],
+          values: {
+            ferritin: '210',
+            b12: '310',
+            vitD: '28',
+            homocysteine: '13.8',
+            tsh: '3.1',
+            glucose: '104',
+            insulin: '18.0',
+            hba1c: '6.0',
+            tg: '235',
+            pcr: '3.8',
+            qt: '420',
+            hr: '78'
+          }
+        },
+        therapy: {
+          allopathic: [
+            { id: 'alo_r1', name: 'Bupropiona XL', cls: 'Atípico (NDRI)', dose: '150mg', posology: '1 cp pela manhã (resgate dopaminérgico / peso / libido)', action: 'Introduzir' },
+            { id: 'alo_r2', name: 'Escitalopram', cls: 'ISRS', dose: '10mg (reduzir de 20mg)', posology: '1 cp pela manhã', action: 'Ajustar Dose' },
+            { id: 'alo_r3', name: 'Quetiapina', cls: 'Antipsicótico Atípico', dose: '50mg → desmame gradual', posology: '1 cp à noite (substituir por suporte metabólico/sono)', action: 'Desmame' }
+          ],
+          tapering: {
+            currentDrug: 'Quetiapina',
+            currentDose: 100,
+            unit: 'mg',
+            strategy: 'ad_taper',
+            newDrug: '',
+            newTargetDose: 0,
+            rate: 25,
+            intervalDays: 14,
+            scheduleText: 'CRONOGRAMA DE DESMAME GUIADO — Quetiapina (Dose inicial: 100mg)\n• Semanas 1–2: 75mg à noite\n• Semanas 3–4: 50mg à noite\n• Semanas 5–6: 25mg à noite\n• Semana 7: Suspender se sono estável.'
+          },
+          integrative: [
+            {
+              id: 'int_r1',
+              title: 'Neuroinflamação & Depressão Resistente',
+              turno: 'Almoço',
+              posology: 'Tomar 1 dose junto ao almoço.',
+              actives: [
+                { name: 'PEA (Palmitoiletanolamida)', dose: '300mg' },
+                { name: 'Curcumina (95%) + Piperina 10mg', dose: '500mg' },
+                { name: 'Ômega 3 (Alto EPA - TG)', dose: '1000mg EPA' },
+                { name: 'Ácido Alfa-Lipóico (R-ALA)', dose: '300mg' }
+              ]
+            },
+            {
+              id: 'int_r2',
+              title: 'Resgate de Libido & Embotamento por ISRS',
+              turno: 'Manhã',
+              posology: 'Tomar 1 dose após café da manhã.',
+              actives: [
+                { name: 'Maca Peruana', dose: '500mg' },
+                { name: 'Long Jack', dose: '300mg' },
+                { name: 'L-Tirosina', dose: '300mg' },
+                { name: 'Mucuna pruriens', dose: '200mg' }
+              ]
+            }
+          ]
+        },
+        orientations: ['ori_diet', 'ori_exercise', 'ori_no_stop', 'ori_redflags'],
+        history: [
+          { date: '2026-07-10', phq9: 21, gad7: 15, isi: 18, weight: 92.0, bmi: 29.7, summary: 'Quadro depressivo grave. Mantido Escitalopram 20mg + Quetiapina 100mg.' },
+          { date: '2026-09-12', phq9: 18, gad7: 13, isi: 15, weight: 95.5, bmi: 30.8, summary: 'Melhora discreta do sono, porém ganho ponderal acelerado e embotamento.' },
+          { date: '2026-11-20', phq9: 17, gad7: 12, isi: 14, weight: 98.0, bmi: 31.6, summary: 'Identificada resistência insulínica (HOMA-IR 4.62). Associada Bupropiona XL, redução de Escitalopram e desmame de Quetiapina + protocolo anti-inflamatório.' }
+        ]
+      }
+    ];
+
+    /*************************************************************************
+     * 3. ESTADO GLOBAL DA APLICAÇÃO
+     *************************************************************************/
+    let patients = [];
+    let activePatientId = null;
+    let activeTab = 'dashboard';
+    let therapySubTab = 'allopathic'; // 'allopathic' | 'tapering' | 'integrative'
+    let drugSearchQuery = '';
+    let drugFilterClass = 'TODOS';
+    let confirmCallback = null;
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            patients = parsed;
+            activePatientId = patients[0].id;
+            return;
+          }
+        }
+      } catch (e) {
+        console.error('Erro ao ler localStorage:', e);
+      }
+      patients = JSON.parse(JSON.stringify(DEMO_PATIENTS));
+      activePatientId = patients[0].id;
+      saveState();
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
+      } catch (e) {
+        console.error('Erro ao salvar localStorage:', e);
+      }
+    }
+
+    function getActivePatient() {
+      return patients.find(p => p.id === activePatientId) || patients[0];
+    }
+
+    /*************************************************************************
+     * 4. MOTOR DE INTELIGÊNCIA CLÍNICA & CÁLCULOS AUTOMÁTICOS
+     *************************************************************************/
+
+    function calcBMI(weight, heightCm) {
+      const w = parseFloat(weight);
+      const h = parseFloat(heightCm) / 100;
+      if (!w || !h || h <= 0) return { val: '--', label: 'N/A', color: 'slate' };
+      const bmi = w / (h * h);
+      let label = 'Eutrofia', color = 'emerald';
+      if (bmi < 18.5) { label = 'Baixo Peso'; color = 'amber'; }
+      else if (bmi >= 25 && bmi < 30) { label = 'Sobrepeso'; color = 'amber'; }
+      else if (bmi >= 30 && bmi < 35) { label = 'Obesidade I'; color = 'rose'; }
+      else if (bmi >= 35) { label = 'Obesidade II/III'; color = 'rose'; }
+      return { val: bmi.toFixed(1), label, color };
+    }
+
+    function calcHOMAIR(glucose, insulin) {
+      const g = parseFloat(glucose);
+      const i = parseFloat(insulin);
+      if (!g || !i) return null;
+      return (g * i) / 405;
+    }
+
+    function calcQTcBazett(qtMs, hrBpm) {
+      const qt = parseFloat(qtMs);
+      const hr = parseFloat(hrBpm);
+      if (!qt || !hr || hr <= 0) return null;
+      const rrSec = 60 / hr;
+      return qt / Math.sqrt(rrSec);
+    }
+
+    function getScaleTotals(p) {
+      const phq9 = (p.scales?.phq9 || []).reduce((a, b) => a + Number(b || 0), 0);
+      const gad7 = (p.scales?.gad7 || []).reduce((a, b) => a + Number(b || 0), 0);
+      const isi  = (p.scales?.isi  || []).reduce((a, b) => a + Number(b || 0), 0);
+      const mdq  = (p.scales?.mdq  || []).filter(Boolean).length;
+      const asrs = (p.scales?.asrs || []).reduce((a, b) => a + Number(b || 0), 0);
+      const asrsPos = (p.scales?.asrs || []).filter((v, idx) => (idx < 3 ? v >= 2 : v >= 3)).length;
+      return { phq9, gad7, isi, mdq, asrs, asrsPos };
+    }
+
+    function classifyPHQ9(s) {
+      if (s <= 4) return { label: 'Mínima', color: 'emerald' };
+      if (s <= 9) return { label: 'Leve', color: 'amber' };
+      if (s <= 14) return { label: 'Moderada', color: 'amber' };
+      if (s <= 19) return { label: 'Moderadamente Grave', color: 'rose' };
+      return { label: 'Grave', color: 'rose' };
+    }
+
+    function classifyGAD7(s) {
+      if (s <= 4) return { label: 'Mínima', color: 'emerald' };
+      if (s <= 9) return { label: 'Leve', color: 'amber' };
+      if (s <= 14) return { label: 'Moderada', color: 'amber' };
+      return { label: 'Grave', color: 'rose' };
+    }
+
+    function classifyISI(s) {
+      if (s <= 7) return { label: 'Sem Insônia', color: 'emerald' };
+      if (s <= 14) return { label: 'Sublimiar', color: 'amber' };
+      if (s <= 21) return { label: 'Moderada', color: 'rose' };
+      return { label: 'Grave', color: 'rose' };
+    }
+
+    /**
+     * Radar de Segurança e Inteligência Clínica Automática
+     * Analisa medicações em uso, prescrições ativas, integrativa (CBD), Red Flags e Escalas
+     */
+    function computeClinicalAlerts(p) {
+      const alerts = [];
+
+      // Consolidar todos os fármacos (em uso + prescritos que não sejam apenas texto vazio)
+      const allMedNames = new Set([
+        ...(p.currentMeds || []),
+        ...(p.therapy?.allopathic || []).map(m => m.name)
+      ]);
+      const medList = Array.from(allMedNames);
+      const medListLower = medList.map(m => m.toLowerCase());
+
+      // Verificar presença de CBD nos protocolos integrativos
+      const hasCBD = (p.therapy?.integrative || []).some(f =>
+        f.title.toLowerCase().includes('cbd') ||
+        f.title.toLowerCase().includes('canabidiol') ||
+        (f.actives || []).some(a => a.name.toLowerCase().includes('canabidiol') || a.name.toLowerCase().includes('cbd'))
+      );
+
+      // 1. SINAIS DE ALARME (RED FLAGS)
+      const rf = p.redFlags || {};
+      const activeRFs = [];
+      if (rf.suicidalIdeation) activeRFs.push('Ideação Suicida');
+      if (rf.psychosis) activeRFs.push('Sintomas Psicóticos');
+      if (rf.mania) activeRFs.push('Virada Maníaca / Hipomania');
+      if (rf.agitation) activeRFs.push('Agitação Psicomotora');
+      if ((p.scales?.phq9?.[8] || 0) > 0 && !rf.suicidalIdeation) {
+        activeRFs.push('Item 9 do PHQ-9 positivo (pensamentos de morte/autoagressão)');
+      }
+
+      if (activeRFs.length > 0) {
+        alerts.push({
+          severity: 'critical',
+          title: 'RED FLAG PSIQUIÁTRICO ATIVO',
+          desc: `Sinais detectados: ${activeRFs.join(', ')}. Avaliar estratificação de risco imediata, rede de apoio, plano de segurança e necessidade de manejo intensivo/urgência.`,
+          tags: activeRFs
+        });
+      }
+
+      // 2. RISCO METABÓLICO OCULTO
+      const metabolicDrugs = ['olanzapina', 'quetiapina', 'risperidona', 'clozapina', 'ácido valproico', 'divalproato', 'valproico'];
+      const foundMetabolic = medList.filter(m => metabolicDrugs.some(md => m.toLowerCase().includes(md)));
+      if (foundMetabolic.length > 0) {
+        alerts.push({
+          severity: 'high',
+          title: 'Alerta de Risco Metabólico Oculto',
+          desc: `Uso/prescrição de ${foundMetabolic.join(', ')}. Rastreio obrigatório recomendado: HOMA-IR (Glicemia + Insulina), Triglicerídeos, HbA1c, Perfil Lipídico e Enzimas Hepáticas (TGO/TGP/GGT).`,
+          tags: foundMetabolic
+        });
+      }
+
+      // 3. SÍNDROME SEROTONINÉRGICA
+      const seroKeywords = ['escitalopram', 'sertralina', 'fluoxetina', 'paroxetina', 'citalopram', 'fluvoxamina', 'desvenlafaxina', 'venlafaxina', 'duloxetina', 'trazodona', 'mirtazapina', 'vortioxetina', 'amitriptilina', 'nortriptilina', 'clomipramina', 'lítio', 'tramadol', 'triptano', 'sumatriptana'];
+      const foundSero = medList.filter(m => seroKeywords.some(sk => m.toLowerCase().includes(sk)));
+      if (foundSero.length >= 2) {
+        alerts.push({
+          severity: 'high',
+          title: 'Risco de Síndrome Serotoninérgica',
+          desc: `Associação de ${foundSero.length} agentes serotoninérgicos (${foundSero.join(' + ')}). Monitorar clônus, hiperreflexia, diaforese, tremor, agitação e hipertermia; ajustar doses com cautela.`,
+          tags: foundSero
+        });
+      }
+
+      // 4. PROLONGAMENTO DE INTERVALO QTc
+      const qtcKeywords = ['citalopram', 'escitalopram', 'haloperidol', 'quetiapina', 'ziprasidona', 'amitriptilina', 'nortriptilina', 'clomipramina', 'lítio', 'clozapina'];
+      const foundQTc = medList.filter(m => qtcKeywords.some(qk => m.toLowerCase().includes(qk)));
+      if (foundQTc.length > 0) {
+        const qtcVal = calcQTcBazett(p.labs?.values?.qt, p.labs?.values?.hr);
+        const qtcExtra = qtcVal ? ` QTc atual calculado: ${Math.round(qtcVal)} ms.` : ' Solicitar ECG basal (Camada 4) e eletrólitos (K+/Mg2+).';
+        alerts.push({
+          severity: foundQTc.length >= 2 || (qtcVal && qtcVal > 470) ? 'high' : 'warning',
+          title: 'Atenção: Prolongamento de Intervalo QTc',
+          desc: `Agente(s) com potencial de alargar QTc: ${foundQTc.join(', ')}.${qtcExtra}`,
+          tags: foundQTc
+        });
+      }
+
+      // 5. INTERAÇÃO CYP450
+      const cypFindings = [];
+      if (medListLower.some(m => m.includes('fluoxetina') || m.includes('paroxetina') || m.includes('bupropiona'))) {
+        cypFindings.push('Inibidor potente CYP2D6 (Fluoxetina/Paroxetina/Bupropiona)');
+      }
+      if (medListLower.some(m => m.includes('fluvoxamina'))) {
+        cypFindings.push('Inibidor potente CYP1A2/2C19 (Fluvoxamina)');
+      }
+      if (medListLower.some(m => m.includes('carbamazepina'))) {
+        cypFindings.push('Indutor potente CYP3A4/1A2 (Carbamazepina — reduz nível sérico de outros fármacos)');
+      }
+      if (hasCBD) {
+        cypFindings.push('Canabidiol (CBD) — inibidor CYP3A4 e CYP2C19 (atenção a Clobazam, BZD, ISRS e Antipsicóticos)');
+      }
+      if (cypFindings.length > 0) {
+        alerts.push({
+          severity: 'warning',
+          title: 'Alerta de Interação Enzimática CYP450',
+          desc: cypFindings.join(' | '),
+          tags: ['CYP450']
+        });
+      }
+
+      // 6. RASTREIO DE BIPOLARIDADE (MDQ) + ANTIDEPRESSIVO SEM ESTABILIZADOR
+      const scales = getScaleTotals(p);
+      const hasMoodStab = medListLower.some(m => ['lítio', 'valproico', 'divalproato', 'lamotrigina', 'carbamazepina', 'quetiapina', 'olanzapina', 'aripiprazol', 'risperidona'].some(ms => m.includes(ms)));
+      const hasAntidepressant = medListLower.some(m => ['escitalopram', 'sertralina', 'fluoxetina', 'paroxetina', 'citalopram', 'fluvoxamina', 'desvenlafaxina', 'venlafaxina', 'duloxetina', 'amitriptilina', 'bupropiona'].some(ad => m.includes(ad)));
+      if (scales.mdq >= 3 && hasAntidepressant && !hasMoodStab) {
+        alerts.push({
+          severity: 'critical',
+          title: 'Risco de Virada Maníaca (MDQ Positivo)',
+          desc: `Rastreio MDQ positivo (${scales.mdq}/5) com uso de antidepressivo sem estabilizador de humor associado. Reavaliar espectro bipolar antes de manter monoterapia antidepressiva.`,
+          tags: ['Espectro Bipolar']
+        });
+      }
+
+      return alerts;
+    }
+
+    // Avalia se um exame laboratorial está fora da faixa ótima funcional
+    function getFunctionalLabStatus(key, rawVal) {
+      const v = parseFloat(rawVal);
+      if (isNaN(v)) return null;
+      const rules = {
+        ferritin:     { ok: v >= 50 && v <= 250, msg: v < 50 ? 'Baixa (< 50 ng/mL — risco fadiga/dopamina)' : 'Elevada (> 250 — investigar inflamação)' },
+        b12:          { ok: v >= 500, msg: 'Subótima (< 500 pg/mL — faixa ótima psiquiátrica ≥ 500)' },
+        vitD:         { ok: v >= 40 && v <= 80, msg: v < 40 ? 'Insuficiente (< 40 ng/mL)' : 'Elevada (> 80 ng/mL)' },
+        homocysteine: { ok: v <= 10, msg: 'Elevada (> 10 µmol/L — atenção metilação/risco vascular)' },
+        tsh:          { ok: v >= 0.5 && v <= 2.5, msg: v > 2.5 ? 'Acima da faixa ótima (> 2.5 mUI/L)' : 'Suprimido (< 0.5)' },
+        hba1c:        { ok: v < 5.7, msg: 'Atenção glicêmica (≥ 5.7% — pré-diabetes/RI)' },
+        tg:           { ok: v < 150, msg: 'Elevado (≥ 150 mg/dL — risco metabólico)' },
+        pcr:          { ok: v <= 1.0, msg: 'Inflamação subclínica (> 1.0 mg/L)' }
+      };
+      if (!rules[key]) return null;
+      return rules[key].ok ? { status: 'ok', msg: 'Faixa ótima' } : { status: 'alert', msg: rules[key].msg };
+    }
+
+    /*************************************************************************
+     * 5. NAVEGAÇÃO, TEMA, TOASTS & MODAIS
+     *************************************************************************/
+    function toggleSidebar() {
+      const sb = document.getElementById('sidebar');
+      const ov = document.getElementById('sidebar-overlay');
+      sb.classList.toggle('-translate-x-full');
+      ov.classList.toggle('hidden');
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isDark = html.classList.toggle('dark');
+      localStorage.setItem('psicocare_theme', isDark ? 'dark' : 'light');
+      updateThemeUI();
+    }
+
+    function updateThemeUI() {
+      const isDark = document.documentElement.classList.contains('dark');
+      document.getElementById('theme-label').textContent = isDark ? 'Modo Claro' : 'Modo Escuro';
+      document.getElementById('theme-icon').textContent = isDark ? '☀️' : '🌙';
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const bg = type === 'error' ? 'bg-rose-600' : type === 'info' ? 'bg-indigo-600' : 'bg-emerald-600';
+      toast.className = `${bg} text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 pointer-events-auto transition-all duration-300 translate-y-2 opacity-0`;
+      toast.innerHTML = `<span>${type === 'error' ? '⚠️' : '✓'}</span><span>${message}</span>`;
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 2800);
+    }
+
+    function openConfirmModal(title, message, onConfirm) {
+      document.getElementById('confirm-title').textContent = title;
+      document.getElementById('confirm-message').textContent = message;
+      confirmCallback = onConfirm;
+      const modal = document.getElementById('modal-confirm');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.getElementById('confirm-ok-btn').onclick = () => {
+        if (confirmCallback) confirmCallback();
+        closeConfirmModal();
+      };
+    }
+
+    function closeConfirmModal() {
+      const modal = document.getElementById('modal-confirm');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      confirmCallback = null;
+    }
+
+    function openNewPatientModal() {
+      const modal = document.getElementById('modal-new-patient');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.getElementById('np-name').value = '';
+      document.getElementById('np-dx').value = '';
+      document.getElementById('np-name').focus();
+    }
+
+    function closeNewPatientModal() {
+      const modal = document.getElementById('modal-new-patient');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function createNewPatient() {
+      const name = document.getElementById('np-name').value.trim();
+      if (!name) {
+        showToast('Informe o nome do paciente.', 'error');
+        return;
+      }
+      const newPat = {
+        id: 'pat_' + Date.now(),
+        name,
+        age: parseInt(document.getElementById('np-age').value) || 30,
+        sex: document.getElementById('np-sex').value || 'F',
+        weight: parseFloat(document.getElementById('np-weight').value) || 70,
+        height: parseFloat(document.getElementById('np-height').value) || 170,
+        diagnoses: document.getElementById('np-dx').value.trim() || 'Em investigação clínica',
+        currentMeds: [],
+        redFlags: { suicidalIdeation: false, psychosis: false, mania: false, agitation: false },
+        anamnesis: { qpHda: '', prevMeds: '', sleepCircadian: '', gutBrain: '', stressHabits: '' },
+        scales: { phq9: Array(9).fill(0), gad7: Array(7).fill(0), isi: Array(7).fill(0), mdq: Array(5).fill(false), asrs: Array(6).fill(0) },
+        labs: { selectedExams: [], values: {} },
+        therapy: { allopathic: [], tapering: { currentDrug: 'Clonazepam', currentDose: 2, unit: 'mg', strategy: 'bzd_taper', newDrug: '', newTargetDose: 0, rate: 25, intervalDays: 14, scheduleText: '' }, integrative: [] },
+        orientations: ['ori_sleep', 'ori_no_stop', 'ori_redflags'],
+        history: []
+      };
+      patients.unshift(newPat);
+      activePatientId = newPat.id;
+      saveState();
+      closeNewPatientModal();
+      renderAll();
+      showToast(`Paciente "${name}" criado!`);
+    }
+
+    function selectPatient(id) {
+      activePatientId = id;
+      renderAll();
+      if (window.innerWidth < 1024) toggleSidebar();
+    }
+
+    function deletePatient(id, e) {
+      e.stopPropagation();
+      if (patients.length <= 1) {
+        showToast('Mantenha ao menos 1 paciente cadastrado.', 'error');
+        return;
+      }
+      const pat = patients.find(p => p.id === id);
+      openConfirmModal('Excluir Paciente', `Deseja remover "${pat?.name}" do armazenamento local? Esta ação não pode ser desfeita.`, () => {
+        patients = patients.filter(p => p.id !== id);
+        if (activePatientId === id) activePatientId = patients[0].id;
+        saveState();
+        renderAll();
+        showToast('Paciente removido.');
+      });
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      renderAll();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (window.innerWidth < 1024) {
+        const sb = document.getElementById('sidebar');
+        if (!sb.classList.contains('-translate-x-full')) toggleSidebar();
+      }
+    }
+
+    // Backup & Restore JSON (LGPD 100% Local)
+    function exportBackupJSON() {
+      const dataStr = JSON.stringify(patients, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `PsicoCare_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Backup JSON exportado com sucesso!');
+    }
+
+    function importBackupJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (!Array.isArray(parsed) || parsed.length === 0) throw new Error('Formato inválido');
+          patients = parsed;
+          activePatientId = patients[0].id;
+          saveState();
+          renderAll();
+          showToast(`${patients.length} paciente(s) restaurado(s)!`);
+        } catch (err) {
+          showToast('Arquivo JSON inválido.', 'error');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    // Cópia segura para Clipboard (compatível com iFrame via execCommand)
+    function copyTextToClipboard(text, btnElement) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        if (btnElement) {
+          const orig = btnElement.innerHTML;
+          btnElement.innerHTML = '✓ Copiado!';
+          btnElement.classList.add('bg-emerald-600', 'text-white');
+          setTimeout(() => {
+            btnElement.innerHTML = orig;
+            btnElement.classList.remove('bg-emerald-600', 'text-white');
+          }, 1800);
+        }
+        showToast('Texto copiado para a área de transferência!');
+      } catch (err) {
+        showToast('Não foi possível copiar automaticamente.', 'error');
+      }
+      document.body.removeChild(ta);
+    }
+
+    /*************************************************************************
+     * 6. RENDERIZAÇÃO PRINCIPAL E HEADER/SIDEBAR
+     *************************************************************************/
+    function renderAll() {
+      renderPatientList();
+      renderTopbarAndBadges();
+      updateNavHighlight();
+
+      const main = document.getElementById('main-content');
+      const p = getActivePatient();
+
+      if (activeTab === 'dashboard') main.innerHTML = renderDashboard(p);
+      else if (activeTab === 'anamnesis') main.innerHTML = renderAnamnesisAndScales(p);
+      else if (activeTab === 'labs') main.innerHTML = renderLabsModule(p);
+      else if (activeTab === 'therapy') main.innerHTML = renderTherapyModule(p);
+      else if (activeTab === 'longitudinal') main.innerHTML = renderLongitudinalModule(p);
+      else if (activeTab === 'export') main.innerHTML = renderExportModule(p);
+    }
+
+    function renderPatientList() {
+      const q = (document.getElementById('patient-search')?.value || '').toLowerCase();
+      const list = document.getElementById('patient-list');
+      const filtered = patients.filter(p => p.name.toLowerCase().includes(q) || (p.diagnoses || '').toLowerCase().includes(q));
+      list.innerHTML = filtered.map(p => {
+        const isActive = p.id === activePatientId;
+        const alertCount = computeClinicalAlerts(p).length;
+        return `
+          <div onclick="selectPatient('${p.id}')" class="group cursor-pointer flex items-center justify-between px-2.5 py-2 rounded-xl text-xs transition ${isActive ? 'bg-indigo-600 text-white shadow-sm' : 'hover:bg-slate-200/70 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'}">
+            <div class="min-w-0 pr-2">
+              <div class="font-semibold truncate">${p.name}</div>
+              <div class="text-[10px] truncate ${isActive ? 'text-indigo-100' : 'text-slate-400'}">${p.age}a • ${p.sex} • ${p.currentMeds.length} med(s)</div>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+              ${alertCount > 0 ? `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-rose-500/15 text-rose-500'}">${alertCount}</span>` : ''}
+              <button onclick="deletePatient('${p.id}', event)" title="Excluir paciente" class="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-500 hover:text-white transition">✕</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderTopbarAndBadges() {
+      const p = getActivePatient();
+      const bmi = calcBMI(p.weight, p.height);
+      const alerts = computeClinicalAlerts(p);
+
+      document.getElementById('topbar-patient-name').textContent = p.name;
+      document.getElementById('topbar-patient-meta').textContent = `${p.age}a • ${p.sex} • IMC ${bmi.val}`;
+      document.getElementById('topbar-patient-dx').textContent = p.diagnoses || 'Sem diagnóstico registrado';
+
+      // Sidebar badge
+      const sbBadge = document.getElementById('sidebar-alert-badge');
+      if (alerts.length > 0) {
+        sbBadge.textContent = alerts.length;
+        sbBadge.classList.remove('hidden');
+      } else {
+        sbBadge.classList.add('hidden');
+      }
+
+      // Topbar status pill
+      const pill = document.getElementById('topbar-status-pill');
+      const hasCritical = alerts.some(a => a.severity === 'critical');
+      if (alerts.length === 0) {
+        pill.className = 'cursor-pointer hidden sm:flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20';
+        pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Radar Limpo`;
+      } else if (hasCritical) {
+        pill.className = 'cursor-pointer hidden sm:flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-rose-600 text-white pulse-red';
+        pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-white"></span> ${alerts.length} Alerta(s) Crítico(s)`;
+      } else {
+        pill.className = 'cursor-pointer hidden sm:flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30';
+        pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> ${alerts.length} Alerta(s) Clínico(s)`;
+      }
+    }
+
+    function updateNavHighlight() {
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        const isCurrent = btn.dataset.tab === activeTab;
+        if (isCurrent) {
+          btn.className = 'nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300 transition';
+        } else {
+          btn.className = 'nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition';
+        }
+      });
+    }
+
+    /*************************************************************************
+     * MÓDULO 1: DASHBOARD & RADAR CLÍNICO
+     *************************************************************************/
+    function renderDashboard(p) {
+      const bmi = calcBMI(p.weight, p.height);
+      const alerts = computeClinicalAlerts(p);
+      const totals = getScaleTotals(p);
+      const phqCls = classifyPHQ9(totals.phq9);
+      const gadCls = classifyGAD7(totals.gad7);
+      const isiCls = classifyISI(totals.isi);
+      const homa = calcHOMAIR(p.labs?.values?.glucose, p.labs?.values?.insulin);
+
+      const quickMedOptions = PSYCHOPHARM_LIBRARY.map(m => `<option value="${m.name}">${m.name} (${m.cls})</option>`).join('');
+
+      return `
+        <!-- KPIs Rápidos -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+            <div class="text-xs font-medium text-slate-500 dark:text-slate-400">PHQ-9 (Depressão)</div>
+            <div class="mt-1 flex items-baseline gap-2">
+              <span class="text-2xl font-extrabold">${totals.phq9}</span>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-${phqCls.color}-500/15 text-${phqCls.color}-600 dark:text-${phqCls.color}-400">${phqCls.label}</span>
+            </div>
+          </div>
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+            <div class="text-xs font-medium text-slate-500 dark:text-slate-400">GAD-7 (Ansiedade)</div>
+            <div class="mt-1 flex items-baseline gap-2">
+              <span class="text-2xl font-extrabold">${totals.gad7}</span>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-${gadCls.color}-500/15 text-${gadCls.color}-600 dark:text-${gadCls.color}-400">${gadCls.label}</span>
+            </div>
+          </div>
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+            <div class="text-xs font-medium text-slate-500 dark:text-slate-400">ISI (Insônia)</div>
+            <div class="mt-1 flex items-baseline gap-2">
+              <span class="text-2xl font-extrabold">${totals.isi}</span>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-${isiCls.color}-500/15 text-${isiCls.color}-600 dark:text-${isiCls.color}-400">${isiCls.label}</span>
+            </div>
+          </div>
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+            <div class="text-xs font-medium text-slate-500 dark:text-slate-400">Metabólico (IMC / HOMA-IR)</div>
+            <div class="mt-1 flex items-baseline gap-2 flex-wrap">
+              <span class="text-2xl font-extrabold">${bmi.val}</span>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-${bmi.color}-500/15 text-${bmi.color}-600 dark:text-${bmi.color}-400">${bmi.label}</span>
+              ${homa ? `<span class="text-xs font-semibold ${homa > 2.5 ? 'text-rose-500' : 'text-emerald-500'}">HOMA: ${homa.toFixed(2)}</span>` : ''}
+            </div>
+          </div>
+        </div>
+
+        <!-- RADAR DE SEGURANÇA & INTELIGÊNCIA CLÍNICA -->
+        <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-rose-500/15 text-rose-500 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              </div>
+              <div>
+                <h3 class="text-base font-bold">Radar de Segurança & Inteligência Clínica</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Atualizado em tempo real conforme medicações em uso, prescrições, CBD e escalas.</p>
+              </div>
+            </div>
+            <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${alerts.length ? 'bg-rose-500/15 text-rose-500' : 'bg-emerald-500/15 text-emerald-500'}">
+              ${alerts.length} alerta(s) ativo(s)
+            </span>
+          </div>
+
+          <!-- Rastreio Rápido de Red Flags -->
+          <div class="mb-4 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/70">
+            <div class="text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 mb-2.5">Rastreio Rápido de Sinais de Alarme (Red Flags)</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+              ${[
+                { k: 'suicidalIdeation', label: 'Ideação Suicida' },
+                { k: 'psychosis', label: 'Sintomas Psicóticos' },
+                { k: 'mania', label: 'Virada Maníaca / Hipomania' },
+                { k: 'agitation', label: 'Agitação Psicomotora' }
+              ].map(item => `
+                <label class="cursor-pointer flex items-center gap-2.5 p-2.5 rounded-xl border transition ${p.redFlags[item.k] ? 'bg-rose-600 text-white border-rose-600 shadow-sm' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-rose-400'}">
+                  <input type="checkbox" ${p.redFlags[item.k] ? 'checked' : ''} onchange="toggleRedFlag('${item.k}', this.checked)" class="w-4 h-4 accent-rose-600 rounded" />
+                  <span class="text-xs font-semibold">${item.label}</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Cards de Alertas Gerados -->
+          ${alerts.length === 0 ? `
+            <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-sm flex items-center gap-3">
+              <span class="text-lg">🛡️</span>
+              <div>
+                <div class="font-bold">Nenhum alerta farmacológico ou red flag detectado.</div>
+                <div class="text-xs opacity-80">Adicione medicações em uso ou prescrições para ativar o cruzamento automático de segurança.</div>
+              </div>
+            </div>
+          ` : `
+            <div class="space-y-2.5">
+              ${alerts.map(a => {
+                const styles = a.severity === 'critical'
+                  ? 'bg-rose-600/10 dark:bg-rose-950/50 border-rose-500 text-rose-800 dark:text-rose-200'
+                  : a.severity === 'high'
+                  ? 'bg-amber-500/10 dark:bg-amber-950/40 border-amber-500 text-amber-900 dark:text-amber-200'
+                  : 'bg-indigo-500/10 dark:bg-indigo-950/40 border-indigo-400 text-indigo-900 dark:text-indigo-200';
+                const badge = a.severity === 'critical' ? 'CRÍTICO' : a.severity === 'high' ? 'ALTO RISCO' : 'ATENÇÃO';
+                const badgeCls = a.severity === 'critical' ? 'bg-rose-600 text-white' : a.severity === 'high' ? 'bg-amber-500 text-slate-950' : 'bg-indigo-600 text-white';
+                return `
+                  <div class="p-3.5 rounded-xl border-l-4 ${styles}">
+                    <div class="flex items-center justify-between gap-2 mb-1">
+                      <span class="text-sm font-bold">${a.title}</span>
+                      <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full ${badgeCls}">${badge}</span>
+                    </div>
+                    <p class="text-xs leading-relaxed opacity-90">${a.desc}</p>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `}
+        </section>
+
+        <!-- DADOS DEMOGRÁFICOS & PSICOFÁRMACOS EM USO ATUAL -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Dados Demográficos -->
+          <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+            <h3 class="text-base font-bold flex items-center gap-2">
+              <span class="w-2 h-5 rounded-full bg-indigo-600"></span> Dados Demográficos & Diagnósticos
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="sm:col-span-2">
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Nome Completo</label>
+                <input type="text" value="${escapeHtml(p.name)}" onchange="updatePatientField('name', this.value)" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Idade</label>
+                <input type="number" value="${p.age}" onchange="updatePatientField('age', Number(this.value))" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Sexo</label>
+                <select onchange="updatePatientField('sex', this.value)" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none">
+                  <option value="F" ${p.sex === 'F' ? 'selected' : ''}>Feminino</option>
+                  <option value="M" ${p.sex === 'M' ? 'selected' : ''}>Masculino</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Peso (kg)</label>
+                <input type="number" step="0.1" value="${p.weight}" onchange="updatePatientField('weight', Number(this.value))" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Altura (cm)</label>
+                <input type="number" value="${p.height}" onchange="updatePatientField('height', Number(this.value))" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none" />
+              </div>
+              <div class="sm:col-span-2">
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Diagnósticos Sindrômicos Principais (CID-10 / DSM-5-TR)</label>
+                <textarea rows="2" onchange="updatePatientField('diagnoses', this.value)" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-indigo-500">${escapeHtml(p.diagnoses)}</textarea>
+              </div>
+            </div>
+          </section>
+
+          <!-- Psicofármacos em Uso Atual -->
+          <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col justify-between space-y-4">
+            <div>
+              <h3 class="text-base font-bold flex items-center gap-2 mb-1">
+                <span class="w-2 h-5 rounded-full bg-emerald-500"></span> Psicofármacos em Uso Atual
+              </h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Adicione medicações que o paciente já utiliza para disparar o Radar de Segurança.</p>
+
+              <div class="flex gap-2 mb-4">
+                <select id="add-current-med-select" class="flex-1 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none">
+                  <option value="">Selecionar fármaco...</option>
+                  ${quickMedOptions}
+                </select>
+                <button onclick="addCurrentMed()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition">+ Adicionar</button>
+              </div>
+
+              <div class="flex flex-wrap gap-2">
+                ${p.currentMeds.length === 0 ? '<p class="text-xs text-slate-400 italic">Nenhum psicofármaco em uso registrado.</p>' : p.currentMeds.map(m => `
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20 text-xs font-semibold">
+                    💊 ${escapeHtml(m)}
+                    <button onclick="removeCurrentMed('${escapeHtml(m)}')" class="ml-1 text-indigo-400 hover:text-rose-500 font-bold">✕</button>
+                  </span>
+                `).join('')}
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+              <span>Prescrições ativas no plano: <strong>${p.therapy.allopathic.length} alopática(s)</strong> • <strong>${p.therapy.integrative.length} integrativa(s)</strong></span>
+              <button onclick="switchTab('therapy')" class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">Abrir Conduta →</button>
+            </div>
+          </section>
+        </div>
+      `;
+    }
+
+    function updatePatientField(field, value) {
+      const p = getActivePatient();
+      p[field] = value;
+      saveState();
+      renderAll();
+    }
+
+    function toggleRedFlag(key, checked) {
+      const p = getActivePatient();
+      p.redFlags[key] = checked;
+      saveState();
+      renderAll();
+    }
+
+    function addCurrentMed() {
+      const sel = document.getElementById('add-current-med-select');
+      const val = sel.value;
+      if (!val) return;
+      const p = getActivePatient();
+      if (!p.currentMeds.includes(val)) {
+        p.currentMeds.push(val);
+        saveState();
+        renderAll();
+        showToast(`${val} adicionado ao uso atual.`);
+      }
+    }
+
+    function removeCurrentMed(name) {
+      const p = getActivePatient();
+      p.currentMeds = p.currentMeds.filter(m => m !== name);
+      saveState();
+      renderAll();
+    }
+
+    /*************************************************************************
+     * MÓDULO 2: ANAMNESE ESTRUTURADA & ESCALAS PSICOMÉTRICAS
+     *************************************************************************/
+    function renderAnamnesisAndScales(p) {
+      const totals = getScaleTotals(p);
+      const phqCls = classifyPHQ9(totals.phq9);
+      const gadCls = classifyGAD7(totals.gad7);
+      const isiCls = classifyISI(totals.isi);
+
+      return `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="text-xl font-extrabold">Anamnese Estruturada & Escalas Psicométricas</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Avaliação biopsicossocial integrativa e instrumentos quantitativos validados.</p>
+          </div>
+          <button onclick="saveEvaluationToTimeline()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition flex items-center gap-2 self-start sm:self-auto">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+            Salvar Avaliação na Linha do Tempo
+          </button>
+        </div>
+
+        <!-- ANAMNESE EM SEÇÕES COLAPSÁVEIS -->
+        <section class="space-y-3">
+          ${[
+            { key: 'qpHda', title: '1. Queixa Principal & História da Doença Atual (HDA)', placeholder: 'Descreva início, evolução, fatores precipitantes, gravidade e impacto funcional...', open: true },
+            { key: 'prevMeds', title: '2. Histórico de Psicofármacos Prévios (Eficácia & Efeitos Colaterais)', placeholder: 'Quais fármacos funcionaram? Houve embotamento afetivo, ganho de peso, disfunção sexual ou virada maníaca?', open: false },
+            { key: 'sleepCircadian', title: '3. Sono & Ritmo Circadiano', placeholder: 'Horário de deitar/acordar, latência, despertares, exposição à luz solar, telas, cafeína...', open: false },
+            { key: 'gutBrain', title: '4. Eixo Intestino-Cérebro & Padrão Alimentar', placeholder: 'Hábito intestinal (Bristol), distensão, sinais de disbiose, consumo de ultraprocessados/açúcares...', open: false },
+            { key: 'stressHabits', title: '5. Estresse, Burnout & Hábitos de Vida', placeholder: 'Carga laboral, exercício físico, álcool, cafeína, nicotina, rede de apoio e psicoterapia...', open: false }
+          ].map(sec => `
+            <details ${sec.open ? 'open' : ''} class="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+              <summary class="cursor-pointer list-none px-5 py-3.5 flex items-center justify-between font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                <span>${sec.title}</span>
+                <span class="text-slate-400 group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <div class="px-5 pb-4 pt-1">
+                <textarea rows="3" onchange="updateAnamnesis('${sec.key}', this.value)" placeholder="${sec.placeholder}" class="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-indigo-500">${escapeHtml(p.anamnesis[sec.key] || '')}</textarea>
+              </div>
+            </details>
+          `).join('')}
+        </section>
+
+        <!-- ESCALAS PSICOMÉTRICAS INTERATIVAS -->
+        <section class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+          <!-- PHQ-9 -->
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h3 class="text-base font-bold">PHQ-9 — Depressão</h3>
+                <p class="text-[11px] text-slate-500">0: Nenhuma vez | 1: Vários dias | 2: Mais da metade | 3: Quase todos os dias</p>
+              </div>
+              <div class="text-right">
+                <span class="text-xl font-extrabold">${totals.phq9}</span><span class="text-xs text-slate-400">/27</span>
+                <div class="text-[11px] font-bold text-${phqCls.color}-600 dark:text-${phqCls.color}-400">${phqCls.label}</div>
+              </div>
+            </div>
+            <div class="space-y-2">
+              ${PHQ9_QUESTIONS.map((q, i) => `
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl ${i === 8 && p.scales.phq9[8] > 0 ? 'bg-rose-500/15 border border-rose-500/40' : 'bg-slate-50 dark:bg-slate-800/60'}">
+                  <span class="text-xs font-medium">${i + 1}. ${q}</span>
+                  <div class="flex gap-1 shrink-0">
+                    ${[0, 1, 2, 3].map(v => `
+                      <button onclick="setScaleVal('phq9', ${i}, ${v})" class="w-8 h-7 rounded-lg text-xs font-bold transition ${p.scales.phq9[i] === v ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-indigo-400'}">${v}</button>
+                    `).join('')}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- GAD-7 & ISI -->
+          <div class="space-y-6">
+            <!-- GAD-7 -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <h3 class="text-base font-bold">GAD-7 — Ansiedade</h3>
+                  <p class="text-[11px] text-slate-500">0: Nenhuma vez | 1: Vários dias | 2: Mais da metade | 3: Quase todos os dias</p>
+                </div>
+                <div class="text-right">
+                  <span class="text-xl font-extrabold">${totals.gad7}</span><span class="text-xs text-slate-400">/21</span>
+                  <div class="text-[11px] font-bold text-${gadCls.color}-600 dark:text-${gadCls.color}-400">${gadCls.label}</div>
+                </div>
+              </div>
+              <div class="space-y-2">
+                ${GAD7_QUESTIONS.map((q, i) => `
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60">
+                    <span class="text-xs font-medium">${i + 1}. ${q}</span>
+                    <div class="flex gap-1 shrink-0">
+                      ${[0, 1, 2, 3].map(v => `
+                        <button onclick="setScaleVal('gad7', ${i}, ${v})" class="w-8 h-7 rounded-lg text-xs font-bold transition ${p.scales.gad7[i] === v ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-indigo-400'}">${v}</button>
+                      `).join('')}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- ISI -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <h3 class="text-base font-bold">ISI — Índice de Gravidade de Insônia</h3>
+                  <p class="text-[11px] text-slate-500">0: Nenhuma | 1: Leve | 2: Moderada | 3: Grave | 4: Muito Grave</p>
+                </div>
+                <div class="text-right">
+                  <span class="text-xl font-extrabold">${totals.isi}</span><span class="text-xs text-slate-400">/28</span>
+                  <div class="text-[11px] font-bold text-${isiCls.color}-600 dark:text-${isiCls.color}-400">${isiCls.label}</div>
+                </div>
+              </div>
+              <div class="space-y-2">
+                ${ISI_QUESTIONS.map((q, i) => `
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60">
+                    <span class="text-xs font-medium">${i + 1}. ${q}</span>
+                    <div class="flex gap-1 shrink-0">
+                      ${[0, 1, 2, 3, 4].map(v => `
+                        <button onclick="setScaleVal('isi', ${i}, ${v})" class="w-7 h-7 rounded-lg text-xs font-bold transition ${p.scales.isi[i] === v ? 'bg-emerald-600 text-white shadow-sm' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-emerald-400'}">${v}</button>
+                      `).join('')}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- RASTREIO RÁPIDO: BIPOLARIDADE (MDQ) & TDAH (ASRS-6) -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- MDQ -->
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h3 class="text-base font-bold">Rastreio de Bipolaridade (MDQ Simplificado)</h3>
+                <p class="text-[11px] text-slate-500">≥ 3 itens positivos sugere rastreio positivo para espectro bipolar.</p>
+              </div>
+              <span class="text-xs font-bold px-2.5 py-1 rounded-full ${totals.mdq >= 3 ? 'bg-rose-600 text-white' : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'}">
+                ${totals.mdq}/5 — ${totals.mdq >= 3 ? 'RASTREIO POSITIVO' : 'Negativo'}
+              </span>
+            </div>
+            <div class="space-y-2">
+              ${MDQ_QUESTIONS.map((q, i) => `
+                <label class="cursor-pointer flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                  <input type="checkbox" ${p.scales.mdq[i] ? 'checked' : ''} onchange="setMDQVal(${i}, this.checked)" class="mt-0.5 w-4 h-4 accent-rose-600 rounded" />
+                  <span class="text-xs">${q}</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- ASRS-6 -->
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h3 class="text-base font-bold">Rastreio de TDAH (ASRS-6)</h3>
+                <p class="text-[11px] text-slate-500">0: Nunca | 1: Raramente | 2: Às vezes | 3: Freq. | 4: Muito Freq.</p>
+              </div>
+              <span class="text-xs font-bold px-2.5 py-1 rounded-full ${totals.asrsPos >= 4 ? 'bg-amber-500 text-slate-950' : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'}">
+                ${totals.asrsPos}/6 críticos — ${totals.asrsPos >= 4 ? 'SUGESTIVO TDAH' : 'Baixo Risco'}
+              </span>
+            </div>
+            <div class="space-y-2">
+              ${ASRS_QUESTIONS.map((q, i) => `
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60">
+                  <span class="text-xs">${i + 1}. ${q}</span>
+                  <div class="flex gap-1 shrink-0">
+                    ${[0, 1, 2, 3, 4].map(v => `
+                      <button onclick="setScaleVal('asrs', ${i}, ${v})" class="w-7 h-7 rounded-lg text-xs font-bold transition ${p.scales.asrs[i] === v ? 'bg-amber-500 text-slate-950 shadow-sm' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700'}">${v}</button>
+                    `).join('')}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function updateAnamnesis(key, val) {
+      const p = getActivePatient();
+      p.anamnesis[key] = val;
+      saveState();
+    }
+
+    function setScaleVal(scale, idx, val) {
+      const p = getActivePatient();
+      p.scales[scale][idx] = val;
+      saveState();
+      renderAll();
+    }
+
+    function setMDQVal(idx, checked) {
+      const p = getActivePatient();
+      p.scales.mdq[idx] = checked;
+      saveState();
+      renderAll();
+    }
+
+    function saveEvaluationToTimeline() {
+      const p = getActivePatient();
+      const totals = getScaleTotals(p);
+      const bmi = calcBMI(p.weight, p.height);
+      const today = new Date().toISOString().slice(0, 10);
+      const medsSummary = p.therapy.allopathic.map(m => `${m.name} (${m.action})`).join(', ') || 'Manutenção clínica';
+      const entry = {
+        date: today,
+        phq9: totals.phq9,
+        gad7: totals.gad7,
+        isi: totals.isi,
+        weight: p.weight,
+        bmi: parseFloat(bmi.val) || 0,
+        summary: `Avaliação registrada. Conduta: ${medsSummary}.`
+      };
+      // Atualiza se já existir registro na mesma data ou adiciona novo
+      const existingIdx = p.history.findIndex(h => h.date === today);
+      if (existingIdx >= 0) p.history[existingIdx] = entry;
+      else p.history.push(entry);
+      saveState();
+      showToast('Avaliação salva na linha do tempo longitudinal!');
+    }
+
+    /*************************************************************************
+     * MÓDULO 3: EXAMES EM CAMADAS + CALCULADORAS (HOMA-IR & QTc BAZETT)
+     *************************************************************************/
+    function renderLabsModule(p) {
+      const vals = p.labs.values || {};
+      const homa = calcHOMAIR(vals.glucose, vals.insulin);
+      const qtc = calcQTcBazett(vals.qt, vals.hr);
+
+      const labFields = [
+        { k: 'ferritin', label: 'Ferritina (ng/mL)', ref: 'Ótimo: ≥ 50' },
+        { k: 'b12', label: 'Vitamina B12 (pg/mL)', ref: 'Ótimo: ≥ 500' },
+        { k: 'vitD', label: 'Vitamina D 25-OH (ng/mL)', ref: 'Ótimo: 40–80' },
+        { k: 'homocysteine', label: 'Homocisteína (µmol/L)', ref: 'Ótimo: ≤ 10' },
+        { k: 'tsh', label: 'TSH (mUI/L)', ref: 'Ótimo: 0.5–2.5' },
+        { k: 'hba1c', label: 'HbA1c (%)', ref: 'Ótimo: < 5.7%' },
+        { k: 'tg', label: 'Triglicerídeos (mg/dL)', ref: 'Ótimo: < 150' },
+        { k: 'pcr', label: 'PCR-us (mg/L)', ref: 'Ótimo: ≤ 1.0' }
+      ];
+
+      return `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="text-xl font-extrabold">Exames em Camadas — Psiquiatria Metabólica & Orgânica</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Selecione exames para o pedido médico e registre resultados com alertas de faixa ótima funcional.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold px-3 py-1.5 rounded-xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-300">
+              ${p.labs.selectedExams.length} exame(s) selecionado(s)
+            </span>
+            <button onclick="switchTab('export')" class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition">Ver Pedido →</button>
+          </div>
+        </div>
+
+        <!-- 4 CAMADAS DE EXAMES -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          ${EXAM_LAYERS.map(layer => {
+            const allSelected = layer.exams.every(ex => p.labs.selectedExams.includes(ex));
+            return `
+              <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+                <div>
+                  <div class="flex items-start justify-between gap-2 mb-3">
+                    <div>
+                      <h3 class="text-sm font-bold text-${layer.color}-600 dark:text-${layer.color}-400">${layer.title}</h3>
+                      <p class="text-[11px] text-slate-500">${layer.subtitle}</p>
+                    </div>
+                    <button onclick="toggleExamLayer('${layer.id}')" class="shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                      ${allSelected ? 'Desmarcar Camada' : 'Selecionar Camada'}
+                    </button>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    ${layer.exams.map(ex => {
+                      const checked = p.labs.selectedExams.includes(ex);
+                      return `
+                        <label class="cursor-pointer flex items-center gap-2 p-2 rounded-xl text-xs transition ${checked ? 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-semibold' : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'}">
+                          <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleSingleExam('${escapeHtml(ex)}', this.checked)" class="w-3.5 h-3.5 accent-indigo-600 rounded" />
+                          <span>${ex}</span>
+                        </label>
+                      `;
+                    }).join('')}
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <!-- CALCULADORAS INTEGRADA: HOMA-IR & QTc BAZETT -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Calculadora HOMA-IR -->
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+            <h3 class="text-base font-bold mb-1 flex items-center gap-2">
+              <span class="w-2 h-5 rounded-full bg-emerald-500"></span> Calculadora HOMA-IR (Resistência Insulínica)
+            </h3>
+            <p class="text-xs text-slate-500 mb-4">Fórmula: (Glicemia mg/dL × Insulina µU/mL) / 405. Alvo funcional: ≤ 2.5.</p>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Glicemia Jejum (mg/dL)</label>
+                <input type="number" step="0.1" value="${vals.glucose || ''}" oninput="updateLabVal('glucose', this.value)" placeholder="Ex: 95" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Insulina Jejum (µU/mL)</label>
+                <input type="number" step="0.1" value="${vals.insulin || ''}" oninput="updateLabVal('insulin', this.value)" placeholder="Ex: 12" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+            </div>
+            <div class="p-3.5 rounded-xl ${!homa ? 'bg-slate-50 dark:bg-slate-800/60' : homa > 2.5 ? 'bg-rose-500/15 border border-rose-500/30' : 'bg-emerald-500/15 border border-emerald-500/30'} flex items-center justify-between">
+              <div>
+                <div class="text-xs font-semibold opacity-80">Resultado HOMA-IR</div>
+                <div class="text-2xl font-extrabold">${homa ? homa.toFixed(2) : '--'}</div>
+              </div>
+              <div class="text-right text-xs font-bold">
+                ${!homa ? '<span class="text-slate-400">Digite glicemia e insulina</span>' : homa > 2.5 ? '<span class="text-rose-600 dark:text-rose-400">⚠️ Resistência Insulínica (> 2.5)</span>' : '<span class="text-emerald-600 dark:text-emerald-400">✓ Sensibilidade Adequada</span>'}
+              </div>
+            </div>
+          </div>
+
+          <!-- Calculadora QTc Bazett -->
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+            <h3 class="text-base font-bold mb-1 flex items-center gap-2">
+              <span class="w-2 h-5 rounded-full bg-rose-500"></span> Calculadora QTc (Fórmula de Bazett)
+            </h3>
+            <p class="text-xs text-slate-500 mb-4">QTc = QT / √RR. Alerta: > 450ms (H) / > 460ms (M) • Alto Risco Torsades: ≥ 500ms.</p>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Intervalo QT medido (ms)</label>
+                <input type="number" value="${vals.qt || ''}" oninput="updateLabVal('qt', this.value)" placeholder="Ex: 400" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-rose-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Frequência Cardíaca (bpm)</label>
+                <input type="number" value="${vals.hr || ''}" oninput="updateLabVal('hr', this.value)" placeholder="Ex: 75" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-rose-500" />
+              </div>
+            </div>
+            ${(() => {
+              const limit = p.sex === 'F' ? 460 : 450;
+              const statusCls = !qtc ? 'bg-slate-50 dark:bg-slate-800/60' : qtc >= 500 ? 'bg-rose-600 text-white' : qtc > limit ? 'bg-amber-500/15 border border-amber-500/40' : 'bg-emerald-500/15 border border-emerald-500/30';
+              const msg = !qtc ? 'Digite QT e FC' : qtc >= 500 ? '🚨 ALTO RISCO (≥ 500ms)' : qtc > limit ? `⚠️ Prolongado (> ${limit}ms)` : '✓ QTc Normal';
+              return `
+                <div class="p-3.5 rounded-xl ${statusCls} flex items-center justify-between">
+                  <div>
+                    <div class="text-xs font-semibold opacity-80">QTc (Bazett)</div>
+                    <div class="text-2xl font-extrabold">${qtc ? Math.round(qtc) + ' ms' : '--'}</div>
+                  </div>
+                  <div class="text-right text-xs font-bold">${msg}</div>
+                </div>
+              `;
+            })()}
+          </div>
+        </div>
+
+        <!-- REGISTRO DE RESULTADOS LABORATORIAIS (FAIXA ÓTIMA FUNCIONAL) -->
+        <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+          <h3 class="text-base font-bold mb-1">Resultados Laboratoriais Atuais (Alvos Ótimos Funcionais)</h3>
+          <p class="text-xs text-slate-500 mb-4">Valores fora da faixa ótima funcional para neuroquímica e metabolismo são destacados automaticamente.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            ${labFields.map(f => {
+              const st = getFunctionalLabStatus(f.k, vals[f.k]);
+              const borderCls = st?.status === 'alert' ? 'border-amber-500 ring-1 ring-amber-500/40 bg-amber-500/5' : st?.status === 'ok' ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50';
+              return `
+                <div class="p-3 rounded-xl border ${borderCls} transition">
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="text-xs font-bold">${f.label}</label>
+                    <span class="text-[10px] text-slate-400">${f.ref}</span>
+                  </div>
+                  <input type="number" step="0.1" value="${vals[f.k] || ''}" onchange="updateLabVal('${f.k}', this.value)" placeholder="Valor..." class="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm outline-none" />
+                  ${st ? `<div class="mt-1.5 text-[11px] font-semibold ${st.status === 'alert' ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}">${st.status === 'alert' ? '⚠️ ' : '✓ '}${st.msg}</div>` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </section>
+      `;
+    }
+
+    function toggleExamLayer(layerId) {
+      const p = getActivePatient();
+      const layer = EXAM_LAYERS.find(l => l.id === layerId);
+      if (!layer) return;
+      const allSelected = layer.exams.every(ex => p.labs.selectedExams.includes(ex));
+      if (allSelected) {
+        p.labs.selectedExams = p.labs.selectedExams.filter(ex => !layer.exams.includes(ex));
+      } else {
+        layer.exams.forEach(ex => {
+          if (!p.labs.selectedExams.includes(ex)) p.labs.selectedExams.push(ex);
+        });
+      }
+      saveState();
+      renderAll();
+    }
+
+    function toggleSingleExam(examName, checked) {
+      const p = getActivePatient();
+      if (checked && !p.labs.selectedExams.includes(examName)) {
+        p.labs.selectedExams.push(examName);
+      } else if (!checked) {
+        p.labs.selectedExams = p.labs.selectedExams.filter(e => e !== examName);
+      }
+      saveState();
+      renderAll();
+    }
+
+    function updateLabVal(key, value) {
+      const p = getActivePatient();
+      if (!p.labs.values) p.labs.values = {};
+      p.labs.values[key] = value;
+      saveState();
+      renderAll();
+    }
+
+    /*************************************************************************
+     * MÓDULO 4: DECISÃO TERAPÊUTICA (ALOPATIA, TAPERING & INTEGRATIVA)
+     *************************************************************************/
+    function renderTherapyModule(p) {
+      return `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="text-xl font-extrabold">Decisão Terapêutica — Alopatia, Tapering & Integrativa</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Construa a prescrição estruturada integrando farmacologia alopática, desmame seguro e manipulação neuroprotetora.</p>
+          </div>
+        </div>
+
+        <!-- Sub-abas do Módulo Terapêutico -->
+        <div class="flex flex-wrap gap-2 p-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-fit">
+          <button onclick="setTherapySubTab('allopathic')" class="px-4 py-2 rounded-xl text-xs font-bold transition ${therapySubTab === 'allopathic' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}">
+            A. Manejo Alopático (${p.therapy.allopathic.length})
+          </button>
+          <button onclick="setTherapySubTab('tapering')" class="px-4 py-2 rounded-xl text-xs font-bold transition ${therapySubTab === 'tapering' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}">
+            B. Cross-Tapering & Desmame
+          </button>
+          <button onclick="setTherapySubTab('integrative')" class="px-4 py-2 rounded-xl text-xs font-bold transition ${therapySubTab === 'integrative' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}">
+            C. Psiquiatria Integrativa (${p.therapy.integrative.length})
+          </button>
+        </div>
+
+        ${therapySubTab === 'allopathic' ? renderAllopathicSubTab(p) : therapySubTab === 'tapering' ? renderTaperingSubTab(p) : renderIntegrativeSubTab(p)}
+      `;
+    }
+
+    function setTherapySubTab(sub) {
+      therapySubTab = sub;
+      renderAll();
+    }
+
+    // Sub-aba A: Alopatia
+    function renderAllopathicSubTab(p) {
+      const classes = ['TODOS', ...Array.from(new Set(PSYCHOPHARM_LIBRARY.map(d => d.cls)))];
+      const filteredDrugs = PSYCHOPHARM_LIBRARY.filter(d => {
+        const matchQ = d.name.toLowerCase().includes(drugSearchQuery.toLowerCase()) || d.cls.toLowerCase().includes(drugSearchQuery.toLowerCase());
+        const matchCls = drugFilterClass === 'TODOS' || d.cls === drugFilterClass;
+        return matchQ && matchCls;
+      });
+
+      return `
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+          <!-- Biblioteca Rápida -->
+          <div class="xl:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input type="text" value="${escapeHtml(drugSearchQuery)}" oninput="drugSearchQuery=this.value; renderAll();" placeholder="Buscar psicofármaco ou classe..." class="flex-1 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+              <select onchange="drugFilterClass=this.value; renderAll();" class="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold outline-none">
+                ${classes.map(c => `<option value="${c}" ${drugFilterClass === c ? 'selected' : ''}>${c}</option>`).join('')}
+              </select>
+            </div>
+            <div class="max-h-[460px] overflow-y-auto space-y-2 pr-1">
+              ${filteredDrugs.map(d => `
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <span class="font-bold text-sm">${d.name}</span>
+                      <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-600 dark:text-indigo-300">${d.cls}</span>
+                    </div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Dose usual: ${d.doses} • ${d.posology}</div>
+                  </div>
+                  <div class="flex gap-1.5 shrink-0">
+                    <button onclick="addAllopathicMed('${escapeHtml(d.name)}', 'Introduzir')" class="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition">+ Introduzir</button>
+                    <button onclick="addAllopathicMed('${escapeHtml(d.name)}', 'Ajustar Dose')" class="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 transition">Ajustar</button>
+                    <button onclick="addAllopathicMed('${escapeHtml(d.name)}', 'Desmame')" class="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-amber-500/20 text-amber-700 dark:text-amber-300 hover:bg-amber-500/30 transition">Desmame</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Prescrição Alopática Atual -->
+          <div class="xl:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+            <div>
+              <h3 class="text-base font-bold mb-1">Prescrição Alopática (Drogaria)</h3>
+              <p class="text-xs text-slate-500 mb-4">Edite dose, posologia e status de cada item antes de exportar.</p>
+              ${p.therapy.allopathic.length === 0 ? `
+                <div class="p-6 text-center rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-xs text-slate-400">
+                  Nenhum psicofármaco adicionado à prescrição. Selecione na biblioteca ao lado.
+                </div>
+              ` : `
+                <div class="space-y-3">
+                  ${p.therapy.allopathic.map((m, idx) => `
+                    <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 space-y-2">
+                      <div class="flex items-center justify-between gap-2">
+                        <span class="font-bold text-sm">${escapeHtml(m.name)}</span>
+                        <div class="flex items-center gap-1.5">
+                          <select onchange="updateAllopathicField(${idx}, 'action', this.value)" class="text-[11px] font-bold px-2 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                            ${['Introduzir', 'Ajustar Dose', 'Desmame', 'Manter'].map(act => `<option value="${act}" ${m.action === act ? 'selected' : ''}>${act}</option>`).join('')}
+                          </select>
+                          <button onclick="removeAllopathicMed(${idx})" class="text-slate-400 hover:text-rose-500 px-1 font-bold">✕</button>
+                        </div>
+                      </div>
+                      <div class="grid grid-cols-1 gap-2">
+                        <input type="text" value="${escapeHtml(m.dose)}" onchange="updateAllopathicField(${idx}, 'dose', this.value)" placeholder="Dose (ex: 50mg)" class="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs" />
+                        <input type="text" value="${escapeHtml(m.posology)}" onchange="updateAllopathicField(${idx}, 'posology', this.value)" placeholder="Posologia (ex: 1 cp pela manhã)" class="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs" />
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              `}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function addAllopathicMed(name, action) {
+      const p = getActivePatient();
+      const lib = PSYCHOPHARM_LIBRARY.find(d => d.name === name);
+      p.therapy.allopathic.push({
+        id: 'alo_' + Date.now(),
+        name,
+        cls: lib?.cls || 'Psicofármaco',
+        dose: lib?.doses || '',
+        posology: lib?.posology || '',
+        action
+      });
+      saveState();
+      renderAll();
+      showToast(`${name} (${action}) adicionado à prescrição.`);
+    }
+
+    function updateAllopathicField(idx, field, val) {
+      const p = getActivePatient();
+      p.therapy.allopathic[idx][field] = val;
+      saveState();
+      renderTopbarAndBadges();
+    }
+
+    function removeAllopathicMed(idx) {
+      const p = getActivePatient();
+      p.therapy.allopathic.splice(idx, 1);
+      saveState();
+      renderAll();
+    }
+
+    // Sub-aba B: Calculadora de Cross-Tapering & Desmame Guiado
+    function renderTaperingSubTab(p) {
+      const t = p.therapy.tapering || { currentDrug: 'Clonazepam', currentDose: 2, unit: 'mg', strategy: 'bzd_taper', newDrug: '', newTargetDose: 50, rate: 25, intervalDays: 14, scheduleText: '' };
+      return `
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+            <h3 class="text-base font-bold">Parâmetros do Desmame / Cross-Tapering</h3>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Estratégia Clínica</label>
+                <select id="tp-strategy" onchange="updateTaperingConfig()" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm">
+                  <option value="bzd_taper" ${t.strategy === 'bzd_taper' ? 'selected' : ''}>Desmame de Benzodiazepínico / Hipnótico Z</option>
+                  <option value="ad_taper" ${t.strategy === 'ad_taper' ? 'selected' : ''}>Desmame de Antidepressivo / Antipsicótico</option>
+                  <option value="cross_taper" ${t.strategy === 'cross_taper' ? 'selected' : ''}>Troca Cruzada (Cross-Tapering) para Novo Fármaco</option>
+                </select>
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <div class="col-span-2">
+                  <label class="block text-xs font-semibold text-slate-500 mb-1">Fármaco Atual</label>
+                  <input id="tp-current-drug" type="text" value="${escapeHtml(t.currentDrug)}" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-500 mb-1">Dose (mg)</label>
+                  <input id="tp-current-dose" type="number" step="0.25" value="${t.currentDose}" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm" />
+                </div>
+              </div>
+
+              ${t.strategy === 'cross_taper' ? `
+                <div class="grid grid-cols-3 gap-2 p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
+                  <div class="col-span-2">
+                    <label class="block text-xs font-semibold text-indigo-600 dark:text-indigo-300 mb-1">Novo Fármaco (Alvo)</label>
+                    <input id="tp-new-drug" type="text" value="${escapeHtml(t.newDrug || 'Sertralina')}" placeholder="Ex: Desvenlafaxina" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-indigo-300 dark:border-indigo-700 text-sm" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-indigo-600 dark:text-indigo-300 mb-1">Dose Alvo (mg)</label>
+                    <input id="tp-new-dose" type="number" step="5" value="${t.newTargetDose || 50}" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-indigo-300 dark:border-indigo-700 text-sm" />
+                  </div>
+                </div>
+              ` : ''}
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-500 mb-1">Taxa de Redução</label>
+                  <select id="tp-rate" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm">
+                    <option value="25" ${t.rate == 25 ? 'selected' : ''}>25% linear (Padrão)</option>
+                    <option value="12.5" ${t.rate == 12.5 ? 'selected' : ''}>12.5% moderada</option>
+                    <option value="10" ${t.rate == 10 ? 'selected' : ''}>10% hiperbólica (Lenta/Segura)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-500 mb-1">Intervalo entre Degraus</label>
+                  <select id="tp-interval" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm">
+                    <option value="7" ${t.intervalDays == 7 ? 'selected' : ''}>A cada 7 dias</option>
+                    <option value="14" ${t.intervalDays == 14 ? 'selected' : ''}>A cada 14 dias</option>
+                    <option value="21" ${t.intervalDays == 21 ? 'selected' : ''}>A cada 21 dias</option>
+                  </select>
+                </div>
+              </div>
+
+              <button onclick="generateTaperingSchedule()" class="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm shadow-sm transition">
+                ⚡ Gerar Cronograma Semana a Semana
+              </button>
+            </div>
+          </div>
+
+          <div class="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col justify-between space-y-3">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-base font-bold">Cronograma Gerado (Pronto para Receita)</h3>
+                <button onclick="copyTextToClipboard(document.getElementById('tp-output').value, this)" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-indigo-600 hover:text-white transition">Copiar Cronograma</button>
+              </div>
+              <textarea id="tp-output" rows="12" onchange="saveTaperingText(this.value)" placeholder="Clique em 'Gerar Cronograma Semana a Semana' para montar o esquema..." class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono leading-relaxed outline-none focus:ring-2 focus:ring-amber-500">${escapeHtml(t.scheduleText || '')}</textarea>
+            </div>
+            <div class="text-xs text-slate-500 flex items-center justify-between">
+              <span>Este cronograma é incluído automaticamente no <strong>BLOCO 1 (Prescrição)</strong> da Central de Exportação.</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function updateTaperingConfig() {
+      const p = getActivePatient();
+      p.therapy.tapering.strategy = document.getElementById('tp-strategy').value;
+      saveState();
+      renderAll();
+    }
+
+    function saveTaperingText(val) {
+      const p = getActivePatient();
+      p.therapy.tapering.scheduleText = val;
+      saveState();
+    }
+
+    function generateTaperingSchedule() {
+      const p = getActivePatient();
+      const strategy = document.getElementById('tp-strategy').value;
+      const currentDrug = document.getElementById('tp-current-drug').value.trim() || 'Fármaco Atual';
+      const currentDose = parseFloat(document.getElementById('tp-current-dose').value) || 10;
+      const rate = parseFloat(document.getElementById('tp-rate').value) || 25;
+      const intervalDays = parseInt(document.getElementById('tp-interval').value) || 14;
+      const newDrug = document.getElementById('tp-new-drug')?.value.trim() || '';
+      const newTargetDose = parseFloat(document.getElementById('tp-new-dose')?.value) || 0;
+
+      const weeksPerStep = Math.max(1, Math.round(intervalDays / 7));
+      const lines = [];
+
+      if (strategy === 'cross_taper') {
+        lines.push(`CRONOGRAMA DE TROCA CRUZADA (CROSS-TAPERING): ${currentDrug} (${currentDose}mg) → ${newDrug} (Alvo: ${newTargetDose}mg)`);
+      } else {
+        lines.push(`CRONOGRAMA DE DESMAME GUIADO — ${currentDrug} (Dose inicial: ${currentDose}mg | Redução: ${rate}% a cada ${intervalDays} dias)`);
+      }
+
+      let step = 1;
+      let dose = currentDose;
+      const isHyperbolic = rate === 10;
+      const linearStepAmount = currentDose * (rate / 100);
+      const maxSteps = isHyperbolic ? 8 : Math.ceil(100 / rate);
+
+      for (let i = 1; i <= maxSteps; i++) {
+        if (isHyperbolic) {
+          dose = Number((dose * (1 - rate / 100)).toFixed(2));
+        } else {
+          dose = Number(Math.max(0, currentDose - linearStepAmount * i).toFixed(2));
+        }
+        const wStart = (i - 1) * weeksPerStep + 1;
+        const wEnd = i * weeksPerStep;
+        const period = weeksPerStep === 1 ? `Semana ${wStart}` : `Semanas ${wStart}–${wEnd}`;
+
+        if (strategy === 'cross_taper' && newDrug && newTargetDose > 0) {
+          const progress = Math.min(1, i / maxSteps);
+          const newDoseStep = Number((newTargetDose * progress).toFixed(1));
+          if (dose <= 0.05) {
+            lines.push(`• ${period}: SUSPENDER ${currentDrug} | Manter ${newDrug} ${newTargetDose}mg/dia.`);
+            break;
+          } else {
+            lines.push(`• ${period}: Reduzir ${currentDrug} para ${dose}mg + Associar ${newDrug} ${newDoseStep}mg.`);
+          }
+        } else {
+          if (dose <= 0.05) {
+            lines.push(`• ${period}: SUSPENDER ${currentDrug} se paciente assintomático e estável.`);
+            break;
+          } else {
+            lines.push(`• ${period}: Reduzir ${currentDrug} para ${dose}mg.`);
+          }
+        }
+        step++;
+      }
+
+      if (isHyperbolic && dose > 0.05) {
+        lines.push(`• Próximos passos (fase final hiperbólica): Reduzir em degraus ainda menores (ex: gotas ou manipulação fracionada) a cada ${intervalDays} dias até suspensão completa.`);
+      }
+      lines.push(`*Orientação de segurança: Caso surjam sintomas de descontinuação (tontura, insônia rebote, ansiedade intensa ou "brain zaps"), manter a dose atual por mais 7–14 dias antes de avançar ao próximo degrau.`);
+
+      const scheduleText = lines.join('\n');
+      p.therapy.tapering = { currentDrug, currentDose, unit: 'mg', strategy, newDrug, newTargetDose, rate, intervalDays, scheduleText };
+      saveState();
+      renderAll();
+      showToast('Cronograma gerado com sucesso!');
+    }
+
+    // Sub-aba C: Protocolos de Psiquiatria Integrativa (Manipulação)
+    function renderIntegrativeSubTab(p) {
+      return `
+        <!-- Biblioteca de 8 Protocolos Clicáveis -->
+        <section class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Protocolos Integrativos de 1 Clique (Manipulação)</h3>
+            <button onclick="addCustomIntegrativeFormula()" class="text-xs font-semibold px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition">+ Fórmula Personalizada</button>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+            ${INTEGRATIVE_PROTOCOLS.map(prot => `
+              <div onclick="loadIntegrativeProtocol('${prot.id}')" class="cursor-pointer group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-500 dark:hover:border-emerald-500 rounded-2xl p-4 shadow-sm transition flex flex-col justify-between">
+                <div>
+                  <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 mb-2">${prot.badge}</span>
+                  <h4 class="text-xs font-bold leading-snug group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">${prot.title}</h4>
+                  <ul class="mt-2 space-y-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                    ${prot.actives.slice(0, 4).map(a => `<li>• ${a.name} ${a.dose}</li>`).join('')}
+                    ${prot.actives.length > 4 ? `<li>• +${prot.actives.length - 4} ativo(s)...</li>` : ''}
+                  </ul>
+                </div>
+                <div class="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-between">
+                  <span>Carregar na Prescrição</span>
+                  <span>+</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+
+        <!-- Fórmulas Integrativas Carregadas (Editáveis) -->
+        <section class="space-y-4">
+          <h3 class="text-base font-bold">Fórmulas Manipuladas na Prescrição (${p.therapy.integrative.length})</h3>
+          ${p.therapy.integrative.length === 0 ? `
+            <div class="p-8 text-center bg-white dark:bg-slate-900 border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl text-xs text-slate-400">
+              Clique em qualquer protocolo acima para carregar a fórmula editável ou crie uma fórmula personalizada.
+            </div>
+          ` : `
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              ${p.therapy.integrative.map((f, fIdx) => `
+                <div class="bg-white dark:bg-slate-900 border border-emerald-500/30 rounded-2xl p-5 shadow-sm space-y-3">
+                  <div class="flex items-start justify-between gap-2">
+                    <input type="text" value="${escapeHtml(f.title)}" onchange="updateIntegrativeFormula(${fIdx}, 'title', this.value)" class="flex-1 font-bold text-sm bg-transparent border-b border-transparent focus:border-emerald-500 outline-none" />
+                    <button onclick="removeIntegrativeFormula(${fIdx})" class="text-slate-400 hover:text-rose-500 text-xs font-bold px-1.5">Excluir</button>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <input type="text" value="${escapeHtml(f.turno)}" onchange="updateIntegrativeFormula(${fIdx}, 'turno', this.value)" placeholder="Turno (ex: Noite)" class="px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs" />
+                    <input type="text" value="${escapeHtml(f.posology)}" onchange="updateIntegrativeFormula(${fIdx}, 'posology', this.value)" placeholder="Posologia" class="px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs" />
+                  </div>
+                  <div class="space-y-1.5">
+                    <div class="text-[11px] font-bold text-slate-400 uppercase">Ativos & Doses</div>
+                    ${f.actives.map((act, aIdx) => `
+                      <div class="flex gap-1.5 items-center">
+                        <input type="text" value="${escapeHtml(act.name)}" onchange="updateIntegrativeActive(${fIdx}, ${aIdx}, 'name', this.value)" placeholder="Ativo" class="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs" />
+                        <input type="text" value="${escapeHtml(act.dose)}" onchange="updateIntegrativeActive(${fIdx}, ${aIdx}, 'dose', this.value)" placeholder="Dose" class="w-32 px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold" />
+                        <button onclick="removeIntegrativeActive(${fIdx}, ${aIdx})" class="text-slate-400 hover:text-rose-500 px-1">✕</button>
+                      </div>
+                    `).join('')}
+                    <button onclick="addIntegrativeActive(${fIdx})" class="mt-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">+ Adicionar ativo avulso</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `}
+        </section>
+      `;
+    }
+
+    function loadIntegrativeProtocol(protId) {
+      const prot = INTEGRATIVE_PROTOCOLS.find(pr => pr.id === protId);
+      if (!prot) return;
+      const p = getActivePatient();
+      p.therapy.integrative.push({
+        id: 'int_' + Date.now(),
+        title: prot.title,
+        turno: prot.turno,
+        posology: prot.posology,
+        actives: JSON.parse(JSON.stringify(prot.actives))
+      });
+      saveState();
+      renderAll();
+      showToast(`Protocolo "${prot.title}" carregado!`);
+    }
+
+    function addCustomIntegrativeFormula() {
+      const p = getActivePatient();
+      p.therapy.integrative.push({
+        id: 'int_' + Date.now(),
+        title: 'Fórmula Manipulada Personalizada',
+        turno: 'Manhã',
+        posology: 'Tomar 1 dose ao dia.',
+        actives: [{ name: 'Magnésio Treonato', dose: '300mg' }]
+      });
+      saveState();
+      renderAll();
+    }
+
+    function updateIntegrativeFormula(fIdx, field, val) {
+      const p = getActivePatient();
+      p.therapy.integrative[fIdx][field] = val;
+      saveState();
+      renderTopbarAndBadges();
+    }
+
+    function removeIntegrativeFormula(fIdx) {
+      const p = getActivePatient();
+      p.therapy.integrative.splice(fIdx, 1);
+      saveState();
+      renderAll();
+    }
+
+    function updateIntegrativeActive(fIdx, aIdx, field, val) {
+      const p = getActivePatient();
+      p.therapy.integrative[fIdx].actives[aIdx][field] = val;
+      saveState();
+      renderTopbarAndBadges();
+    }
+
+    function addIntegrativeActive(fIdx) {
+      const p = getActivePatient();
+      p.therapy.integrative[fIdx].actives.push({ name: '', dose: '' });
+      saveState();
+      renderAll();
+    }
+
+    function removeIntegrativeActive(fIdx, aIdx) {
+      const p = getActivePatient();
+      p.therapy.integrative[fIdx].actives.splice(aIdx, 1);
+      saveState();
+      renderAll();
+    }
+
+    /*************************************************************************
+     * MÓDULO 5: ACOMPANHAMENTO LONGITUDINAL (GRÁFICO SVG + TIMELINE)
+     *************************************************************************/
+    function renderLongitudinalModule(p) {
+      const hist = [...(p.history || [])].sort((a, b) => a.date.localeCompare(b.date));
+
+      return `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="text-xl font-extrabold">Acompanhamento Longitudinal</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Evolução comparativa de PHQ-9, GAD-7, ISI e parâmetros antropométricos ao longo das consultas.</p>
+          </div>
+          <button onclick="saveEvaluationToTimeline(); renderAll();" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition self-start sm:self-auto">
+            + Registrar Consulta de Hoje
+          </button>
+        </div>
+
+        <!-- Gráfico SVG Interativo -->
+        <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <h3 class="text-base font-bold">Curva de Evolução Psicométrica</h3>
+            <div class="flex items-center gap-4 text-xs font-semibold">
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-indigo-500"></span> PHQ-9 (0–27)</span>
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-500"></span> GAD-7 (0–21)</span>
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500"></span> ISI (0–28)</span>
+            </div>
+          </div>
+
+          ${hist.length === 0 ? `
+            <div class="py-12 text-center text-xs text-slate-400">
+              Nenhuma avaliação registrada na linha do tempo ainda. Clique em "+ Registrar Consulta de Hoje".
+            </div>
+          ` : renderLongitudinalSVG(hist)}
+        </section>
+
+        <!-- Linha do Tempo das Consultas -->
+        <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+          <h3 class="text-base font-bold mb-4">Histórico de Consultas (${hist.length})</h3>
+          ${hist.length === 0 ? '<p class="text-xs text-slate-400">Sem registros.</p>' : `
+            <div class="space-y-3">
+              ${[...hist].reverse().map((h, revIdx) => {
+                const origIdx = p.history.findIndex(item => item.date === h.date && item.summary === h.summary);
+                return `
+                  <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/70 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div class="space-y-1">
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-xs font-extrabold px-2.5 py-0.5 rounded-lg bg-indigo-600 text-white">${formatDateBR(h.date)}</span>
+                        <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-600 dark:text-indigo-300">PHQ-9: ${h.phq9}</span>
+                        <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-300">GAD-7: ${h.gad7}</span>
+                        <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-300">ISI: ${h.isi}</span>
+                        <span class="text-xs text-slate-500">Peso: ${h.weight}kg (IMC ${h.bmi})</span>
+                      </div>
+                      <p class="text-xs text-slate-600 dark:text-slate-300">${escapeHtml(h.summary)}</p>
+                    </div>
+                    <button onclick="deleteHistoryEntry(${origIdx})" class="self-end md:self-center text-xs text-slate-400 hover:text-rose-500 font-semibold">Excluir</button>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `}
+        </section>
+      `;
+    }
+
+    function renderLongitudinalSVG(hist) {
+      const W = 760, H = 260, padL = 42, padR = 24, padT = 20, padB = 38;
+      const plotW = W - padL - padR;
+      const plotH = H - padT - padB;
+      const maxY = 28;
+
+      const xPos = (i) => hist.length === 1 ? padL + plotW / 2 : padL + (i / (hist.length - 1)) * plotW;
+      const yPos = (val) => padT + plotH - (Math.min(maxY, Math.max(0, val)) / maxY) * plotH;
+
+      const makePath = (key) => hist.map((h, i) => `${i === 0 ? 'M' : 'L'} ${xPos(i).toFixed(1)} ${yPos(h[key]).toFixed(1)}`).join(' ');
+
+      const gridLines = [0, 7, 14, 21, 28].map(val => {
+        const y = yPos(val);
+        return `
+          <line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="currentColor" stroke-opacity="0.12" stroke-dasharray="4 4" />
+          <text x="${padL - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="currentColor" opacity="0.55">${val}</text>
+        `;
+      }).join('');
+
+      const series = [
+        { key: 'phq9', color: '#6366f1', label: 'PHQ-9' },
+        { key: 'gad7', color: '#f59e0b', label: 'GAD-7' },
+        { key: 'isi',  color: '#10b981', label: 'ISI' }
+      ];
+
+      return `
+        <div class="w-full overflow-x-auto">
+          <svg viewBox="0 0 ${W} ${H}" class="w-full min-w-[480px] h-auto select-none">
+            ${gridLines}
+            ${series.map(s => `
+              ${hist.length > 1 ? `<path d="${makePath(s.key)}" fill="none" stroke="${s.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />` : ''}
+              ${hist.map((h, i) => `
+                <g class="cursor-pointer">
+                  <circle cx="${xPos(i)}" cy="${yPos(h[s.key])}" r="5.5" fill="${s.color}" stroke="#ffffff" stroke-width="2">
+                    <title>${formatDateBR(h.date)} — ${s.label}: ${h[s.key]}</title>
+                  </circle>
+                  <text x="${xPos(i)}" y="${yPos(h[s.key]) - 10}" text-anchor="middle" font-size="10" font-weight="700" fill="${s.color}">${h[s.key]}</text>
+                </g>
+              `).join('')}
+            `).join('')}
+            ${hist.map((h, i) => `
+              <text x="${xPos(i)}" y="${H - 12}" text-anchor="middle" font-size="11" fill="currentColor" opacity="0.65">${formatDateBR(h.date)}</text>
+            `).join('')}
+          </svg>
+        </div>
+      `;
+    }
+
+    function deleteHistoryEntry(idx) {
+      const p = getActivePatient();
+      if (idx >= 0) {
+        p.history.splice(idx, 1);
+        saveState();
+        renderAll();
+        showToast('Registro removido da linha do tempo.');
+      }
+    }
+
+    /*************************************************************************
+     * MÓDULO 6: CENTRAL DE EXPORTAÇÃO (AMPLIMED / MEMED / PACIENTE)
+     *************************************************************************/
+    function buildExportBlocks(p) {
+      const todayBR = formatDateBR(new Date().toISOString().slice(0, 10));
+      const bmi = calcBMI(p.weight, p.height);
+      const totals = getScaleTotals(p);
+      const alerts = computeClinicalAlerts(p);
+      const homa = calcHOMAIR(p.labs?.values?.glucose, p.labs?.values?.insulin);
+      const qtc = calcQTcBazett(p.labs?.values?.qt, p.labs?.values?.hr);
+
+      // Exames alterados
+      const alteredLabs = [];
+      const vals = p.labs?.values || {};
+      Object.keys(vals).forEach(k => {
+        const st = getFunctionalLabStatus(k, vals[k]);
+        if (st && st.status === 'alert') alteredLabs.push(`${k.toUpperCase()}: ${vals[k]} (${st.msg})`);
+      });
+      if (homa && homa > 2.5) alteredLabs.push(`HOMA-IR: ${homa.toFixed(2)} (Resistência Insulínica)`);
+      if (qtc && qtc > (p.sex === 'F' ? 460 : 450)) alteredLabs.push(`QTc Bazett: ${Math.round(qtc)}ms (Prolongado)`);
+
+      // 1. Evolução Prontuário (Amplimed)
+      const evolucao = [
+        `EVOLUÇÃO PSIQUIÁTRICA INTEGRATIVA — ${todayBR}`,
+        `Paciente: ${p.name} | ${p.age} anos | Sexo: ${p.sex} | Peso: ${p.weight}kg | Altura: ${p.height}cm | IMC: ${bmi.val} (${bmi.label})`,
+        `Hipóteses Diagnósticas: ${p.diagnoses}`,
+        `Psicofármacos em uso prévio/atual: ${p.currentMeds.join(', ') || 'Nenhum'}`,
+        ``,
+        `[ANAMNESE]`,
+        `• HDA: ${p.anamnesis.qpHda || 'Não preenchido'}`,
+        `• Histórico de Psicofármacos: ${p.anamnesis.prevMeds || 'Não preenchido'}`,
+        `• Sono & Ritmo Circadiano: ${p.anamnesis.sleepCircadian || 'Não preenchido'}`,
+        `• Eixo Intestino-Cérebro: ${p.anamnesis.gutBrain || 'Não preenchido'}`,
+        `• Estresse & Hábitos: ${p.anamnesis.stressHabits || 'Não preenchido'}`,
+        ``,
+        `[ESCALAS PSICOMÉTRICAS]`,
+        `• PHQ-9: ${totals.phq9}/27 (${classifyPHQ9(totals.phq9).label}) | GAD-7: ${totals.gad7}/21 (${classifyGAD7(totals.gad7).label}) | ISI: ${totals.isi}/28 (${classifyISI(totals.isi).label})`,
+        `• Rastreio Bipolaridade (MDQ): ${totals.mdq}/5 (${totals.mdq >= 3 ? 'POSITIVO' : 'Negativo'}) | Rastreio TDAH (ASRS-6): ${totals.asrsPos}/6 itens críticos`,
+        ``,
+        `[EXAMES & ALERTAS CLÍNICOS]`,
+        `• Achados fora da faixa ótima funcional: ${alteredLabs.length ? alteredLabs.join('; ') : 'Nenhum registrado'}`,
+        `• Alertas de Segurança Farmacológica: ${alerts.length ? alerts.map(a => a.title).join(' | ') : 'Sem alertas críticos'}`,
+        ``,
+        `[CONDUTA TERAPÊUTICA]`,
+        `• Alopatia: ${p.therapy.allopathic.map(m => `${m.name} ${m.dose} [${m.action}]`).join('; ') || 'Sem alterações'}`,
+        `• Integrativa/Manipulação: ${p.therapy.integrative.map(f => f.title).join('; ') || 'Nenhuma'}`,
+        `• Exames solicitados: ${p.labs.selectedExams.length} exame(s).`
+      ].join('\n');
+
+      // 2. BLOCO 1 — Prescrição Estruturada (Memed / Receituário)
+      const aloLines = p.therapy.allopathic.length
+        ? p.therapy.allopathic.map((m, i) => `${i + 1}. ${m.name} ${m.dose} — [${m.action.toUpperCase()}]\n   Posologia: ${m.posology}`).join('\n')
+        : 'Nenhuma medicação alopática adicionada.';
+
+      const taperBlock = p.therapy.tapering?.scheduleText
+        ? `\n\n--- ESQUEMA DE DESMAME / CROSS-TAPERING ---\n${p.therapy.tapering.scheduleText}`
+        : '';
+
+      const intLines = p.therapy.integrative.length
+        ? p.therapy.integrative.map((f, i) => {
+            const activesFmt = f.actives.map(a => `${a.name} ----- ${a.dose}`).join('\n');
+            return `FÓRMULA ${i + 1}: ${f.title.toUpperCase()} (${f.turno})\n${activesFmt}\nModo de uso: ${f.posology}`;
+          }).join('\n\n')
+        : 'Nenhuma fórmula manipulada adicionada.';
+
+      const prescricao = [
+        `=== A. MANEJO ALOPÁTICO (DROGARIA) ===`,
+        aloLines + taperBlock,
+        ``,
+        `=== B. SUPORTE INTEGRATIVO (MANIPULAÇÃO) ===`,
+        intLines
+      ].join('\n');
+
+      // 3. BLOCO 2 — Solicitação de Exames
+      const exames = p.labs.selectedExams.length
+        ? `SOLICITAÇÃO DE EXAMES LABORATORIAIS E COMPLEMENTARES\nPaciente: ${p.name} | Data: ${todayBR}\n\n` + p.labs.selectedExams.map(e => `• ${e}`).join('\n')
+        : 'Nenhum exame selecionado no módulo Exames em Camadas.';
+
+      // 4. BLOCO 3 — Orientações ao Paciente
+      const selectedOris = ORIENTATION_PRESETS.filter(o => (p.orientations || []).includes(o.id));
+      const orientacoes = [
+        `ORIENTAÇÕES AO PACIENTE — ${p.name}`,
+        `Data: ${todayBR}`,
+        ``,
+        ...(selectedOris.length ? selectedOris.map(o => o.text) : ['Selecione os itens de orientação no checklist acima.'])
+      ].join('\n\n');
+
+      return { evolucao, prescricao, exames, orientacoes };
+    }
+
+    function renderExportModule(p) {
+      const blocks = buildExportBlocks(p);
+
+      return `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="text-xl font-extrabold">Central de Exportação (Amplimed / Memed / Paciente)</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Textos limpos, estruturados e editáveis prontos para colar no prontuário ou imprimir em PDF.</p>
+          </div>
+          <button onclick="printExportBlocks()" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition flex items-center gap-2 self-start sm:self-auto">
+            🖨️ Imprimir / Salvar PDF
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Evolução Amplimed -->
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h3 class="text-sm font-bold text-indigo-600 dark:text-indigo-400">EVOLUÇÃO ESTRUTURADA (AMPLIMED)</h3>
+                <p class="text-[11px] text-slate-500">Resumo clínico, escalas, exames alterados e conduta</p>
+              </div>
+              <button onclick="copyTextToClipboard(document.getElementById('exp-evolucao').value, this)" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-indigo-600 hover:text-white transition">Copiar Bloco</button>
+            </div>
+            <textarea id="exp-evolucao" rows="13" class="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono leading-relaxed outline-none focus:ring-2 focus:ring-indigo-500">${escapeHtml(blocks.evolucao)}</textarea>
+          </div>
+
+          <!-- BLOCO 1: Prescrição Memed -->
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h3 class="text-sm font-bold text-emerald-600 dark:text-emerald-400">BLOCO 1 — PRESCRIÇÃO (MEMED / RECEITUÁRIO)</h3>
+                <p class="text-[11px] text-slate-500">Alopatia (Drogaria) + Tapering + Manipulação Integrativa</p>
+              </div>
+              <button onclick="copyTextToClipboard(document.getElementById('exp-prescricao').value, this)" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-emerald-600 hover:text-white transition">Copiar Bloco</button>
+            </div>
+            <textarea id="exp-prescricao" rows="13" class="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono leading-relaxed outline-none focus:ring-2 focus:ring-emerald-500">${escapeHtml(blocks.prescricao)}</textarea>
+          </div>
+
+          <!-- BLOCO 2: Solicitação de Exames -->
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h3 class="text-sm font-bold text-amber-600 dark:text-amber-400">BLOCO 2 — SOLICITAÇÃO DE EXAMES</h3>
+                <p class="text-[11px] text-slate-500">${p.labs.selectedExams.length} exame(s) selecionado(s) nas camadas</p>
+              </div>
+              <button onclick="copyTextToClipboard(document.getElementById('exp-exames').value, this)" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-amber-500 hover:text-slate-950 transition">Copiar Bloco</button>
+            </div>
+            <textarea id="exp-exames" rows="11" class="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono leading-relaxed outline-none focus:ring-2 focus:ring-amber-500">${escapeHtml(blocks.exames)}</textarea>
+          </div>
+
+          <!-- BLOCO 3: Orientações ao Paciente -->
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-bold text-cyan-600 dark:text-cyan-400">BLOCO 3 — ORIENTAÇÕES AO PACIENTE</h3>
+                <p class="text-[11px] text-slate-500">Marque os itens desejados para montar o texto automaticamente</p>
+              </div>
+              <button onclick="copyTextToClipboard(document.getElementById('exp-orientacoes').value, this)" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-600 hover:text-white transition">Copiar Bloco</button>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              ${ORIENTATION_PRESETS.map(o => {
+                const checked = (p.orientations || []).includes(o.id);
+                return `
+                  <label class="cursor-pointer text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition ${checked ? 'bg-cyan-500/15 border-cyan-500 text-cyan-700 dark:text-cyan-300' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}">
+                    <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleOrientation('${o.id}', this.checked)" class="hidden" />
+                    ${checked ? '✓ ' : '+ '}${o.title}
+                  </label>
+                `;
+              }).join('')}
+            </div>
+            <textarea id="exp-orientacoes" rows="8" class="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono leading-relaxed outline-none focus:ring-2 focus:ring-cyan-500">${escapeHtml(blocks.orientacoes)}</textarea>
+          </div>
+        </div>
+      `;
+    }
+
+    function toggleOrientation(id, checked) {
+      const p = getActivePatient();
+      if (!p.orientations) p.orientations = [];
+      if (checked && !p.orientations.includes(id)) p.orientations.push(id);
+      else if (!checked) p.orientations = p.orientations.filter(x => x !== id);
+      saveState();
+      renderAll();
+    }
+
+    function printExportBlocks() {
+      const p = getActivePatient();
+      const presc = document.getElementById('exp-prescricao')?.value || '';
+      const exams = document.getElementById('exp-exames')?.value || '';
+      const ori   = document.getElementById('exp-orientacoes')?.value || '';
+
+      const printArea = document.getElementById('print-area');
+      printArea.innerHTML = `
+        <div style="font-family: Inter, sans-serif; color: #0f172a; max-width: 800px; margin: 0 auto;">
+          <div style="border-bottom: 2px solid #4f46e5; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h1 style="font-size: 20px; font-weight: 800; margin: 0;">PsicoCare Alta Performance</h1>
+              <p style="font-size: 12px; color: #475569; margin: 2px 0 0;">Psiquiatria Alopática & Integrativa</p>
+            </div>
+            <div style="text-align: right; font-size: 12px;">
+              <strong>Paciente:</strong> ${escapeHtml(p.name)}<br/>
+              <strong>Data:</strong> ${formatDateBR(new Date().toISOString().slice(0, 10))}
+            </div>
+          </div>
+          <h2 style="font-size: 14px; font-weight: 700; color: #059669; margin-bottom: 6px;">PRESCRIÇÃO MÉDICA</h2>
+          <pre style="white-space: pre-wrap; font-family: inherit; font-size: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px;">${escapeHtml(presc)}</pre>
+
+          <h2 style="font-size: 14px; font-weight: 700; color: #4f46e5; margin-bottom: 6px;">SOLICITAÇÃO DE EXAMES</h2>
+          <pre style="white-space: pre-wrap; font-family: inherit; font-size: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px;">${escapeHtml(exams)}</pre>
+
+          <h2 style="font-size: 14px; font-weight: 700; color: #0891b2; margin-bottom: 6px;">ORIENTAÇÕES AO PACIENTE</h2>
+          <pre style="white-space: pre-wrap; font-family: inherit; font-size: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">${escapeHtml(ori)}</pre>
+        </div>
+      `;
+      printArea.classList.remove('hidden');
+      window.print();
+      printArea.classList.add('hidden');
+    }
+
+    /*************************************************************************
+     * UTILITÁRIOS E INICIALIZAÇÃO
+     *************************************************************************/
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function formatDateBR(isoDate) {
+      if (!isoDate) return '';
+      const parts = isoDate.split('-');
+      if (parts.length !== 3) return isoDate;
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // Restaurar tema salvo
+      const savedTheme = localStorage.getItem('psicocare_theme');
+      if (savedTheme === 'light') {
+        document.documentElement.classList.remove('dark');
+      } else {
+        document.documentElement.classList.add('dark');
+      }
+      updateThemeUI();
+
+      // Carregar pacientes e renderizar
+      loadState();
+      renderAll();
+    });
+  </script>
+</body>
+</html>
